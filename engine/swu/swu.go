@@ -24,7 +24,7 @@ import (
 	"net"
 	"time"
 
-	swusim "github.com/iniwex5/vowifi-go/engine/sim"
+	swusim "github.com/voorz/vowifi-core/engine/sim"
 )
 
 const (

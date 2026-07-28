@@ -15,12 +15,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emiago/sipgo/sip"
+	"github.com/voorz/sipgo/sip"
 
-	"github.com/iniwex5/vowifi-go/engine/sim"
-	"github.com/iniwex5/vowifi-go/internal/vowifi/ipsec3gpp"
-	"github.com/iniwex5/vowifi-go/internal/vowifi/policy"
-	"github.com/iniwex5/vowifi-go/runtimehost/voiceclient"
+	"github.com/voorz/vowifi-core/engine/sim"
+	"github.com/voorz/vowifi-core/internal/vowifi/ipsec3gpp"
+	"github.com/voorz/vowifi-core/internal/vowifi/policy"
+	"github.com/voorz/vowifi-core/runtimehost/voiceclient"
 )
 
 type registerSessionTestNetwork struct {

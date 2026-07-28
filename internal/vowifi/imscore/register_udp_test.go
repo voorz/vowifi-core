@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/iniwex5/vowifi-go/internal/vowifi/policy"
+	"github.com/voorz/vowifi-core/internal/vowifi/policy"
 )
 
 type recordingIMSNetwork struct {

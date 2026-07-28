@@ -40,11 +40,11 @@ import (
 	"time"
 
 	"github.com/voorz/swu-go/pkg/logger"
-	"github.com/emiago/sipgo"
-	"github.com/emiago/sipgo/sip"
+	"github.com/voorz/sipgo"
+	"github.com/voorz/sipgo/sip"
 
-	"github.com/iniwex5/vowifi-go/engine/sim"
-	"github.com/iniwex5/vowifi-go/runtimehost/messaging"
+	"github.com/voorz/vowifi-core/engine/sim"
+	"github.com/voorz/vowifi-core/runtimehost/messaging"
 )
 
 // Config configures a Client.

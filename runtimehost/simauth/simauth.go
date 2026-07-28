@@ -36,7 +36,7 @@ import (
 
 	"github.com/icholy/digest"
 
-	"github.com/iniwex5/vowifi-go/engine/sim"
+	"github.com/voorz/vowifi-core/engine/sim"
 )
 
 // randAUTNLen is the fixed length of each of RAND and AUTN per 3GPP AKA.

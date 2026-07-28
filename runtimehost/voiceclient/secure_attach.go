@@ -10,7 +10,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/emiago/sipgo/sip"
+	"github.com/voorz/sipgo/sip"
 	"github.com/google/uuid"
 )
 

@@ -14,7 +14,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/iniwex5/vowifi-go/runtimehost/carrier"
+	"github.com/voorz/vowifi-core/runtimehost/carrier"
 )
 
 // Identity is the ISIM/USIM identity read from the card. ICCID/IMSI/MSISDN

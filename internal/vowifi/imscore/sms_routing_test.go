@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/emiago/sipgo/sip"
+	"github.com/voorz/sipgo/sip"
 )
 
 func TestFinalizeRegisterSuccessPreservesServiceRoutes(t *testing.T) {

@@ -5,9 +5,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/emiago/sipgo/sip"
+	"github.com/voorz/sipgo/sip"
 
-	"github.com/iniwex5/vowifi-go/internal/vowifi/policy"
+	"github.com/voorz/vowifi-core/internal/vowifi/policy"
 )
 
 func TestVodafoneUKSecurityMechanismProbeAdvancesOnlyOnBadRequest(t *testing.T) {

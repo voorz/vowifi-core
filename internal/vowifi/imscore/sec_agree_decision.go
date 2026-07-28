@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emiago/sipgo/sip"
+	"github.com/voorz/sipgo/sip"
 
-	"github.com/iniwex5/vowifi-go/internal/vowifi/imsheaders"
+	"github.com/voorz/vowifi-core/internal/vowifi/imsheaders"
 )
 
 type secAgreeDecision struct {

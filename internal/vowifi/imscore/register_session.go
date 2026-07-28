@@ -11,10 +11,10 @@ import (
 	"strings"
 
 	"github.com/voorz/swu-go/pkg/logger"
-	"github.com/emiago/sipgo/sip"
+	"github.com/voorz/sipgo/sip"
 	"github.com/google/uuid"
 
-	"github.com/iniwex5/vowifi-go/runtimehost/voiceclient"
+	"github.com/voorz/vowifi-core/runtimehost/voiceclient"
 )
 
 func resolveStableSIPInstance(cfg Config) string {

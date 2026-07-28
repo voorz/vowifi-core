@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/iniwex5/vowifi-go/internal/vowifi/policy"
-	"github.com/iniwex5/vowifi-go/runtimehost/messaging"
-	"github.com/iniwex5/vowifi-go/runtimehost/voiceclient"
+	"github.com/voorz/vowifi-core/internal/vowifi/policy"
+	"github.com/voorz/vowifi-core/runtimehost/messaging"
+	"github.com/voorz/vowifi-core/runtimehost/voiceclient"
 )
 
 // Service is the RE-recovered imscore IMS messaging surface.

@@ -4,7 +4,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/iniwex5/vowifi-go/runtimehost/voiceclient"
+	"github.com/voorz/vowifi-core/runtimehost/voiceclient"
 )
 
 // IMSRegisterProfileOptions carries optional REGISTER header overrides resolved

@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/iniwex5/vowifi-go/internal/vowifi/ipsec3gpp"
-	"github.com/iniwex5/vowifi-go/runtimehost/voiceclient"
-	"github.com/emiago/sipgo"
-	"github.com/emiago/sipgo/sip"
+	"github.com/voorz/vowifi-core/internal/vowifi/ipsec3gpp"
+	"github.com/voorz/vowifi-core/runtimehost/voiceclient"
+	"github.com/voorz/sipgo"
+	"github.com/voorz/sipgo/sip"
 )
 
 func newSWUNetstack(localIP net.IP, dp voiceclient.PacketDataplane) (voiceclient.SWUTCPDialer, error) {

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/iniwex5/vowifi-go/engine/swu/akabridge"
-	"github.com/iniwex5/vowifi-go/engine/swu/charon"
-	"github.com/iniwex5/vowifi-go/engine/swu/pcscfbridge"
+	"github.com/voorz/vowifi-core/engine/swu/akabridge"
+	"github.com/voorz/vowifi-core/engine/swu/charon"
+	"github.com/voorz/vowifi-core/engine/swu/pcscfbridge"
 )
 
 // ManagerOptions configures a Manager.

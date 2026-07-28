@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/emiago/sipgo/sip"
+	"github.com/voorz/sipgo/sip"
 )
 
 const (

@@ -11,10 +11,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emiago/sipgo/sip"
+	"github.com/voorz/sipgo/sip"
 
-	"github.com/iniwex5/vowifi-go/internal/vowifi/ipsec3gpp"
-	"github.com/iniwex5/vowifi-go/runtimehost/messaging"
+	"github.com/voorz/vowifi-core/internal/vowifi/ipsec3gpp"
+	"github.com/voorz/vowifi-core/runtimehost/messaging"
 )
 
 func TestAttachSecureMessagingClearsInheritedDeadlineAndSendsMESSAGE(t *testing.T) {

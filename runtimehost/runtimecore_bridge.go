@@ -3,7 +3,7 @@ package runtimehost
 import (
 	"time"
 
-	"github.com/iniwex5/vowifi-go/internal/vowifi/runtimecore"
+	"github.com/voorz/vowifi-core/internal/vowifi/runtimecore"
 )
 
 func toRuntimecoreSessionConfig(req StartRequest) runtimecore.SessionConfig {

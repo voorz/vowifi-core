@@ -3,7 +3,7 @@ package imscore
 import (
 	"strings"
 
-	"github.com/iniwex5/vowifi-go/internal/vowifi/policy"
+	"github.com/voorz/vowifi-core/internal/vowifi/policy"
 )
 
 // buildTemplateSecurityClient renders the single preferred Security-Client

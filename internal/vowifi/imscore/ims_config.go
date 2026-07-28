@@ -4,10 +4,10 @@ import (
 	"net"
 	"strings"
 
-	"github.com/iniwex5/vowifi-go/engine/sim"
-	"github.com/iniwex5/vowifi-go/internal/vowifi/policy"
-	"github.com/iniwex5/vowifi-go/runtimehost/messaging"
-	"github.com/iniwex5/vowifi-go/runtimehost/voiceclient"
+	"github.com/voorz/vowifi-core/engine/sim"
+	"github.com/voorz/vowifi-core/internal/vowifi/policy"
+	"github.com/voorz/vowifi-core/runtimehost/messaging"
+	"github.com/voorz/vowifi-core/runtimehost/voiceclient"
 )
 
 // IMSConfig is the author v1.1.2 imscore service configuration surface.

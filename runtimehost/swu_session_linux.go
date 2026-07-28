@@ -15,7 +15,7 @@ import (
 	"github.com/voorz/swu-go/pkg/logger"
 	externalsim "github.com/voorz/swu-go/pkg/sim"
 	externalswu "github.com/voorz/swu-go/pkg/swu"
-	swusim "github.com/iniwex5/vowifi-go/engine/sim"
+	swusim "github.com/voorz/vowifi-core/engine/sim"
 )
 
 type externalSIMAdapter struct {

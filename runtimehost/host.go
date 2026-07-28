@@ -12,14 +12,14 @@ import (
 	"time"
 
 	swulogger "github.com/voorz/swu-go/pkg/logger"
-	swusim "github.com/iniwex5/vowifi-go/engine/sim"
-	"github.com/iniwex5/vowifi-go/internal/vowifi/imscore"
-	"github.com/iniwex5/vowifi-go/internal/vowifi/policy"
-	"github.com/iniwex5/vowifi-go/internal/vowifi/runtimecore"
-	"github.com/iniwex5/vowifi-go/runtimehost/identity"
-	"github.com/iniwex5/vowifi-go/runtimehost/messaging"
-	"github.com/iniwex5/vowifi-go/runtimehost/transport"
-	"github.com/iniwex5/vowifi-go/runtimehost/voiceclient"
+	swusim "github.com/voorz/vowifi-core/engine/sim"
+	"github.com/voorz/vowifi-core/internal/vowifi/imscore"
+	"github.com/voorz/vowifi-core/internal/vowifi/policy"
+	"github.com/voorz/vowifi-core/internal/vowifi/runtimecore"
+	"github.com/voorz/vowifi-core/runtimehost/identity"
+	"github.com/voorz/vowifi-core/runtimehost/messaging"
+	"github.com/voorz/vowifi-core/runtimehost/transport"
+	"github.com/voorz/vowifi-core/runtimehost/voiceclient"
 	"go.uber.org/zap"
 )
 

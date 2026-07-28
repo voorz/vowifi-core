@@ -3,7 +3,7 @@ package imscore
 import (
 	"strings"
 
-	"github.com/emiago/sipgo/sip"
+	"github.com/voorz/sipgo/sip"
 )
 
 type registerFailureOutcome struct {

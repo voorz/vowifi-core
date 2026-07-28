@@ -11,11 +11,11 @@ import (
 	"time"
 
 	"github.com/voorz/swu-go/pkg/logger"
-	"github.com/emiago/sipgo"
-	"github.com/emiago/sipgo/sip"
+	"github.com/voorz/sipgo"
+	"github.com/voorz/sipgo/sip"
 	"github.com/icholy/digest"
 
-	"github.com/iniwex5/vowifi-go/runtimehost/simauth"
+	"github.com/voorz/vowifi-core/runtimehost/simauth"
 )
 
 // maxChallengeRounds bounds the REGISTER challenge/retry loop: RFC 3310's

@@ -6,7 +6,7 @@ import (
 	"net"
 	"testing"
 
-	"github.com/emiago/sipgo/sip"
+	"github.com/voorz/sipgo/sip"
 )
 
 func TestDedupeRegistrarAddrs(t *testing.T) {

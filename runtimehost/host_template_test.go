@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/iniwex5/vowifi-go/runtimehost/identity"
-	"github.com/iniwex5/vowifi-go/runtimehost/voiceclient"
+	"github.com/voorz/vowifi-core/runtimehost/identity"
+	"github.com/voorz/vowifi-core/runtimehost/voiceclient"
 )
 
 func TestResolveIMSRegisterTemplateForVodafoneUK(t *testing.T) {

@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/iniwex5/vowifi-go/internal/vowifi/runtimecore"
-	"github.com/iniwex5/vowifi-go/runtimehost/messaging"
+	"github.com/voorz/vowifi-core/internal/vowifi/runtimecore"
+	"github.com/voorz/vowifi-core/runtimehost/messaging"
 )
 
 type lifecycleMessagingService struct {

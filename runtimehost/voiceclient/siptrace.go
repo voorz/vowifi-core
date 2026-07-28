@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/voorz/swu-go/pkg/logger"
-	"github.com/emiago/sipgo/sip"
+	"github.com/voorz/sipgo/sip"
 )
 
 type sipTraceLogger struct {

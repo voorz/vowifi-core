@@ -6,7 +6,7 @@ import (
 	"net"
 	"strconv"
 
-	"github.com/iniwex5/vowifi-go/runtimehost/voiceclient"
+	"github.com/voorz/vowifi-core/runtimehost/voiceclient"
 )
 
 // KernelIMSNetwork routes IMS sockets through the kernel network stack.

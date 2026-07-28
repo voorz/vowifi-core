@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emiago/sipgo/sip"
+	"github.com/voorz/sipgo/sip"
 	"github.com/google/uuid"
 
-	"github.com/iniwex5/vowifi-go/runtimehost/messaging"
+	"github.com/voorz/vowifi-core/runtimehost/messaging"
 )
 
 const smsContentType = "application/vnd.3gpp.sms"

@@ -34,7 +34,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/iniwex5/vowifi-go/engine/sim"
+	"github.com/voorz/vowifi-core/engine/sim"
 )
 
 const (

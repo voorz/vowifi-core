@@ -3,7 +3,7 @@ package voicehost
 import (
 	"context"
 
-	"github.com/emiago/sipgo/sip"
+	"github.com/voorz/sipgo/sip"
 )
 
 const DefaultSimulateCallHoldSeconds = 15

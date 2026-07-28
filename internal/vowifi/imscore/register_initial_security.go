@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emiago/sipgo/sip"
+	"github.com/voorz/sipgo/sip"
 )
 
 type initialRegisterSecurityDecision struct {

@@ -7,11 +7,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emiago/sipgo/sip"
+	"github.com/voorz/sipgo/sip"
 	"github.com/icholy/digest"
 
-	"github.com/iniwex5/vowifi-go/engine/sim"
-	"github.com/iniwex5/vowifi-go/internal/vowifi/policy"
+	"github.com/voorz/vowifi-core/engine/sim"
+	"github.com/voorz/vowifi-core/internal/vowifi/policy"
 )
 
 // fixedAKA returns deterministic RES/CK/IK for offline replay.

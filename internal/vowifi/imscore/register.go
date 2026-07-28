@@ -14,16 +14,16 @@ import (
 	"time"
 
 	"github.com/voorz/swu-go/pkg/logger"
-	"github.com/emiago/sipgo"
-	"github.com/emiago/sipgo/sip"
+	"github.com/voorz/sipgo"
+	"github.com/voorz/sipgo/sip"
 	"github.com/icholy/digest"
 
-	"github.com/iniwex5/vowifi-go/engine/sim"
-	"github.com/iniwex5/vowifi-go/internal/vowifi/imsheaders"
-	"github.com/iniwex5/vowifi-go/internal/vowifi/ipsec3gpp"
-	"github.com/iniwex5/vowifi-go/internal/vowifi/policy"
-	"github.com/iniwex5/vowifi-go/runtimehost/simauth"
-	"github.com/iniwex5/vowifi-go/runtimehost/voiceclient"
+	"github.com/voorz/vowifi-core/engine/sim"
+	"github.com/voorz/vowifi-core/internal/vowifi/imsheaders"
+	"github.com/voorz/vowifi-core/internal/vowifi/ipsec3gpp"
+	"github.com/voorz/vowifi-core/internal/vowifi/policy"
+	"github.com/voorz/vowifi-core/runtimehost/simauth"
+	"github.com/voorz/vowifi-core/runtimehost/voiceclient"
 )
 
 const (

@@ -10,8 +10,8 @@ import (
 
 	"github.com/voorz/swu-go/pkg/logger"
 
-	"github.com/iniwex5/vowifi-go/internal/vowifi/ipsec3gpp"
-	"github.com/iniwex5/vowifi-go/runtimehost/voiceclient"
+	"github.com/voorz/vowifi-core/internal/vowifi/ipsec3gpp"
+	"github.com/voorz/vowifi-core/runtimehost/voiceclient"
 )
 
 type sipWriteTask struct {
