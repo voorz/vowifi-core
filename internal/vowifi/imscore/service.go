@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/1239t/vowifi-go/internal/vowifi/policy"
-	"github.com/1239t/vowifi-go/runtimehost/messaging"
-	"github.com/1239t/vowifi-go/runtimehost/voiceclient"
+	"github.com/iniwex5/vowifi-go/internal/vowifi/policy"
+	"github.com/iniwex5/vowifi-go/runtimehost/messaging"
+	"github.com/iniwex5/vowifi-go/runtimehost/voiceclient"
 )
 
 // Service is the RE-recovered imscore IMS messaging surface.
@@ -100,6 +100,13 @@ func (s *Service) SendSMS(ctx context.Context, peer, content string, parts []mes
 		return messaging.SendOutcome{}, fmt.Errorf("IMS service not ready")
 	}
 	return s.inner.SendSMS(ctx, peer, content, parts)
+}
+
+// SendSMSWithOptions is a stub that returns "not implemented" — the imscore
+// path does not support high-level SMS encoding; callers should pre-encode
+// parts and use SendSMS directly.
+func (s *Service) SendSMSWithOptions(_ context.Context, _, _ string, _ messaging.SendOptions) (messaging.SendOutcome, error) {
+	return messaging.SendOutcome{}, fmt.Errorf("SendSMSWithOptions not supported in imscore path")
 }
 
 func (s *Service) SendUSSD(ctx context.Context, command string) (*messaging.USSDResult, error) {

@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/1239t/vowifi-go/internal/vowifi/ipsec3gpp"
-	"github.com/1239t/vowifi-go/runtimehost/voiceclient"
+	"github.com/iniwex5/vowifi-go/internal/vowifi/ipsec3gpp"
+	"github.com/iniwex5/vowifi-go/runtimehost/voiceclient"
 	"github.com/emiago/sipgo"
 	"github.com/emiago/sipgo/sip"
 )

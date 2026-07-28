@@ -3,7 +3,7 @@ package imscore
 import (
 	"testing"
 
-	"github.com/1239t/vowifi-go/internal/vowifi/policy"
+	"github.com/iniwex5/vowifi-go/internal/vowifi/policy"
 	"github.com/emiago/sipgo/sip"
 )
 

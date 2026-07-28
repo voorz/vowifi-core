@@ -82,6 +82,10 @@ type DeliveryStore interface {
 	GetSMSDeliveryStatus(messageID string) (*DeliveryStatus, error)
 }
 
+type SendOptions struct {
+	Encoding string
+}
+
 type Service interface {
 	// SendSMS transmits pre-encoded parts to peer (an MSISDN or SIP URI)
 	// as SIP MESSAGE(s) and tracks delivery via DeliveryStore (this is what
@@ -90,6 +94,8 @@ type Service interface {
 	// text from parts, which are already opaque encoded bytes). Encoding
 	// itself is entirely the caller's job -- see SMSPart.
 	SendSMS(ctx context.Context, peer, content string, parts []SMSPart) (SendOutcome, error)
+	// SendSMSWithOptions is a convenience wrapper for SendSMS with encoding hints.
+	SendSMSWithOptions(ctx context.Context, peer, content string, opts SendOptions) (SendOutcome, error)
 	SendUSSD(ctx context.Context, command string) (*USSDResult, error)
 	ContinueUSSD(ctx context.Context, sessionID, input string) (*USSDResult, error)
 	CancelUSSD(ctx context.Context, sessionID string) error

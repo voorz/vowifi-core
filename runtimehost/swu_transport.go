@@ -11,8 +11,8 @@ import (
 
 	externalipsec "github.com/voorz/swu-go/pkg/ipsec"
 	externalswu "github.com/voorz/swu-go/pkg/swu"
-	"github.com/1239t/vowifi-go/runtimehost/ikev2"
-	"github.com/1239t/vowifi-go/runtimehost/transport"
+	"github.com/iniwex5/vowifi-go/runtimehost/ikev2"
+	"github.com/iniwex5/vowifi-go/runtimehost/transport"
 )
 
 type swuDatagramTransport struct {

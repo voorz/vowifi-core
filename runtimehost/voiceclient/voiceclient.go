@@ -43,8 +43,8 @@ import (
 	"github.com/emiago/sipgo"
 	"github.com/emiago/sipgo/sip"
 
-	"github.com/1239t/vowifi-go/engine/sim"
-	"github.com/1239t/vowifi-go/runtimehost/messaging"
+	"github.com/iniwex5/vowifi-go/engine/sim"
+	"github.com/iniwex5/vowifi-go/runtimehost/messaging"
 )
 
 // Config configures a Client.

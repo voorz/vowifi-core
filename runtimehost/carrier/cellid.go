@@ -3,7 +3,7 @@ package carrier
 import (
 	"strings"
 
-	"github.com/1239t/vowifi-go/runtimehost/voiceclient"
+	"github.com/iniwex5/vowifi-go/runtimehost/voiceclient"
 )
 
 // DefaultUTRANCellIDSuffix returns the configured utran-cell-id-3gpp suffix

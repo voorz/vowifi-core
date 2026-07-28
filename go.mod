@@ -1,10 +1,6 @@
-module github.com/1239t/vowifi-go
+module github.com/iniwex5/vowifi-go
 
 go 1.26.3
-
-replace github.com/emiago/sipgo => ../third_party/sipgo
-
-replace github.com/voorz/swu-go => ../../../vohive/vohive-libs/swu-go
 
 require (
 	github.com/emiago/sipgo v1.4.0

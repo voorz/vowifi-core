@@ -55,8 +55,10 @@ type EffectiveCarrierConfig struct {
 	EPDGAddr         string
 	AKAAppPreference string
 	E911             struct {
-		Enabled  bool
-		Provider string
+		Enabled             bool
+		Provider            string
+		Websheet            string
+		EntitlementEndpoint string
 	}
 }
 

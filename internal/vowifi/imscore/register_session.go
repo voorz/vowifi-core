@@ -14,7 +14,7 @@ import (
 	"github.com/emiago/sipgo/sip"
 	"github.com/google/uuid"
 
-	"github.com/1239t/vowifi-go/runtimehost/voiceclient"
+	"github.com/iniwex5/vowifi-go/runtimehost/voiceclient"
 )
 
 func resolveStableSIPInstance(cfg Config) string {

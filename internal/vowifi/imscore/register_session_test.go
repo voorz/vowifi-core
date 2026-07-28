@@ -17,10 +17,10 @@ import (
 
 	"github.com/emiago/sipgo/sip"
 
-	"github.com/1239t/vowifi-go/engine/sim"
-	"github.com/1239t/vowifi-go/internal/vowifi/ipsec3gpp"
-	"github.com/1239t/vowifi-go/internal/vowifi/policy"
-	"github.com/1239t/vowifi-go/runtimehost/voiceclient"
+	"github.com/iniwex5/vowifi-go/engine/sim"
+	"github.com/iniwex5/vowifi-go/internal/vowifi/ipsec3gpp"
+	"github.com/iniwex5/vowifi-go/internal/vowifi/policy"
+	"github.com/iniwex5/vowifi-go/runtimehost/voiceclient"
 )
 
 type registerSessionTestNetwork struct {

@@ -12,14 +12,14 @@ import (
 	"time"
 
 	swulogger "github.com/voorz/swu-go/pkg/logger"
-	swusim "github.com/1239t/vowifi-go/engine/sim"
-	"github.com/1239t/vowifi-go/internal/vowifi/imscore"
-	"github.com/1239t/vowifi-go/internal/vowifi/policy"
-	"github.com/1239t/vowifi-go/internal/vowifi/runtimecore"
-	"github.com/1239t/vowifi-go/runtimehost/identity"
-	"github.com/1239t/vowifi-go/runtimehost/messaging"
-	"github.com/1239t/vowifi-go/runtimehost/transport"
-	"github.com/1239t/vowifi-go/runtimehost/voiceclient"
+	swusim "github.com/iniwex5/vowifi-go/engine/sim"
+	"github.com/iniwex5/vowifi-go/internal/vowifi/imscore"
+	"github.com/iniwex5/vowifi-go/internal/vowifi/policy"
+	"github.com/iniwex5/vowifi-go/internal/vowifi/runtimecore"
+	"github.com/iniwex5/vowifi-go/runtimehost/identity"
+	"github.com/iniwex5/vowifi-go/runtimehost/messaging"
+	"github.com/iniwex5/vowifi-go/runtimehost/transport"
+	"github.com/iniwex5/vowifi-go/runtimehost/voiceclient"
 	"go.uber.org/zap"
 )
 
@@ -923,7 +923,7 @@ func simAdminEPDGHost(mcc, mnc string) string {
 	key := simAdminProfileKeyForPLMN(mcc, mnc)
 	switch key {
 	case "234-33":
-		return "epdg.epc.mnc033.mcc001.pub.3gppnetwork.org"
+		return "epdg.epc.mnc033.mcc234.pub.3gppnetwork.org"
 	case "204-04":
 		return "epdg.epc.mnc004.mcc204.pub.3gppnetwork.org"
 	case "310-260":
