@@ -147,6 +147,35 @@ func VodafoneUKTemplate() IMSRegisterTemplate {
 	}
 }
 
+// eeUKBaseTemplate 旧版多参数实现，排障期间使用但未成功，保留供回退
+/*
+func eeUKBaseTemplate() IMSRegisterTemplate {
+	return IMSRegisterTemplate{
+		ID:                                     "cmlink_23433",
+		SecAgreeMode:                           "on",
+		UserAgent:                              "iOS/26.6 iPhone",
+		FixedPANI:                              `IEEE-802.11; i-wlan-node-id="000000000000";country=GB`,
+		IncludePANI:                            true,
+		IncludePANIAuthenticated:                true,
+		StrictSecurityServerOffer:              true,
+		UsePlainDigestPlaceholder:              false,
+		EnableInitialRejectFallback:            false,
+		OmitRoute:                              false,
+		MinimalInitialHeaders:                  true,
+		ProbeInitialSecurityClientOnBadRequest: true,
+		SupportedHeader:                        "path,sec-agree,gruu",
+		ContactParamOrder: []string{
+			"access_type",
+			"audio",
+			"smsip",
+			"icsi_ref",
+			"sip_instance",
+		},
+		SecurityClientMechanisms: DefaultSecurityClientMechanisms(),
+		TransportModes:          []string{"tcp", "udp"},
+	}
+}
+*/
 // eeUKBaseTemplate is the common IMS REGISTER template for EE UK and its MVNOs
 // (CMlink UK, CTE UK). Key behaviors:
 //   - IncludePANI: true with fixed IEEE-802.11 PANI for WiFi access

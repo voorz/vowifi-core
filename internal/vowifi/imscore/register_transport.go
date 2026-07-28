@@ -176,6 +176,9 @@ func classifySecurityFallbackReason(cfg Config, statusCode int, reason string, r
 }
 
 func registerTransportCandidates(cfg Config, transport string) []string {
+	if len(cfg.Template.TransportModes) > 0 {
+		return cfg.Template.TransportModes
+	}
 	mode := strings.ToLower(strings.TrimSpace(transport))
 	switch mode {
 	case "", "auto":

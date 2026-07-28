@@ -586,9 +586,22 @@ func computeAKAAuth(cfg Config, chal *digest.Challenge, req *sip.Request) (sim.A
 	}
 	rawNonce, err := decodeChallengeNonce(chal.Nonce)
 	if err != nil {
+		logger.Debug("IMS REGISTER nonce decode failed",
+			logger.String("trace_id", strings.TrimSpace(cfg.TraceID)),
+			logger.String("raw_nonce", chal.Nonce),
+			logger.String("algorithm", chal.Algorithm),
+			logger.String("realm", chal.Realm),
+			logger.String("decode_err", err.Error()))
 		return sim.AKAResult{}, "", false, err
 	}
 	if len(rawNonce) < 32 {
+		logger.Debug("IMS REGISTER nonce too short",
+			logger.String("trace_id", strings.TrimSpace(cfg.TraceID)),
+			logger.String("raw_nonce", chal.Nonce),
+			logger.String("algorithm", chal.Algorithm),
+			logger.String("realm", chal.Realm),
+			logger.Int("decoded_len", len(rawNonce)),
+			logger.String("decoded_hex", hex.EncodeToString(rawNonce)))
 		return sim.AKAResult{}, "", false, fmt.Errorf("nonce too short for RAND||AUTN")
 	}
 	akaResult, akaErr := cfg.AKA.CalculateAKA(rawNonce[:16], rawNonce[16:32])

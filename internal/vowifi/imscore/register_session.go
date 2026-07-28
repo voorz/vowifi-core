@@ -233,6 +233,20 @@ func (s *registerSession) runInitialRegisterFlow(ctx context.Context) (*register
 			logger.Bool("has_path", res.GetHeader("Path") != nil),
 			logger.Bool("has_service_route", res.GetHeader("Service-Route") != nil))
 
+		if wwwAuth := res.GetHeader("WWW-Authenticate"); wwwAuth != nil {
+			logger.Debug("IMS REGISTER 401 WWW-Authenticate",
+				logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+				logger.String("www_authenticate", wwwAuth.Value()))
+		}
+		if proxyAuth := res.GetHeader("Proxy-Authenticate"); proxyAuth != nil {
+			logger.Debug("IMS REGISTER 407 Proxy-Authenticate",
+				logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+				logger.String("proxy_authenticate", proxyAuth.Value()))
+		}
+		logger.Debug("IMS REGISTER initial full SIP response",
+			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+			logger.String("sip_message", res.String()))
+
 		switch res.StatusCode {
 		case sip.StatusOK:
 			decision, err := decideInitialRegisterSuccessSecurity(s.cfg, res)
@@ -404,7 +418,20 @@ func (s *registerSession) runAuthRegisterPhase(ctx context.Context, transport *c
 		// Success AKA: install IPsec from THIS challenge's Security-Server,
 		// then send Authorization+Security-Verify on the protected channel.
 		if len(akaResult.CK) == 0 || len(akaResult.IK) == 0 {
-			return nil, fmt.Errorf("challenge round %d: AKA success without CK/IK", round+1)
+			// Plain MD5 digest (no AKA keys): send unprotected authenticated REGISTER
+			logger.Info("IMS REGISTER digest auth (no IPsec keys)",
+				logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+				logger.Int("challenge_round", round+1),
+				logger.String("nonce_fingerprint", nonceFingerprint))
+			res, err := s.sendRegisterRequest(ctx, transport, newReq)
+			if err != nil {
+				return nil, fmt.Errorf("challenge round %d: %w", round+1, err)
+			}
+			lastReq, lastRes = newReq, res
+			if lastRes.StatusCode == sip.StatusOK {
+				return finalizeRegisterSuccess(s.cfg, *s.state, lastRes)
+			}
+			continue
 		}
 		logger.Info("IMS REGISTER AKA success",
 			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
@@ -486,6 +513,34 @@ func (s *registerSession) registerOnce(ctx context.Context, transport *connRegis
 	}
 	if err := s.decorateRegisterRequest(req); err != nil {
 		return nil, nil, err
+	}
+	if initial {
+		var headerNames []string
+		for _, h := range req.Headers() {
+			if h != nil {
+				headerNames = append(headerNames, h.Name())
+			}
+		}
+		logger.Debug("IMS REGISTER initial request headers",
+			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+			logger.String("template_id", strings.TrimSpace(s.cfg.Template.ID)),
+			logger.String("headers", strings.Join(headerNames, ",")))
+		if authH := req.GetHeader("Authorization"); authH != nil {
+			logger.Debug("IMS REGISTER initial Authorization",
+				logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+				logger.String("authorization", authH.Value()))
+		} else {
+			logger.Debug("IMS REGISTER initial Authorization missing",
+				logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)))
+		}
+		if secH := req.GetHeader("Security-Client"); secH != nil {
+			logger.Debug("IMS REGISTER initial Security-Client",
+				logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+				logger.String("security_client", secH.Value()))
+		}
+		logger.Debug("IMS REGISTER initial full SIP request",
+			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+			logger.String("sip_message", req.String()))
 	}
 	if initial && strings.EqualFold(strings.TrimSpace(s.cfg.Template.ID), "vodafone_uk_23415") {
 		payload, err := buildVodafoneInitialRegisterPayload(req)

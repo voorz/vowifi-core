@@ -35,6 +35,7 @@ type IMSRegisterTemplate struct {
 	StrictSecurityServerOffer              bool
 	EnableInitialRejectFallback            bool
 	FallbackIncludesServerParamsInSecCl    bool
+	TransportModes                         []string
 	RegisterPolicy                         IMSRegisterPolicy
 	// IKEGatewayPrefixScores ranks ePDG/P-CSCF IPv6 gateway candidates by
 	// prefix. When nil, callers fall back to DefaultIKEGatewayPrefixScores().
