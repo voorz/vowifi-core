@@ -94,6 +94,12 @@ func ResolveIMSRegisterTemplate(mcc, mnc string) IMSRegisterTemplate {
 		return CSLHKTemplate()
 	case "228:2":
 		return SunriseCHTemplate()
+	case "460:0", "460:2", "460:4", "460:7":
+		return CMCCTemplate()
+	case "460:1", "460:6", "460:9":
+		return ChinaUnicomTemplate()
+	case "460:3", "460:5", "460:11":
+		return ChinaTelecomTemplate()
 	}
 	return GenericTemplate()
 }
@@ -338,4 +344,28 @@ func SunriseCHTemplate() IMSRegisterTemplate {
 	return IMSRegisterTemplate{
 		ID: "sunrise_22802",
 	}
+}
+
+// CMCCTemplate is the IMS REGISTER template for China Mobile (CMCC).
+// Uses 3GPP-standard behavior since CMCC does not publicly deploy VoWiFi.
+func CMCCTemplate() IMSRegisterTemplate {
+	t := GenericTemplate()
+	t.ID = "cmcc_46000"
+	return t
+}
+
+// ChinaUnicomTemplate is the IMS REGISTER template for China Unicom.
+// Uses 3GPP-standard behavior since China Unicom does not publicly deploy VoWiFi.
+func ChinaUnicomTemplate() IMSRegisterTemplate {
+	t := GenericTemplate()
+	t.ID = "china_unicom_46001"
+	return t
+}
+
+// ChinaTelecomTemplate is the IMS REGISTER template for China Telecom.
+// Uses 3GPP-standard behavior since China Telecom does not publicly deploy VoWiFi.
+func ChinaTelecomTemplate() IMSRegisterTemplate {
+	t := GenericTemplate()
+	t.ID = "china_telecom_46003"
+	return t
 }
