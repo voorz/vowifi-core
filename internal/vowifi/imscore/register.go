@@ -49,6 +49,7 @@ type registerState struct {
 	ipsecPolicy   ipsec3gpp.Policy
 	transport     *ipsec3gpp.Transport
 	secureConn    *ipsec3gpp.SecureChannelConn
+	tcpConn       net.Conn // TCP+ESP mode: kept alive for messaging
 
 	expiresSeconds int
 	verifyHeader   string
@@ -60,6 +61,7 @@ type registerResult struct {
 	verifyHeader   string
 	serviceRoutes  []string
 	secureConn     *ipsec3gpp.SecureChannelConn
+	tcpConn        net.Conn // TCP+ESP mode: kept alive for messaging
 	ipsecPolicy    ipsec3gpp.Policy
 	transport      *ipsec3gpp.Transport
 }
@@ -133,9 +135,18 @@ func shouldRetryInitialRegisterForStatus(cfg Config, statusCode int) bool {
 }
 
 func runSecureAuthenticatedRegister(ctx context.Context, cfg Config, swuTCP voiceclient.SWUTCPDialer, state *registerState, lastReq *sip.Request, lastRes *sip.Response) (*registerResult, error) {
-	secureConn, err := dialSecureRegisterConn(ctx, cfg, swuTCP, *state)
+	// Register the ESP transformer with the SWu netstack so that outgoing
+	// TCP packets to the P-CSCF are automatically wrapped in ESP.
+	if ipsecSetter, ok := swuTCP.(voiceclient.SWUIPsecCapable); ok && state.transport != nil {
+		ipsecSetter.SetIPsecTransport(state.transport)
+	}
+
+	rip := net.IP(state.ipsecPolicy.RemoteIP)
+	localPort := state.ipsecPolicy.FlowC.LocalPort
+	remotePort := state.ipsecPolicy.FlowC.RemotePort
+	secureConn, err := swuTCP.DialContextTCP(ctx, cfg.LocalIP, localPort, rip, remotePort)
 	if err != nil {
-		return nil, fmt.Errorf("secure channel dial: %w", err)
+		return nil, fmt.Errorf("secure TCP dial: %w", err)
 	}
 
 	authRes, _, err := buildAuthenticatedRegister(cfg, *state, lastReq, lastRes)
@@ -148,15 +159,15 @@ func runSecureAuthenticatedRegister(ctx context.Context, cfg Config, swuTCP voic
 		return nil, err
 	}
 
-	secureTransport := newConnRegisterTransport(secureConn, cfg.TraceID, cfg.DeviceID, "udp")
-	logger.Info("IMS protected REGISTER ESP channel ready",
+	secureTransport := newConnRegisterTransport(secureConn, cfg.TraceID, cfg.DeviceID, "tcp")
+	logger.Info("IMS protected REGISTER TCP+ESP channel ready",
 		logger.String("trace_id", strings.TrimSpace(cfg.TraceID)),
 		logger.String("local_ip", cfg.LocalIP.String()),
-		logger.String("remote_ip", net.IP(state.ipsecPolicy.RemoteIP).String()),
-		logger.Int("flowc_local_port", state.ipsecPolicy.FlowC.LocalPort),
-		logger.Int("flowc_remote_port", state.ipsecPolicy.FlowC.RemotePort),
-		logger.String("flowc_outbound_spi", fmt.Sprintf("0x%08x", state.ipsecPolicy.FlowC.OutboundSPI)),
-		logger.String("flowc_inbound_spi", fmt.Sprintf("0x%08x", state.ipsecPolicy.FlowC.InboundSPI)),
+		logger.String("remote_ip", rip.String()),
+		logger.Int("local_port", localPort),
+		logger.Int("remote_port", remotePort),
+		logger.String("outbound_spi", fmt.Sprintf("0x%08x", state.ipsecPolicy.FlowC.OutboundSPI)),
+		logger.String("inbound_spi", fmt.Sprintf("0x%08x", state.ipsecPolicy.FlowC.InboundSPI)),
 		logger.Int("ck_len", len(state.ck)),
 		logger.Int("ik_len", len(state.ik)))
 	var sendErr error
@@ -174,7 +185,7 @@ func runSecureAuthenticatedRegister(ctx context.Context, cfg Config, swuTCP voic
 		_ = secureTransport.Close()
 		return nil, fmt.Errorf("authenticated REGISTER: %w", sendErr)
 	}
-	logger.Info("IMS protected REGISTER sent via ESP, awaiting response",
+	logger.Info("IMS protected REGISTER sent via TCP+ESP, awaiting response",
 		logger.String("trace_id", strings.TrimSpace(cfg.TraceID)))
 	finalRes, err := secureTransport.ReadResponse(ctx)
 	if err != nil {
@@ -190,7 +201,8 @@ func runSecureAuthenticatedRegister(ctx context.Context, cfg Config, swuTCP voic
 	}
 	_ = secureTransport.ReleaseConn()
 
-	state.secureConn = secureConn
+	state.secureConn = nil    // TCP+ESP mode: ESP handled by netstack, no SecureChannelConn
+	state.tcpConn = secureConn // Keep TCP connection alive for messaging
 	return finalizeRegisterSuccess(cfg, *state, finalRes)
 }
 func installIPSecFromChallenge(cfg Config, state *registerState, res *sip.Response) error {
@@ -251,11 +263,12 @@ func installIPSecFromChallenge(cfg Config, state *registerState, res *sip.Respon
 	}
 	state.ipsecPolicy = pol
 	state.transport = transport
-	// IPsec ESP operates at the IP layer (UDP); the protected REGISTER must
-	// use UDP regardless of the initial transport (TCP). This allows the
-	// initial REGISTER to use TCP for reliability while the protected
-	// REGISTER correctly uses UDP/IPsec.
-	state.transportMode = "udp"
+	// Protected REGISTER uses TCP through the SWu netstack. The netstack's
+	// outbound loop intercepts matching TCP packets and wraps them in ESP
+	// (via the registered ESPTransformer). This aligns with v1.5.5's kernel
+	// IPsec behavior: TCP handles segmentation, each segment is individually
+	// ESP-encapsulated, so no IP-level fragmentation is needed.
+	state.transportMode = "tcp"
 	return nil
 }
 
@@ -323,9 +336,7 @@ func prepareProtectedRegisterRequest(cfg Config, state registerState, req *sip.R
 	if req == nil {
 		return fmt.Errorf("missing protected REGISTER request")
 	}
-	if canonicalRegisterTransport(state.transportMode) != "udp" {
-		return fmt.Errorf("protected REGISTER transport must be UDP")
-	}
+	transportMode := canonicalRegisterTransport(state.transportMode)
 	protectedServerPort := state.ipsecPolicy.FlowS.LocalPort
 	remotePort := state.ipsecPolicy.FlowC.RemotePort
 	if protectedServerPort <= 0 || remotePort <= 0 {
@@ -338,13 +349,20 @@ func prepareProtectedRegisterRequest(cfg Config, state registerState, req *sip.R
 	}
 	req.RemoveHeader("Via")
 	req.RemoveHeader("CSeq")
+	// TCP mode: Via/Contact use the local client port (port_c) since the
+	// TCP connection is bound to it. UDP mode: use the protected server
+	// port (port_s) where the UE listens for responses.
+	viaPort := protectedServerPort
+	if transportMode == "tcp" {
+		viaPort = state.ipsecPolicy.FlowC.LocalPort
+	}
 	req.PrependHeader(sip.NewHeader(
 		"Via",
-		fmt.Sprintf("SIP/2.0/UDP %s;branch=%s;rport", formatRegisterViaHost(cfg.LocalIP, protectedServerPort), sip.GenerateBranchN(16)),
+		fmt.Sprintf("SIP/2.0/%s %s;branch=%s;rport", strings.ToUpper(transportMode), formatRegisterViaHost(cfg.LocalIP, viaPort), sip.GenerateBranchN(16)),
 	))
 	req.AppendHeader(sip.NewHeader("CSeq", fmt.Sprintf("%d REGISTER", cseq)))
-	req.ReplaceHeader(sip.NewHeader("Contact", buildIMSCoreContactForTransport(cfg, state, protectedServerPort, "udp")))
-	req.SetTransport("UDP")
+	req.ReplaceHeader(sip.NewHeader("Contact", buildIMSCoreContactForTransport(cfg, state, viaPort, transportMode)))
+	req.SetTransport(strings.ToUpper(transportMode))
 	req.SetDestination(net.JoinHostPort(net.IP(state.ipsecPolicy.RemoteIP).String(), strconv.Itoa(remotePort)))
 	return nil
 }
@@ -481,6 +499,7 @@ func finalizeRegisterSuccess(cfg Config, state registerState, res *sip.Response)
 		verifyHeader:   state.verifyHeader,
 		serviceRoutes:  serviceRoutes,
 		secureConn:     state.secureConn,
+		tcpConn:        state.tcpConn,
 		ipsecPolicy:    state.ipsecPolicy,
 		transport:      state.transport,
 	}, nil

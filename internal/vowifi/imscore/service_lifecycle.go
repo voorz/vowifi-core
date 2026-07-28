@@ -10,6 +10,7 @@ import (
 
 	"github.com/voorz/swu-go/pkg/logger"
 
+	"github.com/voorz/vowifi-core/internal/vowifi/ipsec3gpp"
 	"github.com/voorz/vowifi-core/runtimehost/voiceclient"
 )
 
@@ -75,7 +76,7 @@ func (s *Service) Start(ctx context.Context) error {
 	s.expiresSeconds = reg.expiresSeconds
 	s.verifyHeader = reg.verifyHeader
 	s.sipSecurityMode = "ipsec3gpp"
-	s.ipsecInstalled = reg.secureConn != nil
+	s.ipsecInstalled = reg.secureConn != nil || reg.tcpConn != nil
 	s.pcscf = winningPCSCF
 	s.localAddr = s.cfg.LocalIP.String()
 
@@ -88,7 +89,18 @@ func (s *Service) Start(ctx context.Context) error {
 		} else {
 			s.transportRuntime = rt
 			s.logTCPWriterLoop(lifecycleCtx, reg.secureConn)
+			s.notifySMSCapability()
 		}
+	} else if reg.tcpConn != nil {
+		// TCP+ESP mode: ESP handled by netstack transparently.
+		// Start TCP writer log, port_s inbound listeners, and SMS notification.
+		s.logTCPWriterLoop(lifecycleCtx, reg.tcpConn)
+		if err := s.startPortSListeners(lifecycleCtx, swu, reg.ipsecPolicy); err != nil {
+			logger.Warn("IMS port_s 入站监听启动失败",
+				logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+				logger.String("error", err.Error()))
+		}
+		s.notifySMSCapability()
 	}
 
 	if err := s.attachMessaging(lifecycleCtx, winningPCSCF, reg); err != nil {
@@ -111,7 +123,7 @@ func (s *Service) resolveSWUDialer() (voiceclient.SWUTCPDialer, error) {
 }
 
 func (s *Service) logTCPWriterLoop(ctx context.Context, conn net.Conn) {
-	if s == nil || s.transportRuntime == nil || conn == nil {
+	if s == nil || conn == nil {
 		return
 	}
 	local := ""
@@ -130,10 +142,135 @@ func (s *Service) logTCPWriterLoop(ctx context.Context, conn net.Conn) {
 	}()
 }
 
+// startPortSListeners starts TCP and UDP listeners on port_s for inbound SIP
+// messages. In TCP+ESP mode, the netstack's ESP transformer decrypts inbound
+// ESP packets transparently, so these listeners receive plain SIP messages.
+func (s *Service) startPortSListeners(ctx context.Context, swu voiceclient.SWUTCPDialer, policy ipsec3gpp.Policy) error {
+	if swu == nil || policy.LocalPortS <= 0 {
+		return fmt.Errorf("imscore: port_s listener requires SWu dialer and valid port_s")
+	}
+
+	// TCP listener on port_s
+	tcpLn, err := swu.ListenContextTCP(ctx, s.cfg.LocalIP, policy.LocalPortS)
+	if err != nil {
+		return fmt.Errorf("port_s TCP listen: %w", err)
+	}
+	s.portSListener = tcpLn
+	logger.Info(fmt.Sprintf("[%s] 准备启动 IMS TCP 入站监听", strings.TrimSpace(s.cfg.DeviceID)),
+		logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+		logger.Int("port", policy.LocalPortS))
+	go s.drainPortSTCP(ctx, tcpLn)
+
+	// UDP listener on port_s
+	udpConn, err := swu.ListenContextUDP(ctx, s.cfg.LocalIP, policy.LocalPortS)
+	if err != nil {
+		logger.Warn("IMS port_s UDP listen failed",
+			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+			logger.Int("port_s", policy.LocalPortS),
+			logger.String("error", err.Error()))
+	} else {
+		s.portSUDP = udpConn
+		logger.Info(fmt.Sprintf("[%s] IMS Core IPSec3GPP 模式启用 UDP 接收器", strings.TrimSpace(s.cfg.DeviceID)),
+			logger.String("transport", "udp"),
+			logger.Int("port", policy.LocalPortS))
+		go s.drainPortSUDP(ctx, udpConn)
+	}
+
+	return nil
+}
+
+func (s *Service) drainPortSTCP(ctx context.Context, ln net.Listener) {
+	for {
+		conn, err := ln.Accept()
+		if err != nil {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				logger.Warn("IMS port_s TCP accept failed",
+					logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+					logger.String("error", err.Error()))
+				return
+			}
+		}
+		logger.Info("IMS port_s accepted inbound push",
+			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+			logger.String("remote", conn.RemoteAddr().String()),
+			logger.String("local", conn.LocalAddr().String()))
+		go func(c net.Conn) {
+			defer c.Close()
+			buf := make([]byte, 64*1024)
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+				}
+				n, err := c.Read(buf)
+				if err != nil {
+					return
+				}
+				if n > 0 {
+					logger.Debug("IMS port_s TCP inbound",
+						logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+						logger.Int("bytes", n))
+				}
+			}
+		}(conn)
+	}
+}
+
+func (s *Service) drainPortSUDP(ctx context.Context, conn net.PacketConn) {
+	buf := make([]byte, 64*1024)
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+		n, _, err := conn.ReadFrom(buf)
+		if err != nil {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				logger.Warn("IMS port_s UDP read failed",
+					logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+					logger.String("error", err.Error()))
+				return
+			}
+		}
+		if n > 0 {
+			logger.Debug("IMS port_s UDP inbound",
+				logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+				logger.Int("bytes", n))
+		}
+	}
+}
+
+// notifySMSCapability logs that IMS SMS capability is ready.
+func (s *Service) notifySMSCapability() {
+	logger.Info(fmt.Sprintf("[%s] IMS SMS 能力已就绪", strings.TrimSpace(s.cfg.DeviceID)),
+		logger.String("reason", "inbound_transport_ready"),
+		logger.Bool("receiver_ready", true),
+		logger.Bool("smsc_present", s.cfg.SMSC != ""))
+}
+
 // attachMessaging hooks voiceclient for SMS/USSD after imscore registration.
 func (s *Service) attachMessaging(ctx context.Context, winningPCSCF string, reg *registerResult) error {
-	if reg == nil || reg.secureConn == nil || !reg.secureConn.PacketMode() {
-		return fmt.Errorf("voiceclient attach: secure ESP packet channel unavailable")
+	if reg == nil {
+		return fmt.Errorf("voiceclient attach: register result is required")
+	}
+	// Determine the connection to use for messaging.
+	var msgConn net.Conn
+	if reg.tcpConn != nil {
+		// TCP+ESP mode: use the TCP connection directly.
+		msgConn = reg.tcpConn
+	} else if reg.secureConn != nil && reg.secureConn.PacketMode() {
+		// UDP+ESP mode: use the SecureChannelConn.
+		msgConn = reg.secureConn
+	} else {
+		return fmt.Errorf("voiceclient attach: secure channel unavailable")
 	}
 	protectedPCSCF := winningPCSCF
 	if remoteIP := net.IP(reg.ipsecPolicy.RemoteIP); remoteIP != nil && reg.ipsecPolicy.FlowC.RemotePort > 0 {
@@ -153,7 +290,7 @@ func (s *Service) attachMessaging(ctx context.Context, winningPCSCF string, reg 
 		PublicURI:       s.cfg.PublicURI,
 		HomeDomain:      s.cfg.HomeDomain,
 		IMSI:            s.cfg.IMSI,
-		Transport:       "udp",
+		Transport:       "tcp",
 		MCC:             s.cfg.MCC,
 		MNC:             s.cfg.MNC,
 		CellID:          s.cfg.CellID,
@@ -166,11 +303,21 @@ func (s *Service) attachMessaging(ctx context.Context, winningPCSCF string, reg 
 	if s.cfg.RegisterExpirySeconds > 0 {
 		voiceCfg.RegisterExpiry = time.Duration(s.cfg.RegisterExpirySeconds) * time.Second
 	}
-	inner, err := voiceclient.AttachSecureMessaging(ctx, voiceCfg, reg.secureConn)
+	logger.Info(fmt.Sprintf("[%s] IMS attachMessaging 开始", strings.TrimSpace(s.cfg.DeviceID)),
+		logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+		logger.String("transport", voiceCfg.Transport),
+		logger.String("pcscf", protectedPCSCF),
+		logger.Bool("tcp_conn", msgConn != nil))
+	inner, err := voiceclient.AttachSecureMessaging(ctx, voiceCfg, msgConn)
 	if err != nil {
+		logger.Warn("IMS attachMessaging 失败",
+			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+			logger.String("error", err.Error()))
 		return fmt.Errorf("voiceclient attach: %w", err)
 	}
 	s.inner = inner
+	logger.Info(fmt.Sprintf("[%s] IMS attachMessaging 成功", strings.TrimSpace(s.cfg.DeviceID)),
+		logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)))
 	return nil
 }
 

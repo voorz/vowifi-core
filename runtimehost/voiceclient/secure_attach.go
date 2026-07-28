@@ -29,7 +29,9 @@ func AttachSecureMessaging(ctx context.Context, cfg Config, conn net.Conn) (*Cli
 	if strings.TrimSpace(cfg.PrivateID) == "" || strings.TrimSpace(cfg.PublicURI) == "" || strings.TrimSpace(cfg.HomeDomain) == "" {
 		return nil, errors.New("voiceclient: secure messaging IMS identity is required")
 	}
-	cfg.Transport = "udp"
+	if cfg.Transport == "" {
+		cfg.Transport = "tcp"
+	}
 	cfg.SkipRegister = true
 	if err := conn.SetDeadline(time.Time{}); err != nil {
 		return nil, fmt.Errorf("voiceclient: clear inherited secure messaging deadline: %w", err)
@@ -162,7 +164,11 @@ func (t *secureMessagingTransport) decorateRequest(req *sip.Request) error {
 	req.RemoveHeader("Call-ID")
 	req.RemoveHeader("CSeq")
 	viaHost := net.JoinHostPort(t.client.cfg.LocalIP.String(), fmt.Sprintf("%d", localPort))
-	req.PrependHeader(sip.NewHeader("Via", fmt.Sprintf("SIP/2.0/UDP %s;branch=%s;rport", viaHost, sip.GenerateBranchN(16))))
+	transport := strings.ToUpper(strings.TrimSpace(t.client.cfg.Transport))
+	if transport == "" {
+		transport = "TCP"
+	}
+	req.PrependHeader(sip.NewHeader("Via", fmt.Sprintf("SIP/2.0/%s %s;branch=%s;rport", transport, viaHost, sip.GenerateBranchN(16))))
 	req.AppendHeader(sip.NewHeader("Max-Forwards", "70"))
 	req.AppendHeader(sip.NewHeader("Call-ID", uuid.NewString()))
 	req.AppendHeader(sip.NewHeader("CSeq", fmt.Sprintf("%d %s", t.cseq.Add(1), req.Method)))
@@ -172,7 +178,7 @@ func (t *secureMessagingTransport) decorateRequest(req *sip.Request) error {
 		appendHeaderToken(req, "Require", "sec-agree")
 		appendHeaderToken(req, "Proxy-Require", "sec-agree")
 	}
-	req.SetTransport("UDP")
+	req.SetTransport(transport)
 	req.SetDestination(t.client.cfg.PCSCFAddr)
 	return nil
 }

@@ -29,6 +29,8 @@ type Service struct {
 	network          IMSNetwork
 	transportRuntime *transportRuntime
 	swu              voiceclient.SWUTCPDialer
+	portSListener    net.Listener
+	portSUDP         net.PacketConn
 
 	lifecycleCtx    context.Context
 	lifecycleCancel context.CancelFunc
@@ -141,6 +143,14 @@ func (s *Service) Close(ctx context.Context) error {
 	if s.transportRuntime != nil {
 		s.transportRuntime.Close()
 		s.transportRuntime = nil
+	}
+	if s.portSListener != nil {
+		_ = s.portSListener.Close()
+		s.portSListener = nil
+	}
+	if s.portSUDP != nil {
+		_ = s.portSUDP.Close()
+		s.portSUDP = nil
 	}
 	var innerErr error
 	if s.inner != nil {

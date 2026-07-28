@@ -20,7 +20,7 @@ import (
 )
 
 const swuNetstackNICID = 1
-const swuNetstackMTU = 1500
+const swuNetstackMTU = 1280 // IPv6 minimum MTU; ensures ESP packets (TCP segment + ~38 bytes overhead) fit within SWu tunnel
 
 // SWUTCPDialer opens TCP connections through the userspace SWu dataplane.
 type SWUTCPDialer interface {
@@ -37,6 +37,20 @@ type SWURawIPDialer interface {
 	DialContextIP(ctx context.Context, localIP net.IP, remoteIP net.IP, protocol uint8) (net.Conn, error)
 }
 
+// ESPTransformer wraps IPsec ESP transform for outbound/inbound packets.
+// Implemented by *ipsec3gpp.Transport.
+type ESPTransformer interface {
+	TransformOutbound(packet []byte) ([]byte, error)
+	TransformInbound(packet []byte) ([]byte, error)
+}
+
+// SWUIPsecCapable allows registering an ESP transformer with the netstack
+// so that outgoing TCP/UDP packets are automatically wrapped in ESP and
+// incoming ESP packets are decrypted before injection.
+type SWUIPsecCapable interface {
+	SetIPsecTransport(transformer ESPTransformer)
+}
+
 // NewSWUTCPDialer returns a dialer bound to the tunnel virtual IP.
 func NewSWUTCPDialer(localIP net.IP, dp PacketDataplane) (SWUTCPDialer, error) {
 	return newSWUNetstack(localIP, dp)
@@ -49,6 +63,9 @@ type swuNetstack struct {
 	localIP net.IP
 	rawMu   sync.RWMutex
 	rawConn map[*swuRawIPConn]struct{}
+
+	ipsecMu        sync.RWMutex
+	ipsecTransport ESPTransformer
 
 	closeOnce sync.Once
 	closed    chan struct{}
@@ -105,6 +122,15 @@ func (n *swuNetstack) Close() error {
 		n.stack.Wait()
 	})
 	return nil
+}
+
+// SetIPsecTransport registers an ESP transformer for transparent IPsec
+// encapsulation/decapsulation in the netstack's outbound/inbound loops.
+func (n *swuNetstack) SetIPsecTransport(transformer ESPTransformer) {
+	n.ipsecMu.Lock()
+	n.ipsecTransport = transformer
+	n.ipsecMu.Unlock()
+	logger.Info("SWu netstack IPsec ESP transformer registered")
 }
 
 func (n *swuNetstack) DialContextTCP(ctx context.Context, localIP net.IP, localPort int, remoteIP net.IP, remotePort int) (net.Conn, error) {
@@ -288,6 +314,22 @@ func (n *swuNetstack) inboundLoop() {
 			if len(packet) == 0 {
 				continue
 			}
+
+			// If IPsec is active, try to decrypt ESP packets.
+			n.ipsecMu.RLock()
+			transformer := n.ipsecTransport
+			n.ipsecMu.RUnlock()
+			if transformer != nil {
+				decrypted, err := transformer.TransformInbound(packet)
+				if err != nil {
+					logger.Debug("SWu inbound ESP transform failed",
+						logger.String("error", err.Error()),
+						logger.Int("packet_len", len(packet)))
+					continue
+				}
+				packet = decrypted
+			}
+
 			if n.dispatchRawIPPacket(packet) {
 				continue
 			}
@@ -325,6 +367,22 @@ func (n *swuNetstack) outboundLoop() {
 		if len(payload) == 0 {
 			continue
 		}
+
+		// If IPsec is active, wrap matching packets in ESP.
+		n.ipsecMu.RLock()
+		transformer := n.ipsecTransport
+		n.ipsecMu.RUnlock()
+		if transformer != nil {
+			transformed, err := transformer.TransformOutbound(payload)
+			if err != nil {
+				logger.Warn("SWu outbound ESP transform failed",
+					logger.String("error", err.Error()),
+					logger.Int("packet_len", len(payload)))
+				continue
+			}
+			payload = transformed
+		}
+
 		if err := n.dp.SendInnerPacket(payload); err != nil {
 			logger.Warn("SWu outbound inner packet rejected",
 				logger.String("error", err.Error()),

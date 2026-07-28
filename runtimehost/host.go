@@ -877,19 +877,60 @@ func (i *Instance) runStagedPipeline(ctx context.Context, req StartRequest, gene
 			winningPCSCF = strings.TrimSpace(v)
 		}
 	}
+	swulogger.Info("pipeline: pre installService",
+		swulogger.String("trace_id", i.traceID),
+		swulogger.String("device_id", i.deviceID),
+		swulogger.Uint64("generation", generation),
+		swulogger.String("pcscf", winningPCSCF))
 	if !i.installService(ctx, generation, svc, svc.Status, localIP.String(), winningPCSCF) {
+		swulogger.Warn("pipeline: installService returned false",
+			swulogger.String("trace_id", i.traceID),
+			swulogger.String("device_id", i.deviceID),
+			swulogger.Uint64("generation", generation))
 		return
 	}
+	swulogger.Info("pipeline: installService done, pushing ims_ready",
+		swulogger.String("trace_id", i.traceID),
+		swulogger.String("device_id", i.deviceID),
+		swulogger.Uint64("generation", generation))
 
+	// Step 1: IMS ready (REGISTER + ipsec established)
 	if !i.updateStateForGeneration(generation, func(s *State) {
 		s.IMSReady = true
-		s.SMSReady = true
 		s.LastReason = fmt.Sprintf("ims_ready pcscf=%s", winningPCSCF)
 		s.UpdatedAt = time.Now()
 	}) {
+		swulogger.Warn("pipeline: updateStateForGeneration (ims_ready) returned false",
+			swulogger.String("trace_id", i.traceID),
+			swulogger.String("device_id", i.deviceID),
+			swulogger.Uint64("generation", generation))
 		return
 	}
 	i.notifyObserversForGeneration(ctx, generation)
+
+	// Step 2: SMS ready (attachMessaging succeeded inside svc.Start)
+	if !i.updateStateForGeneration(generation, func(s *State) {
+		s.SMSReady = true
+		s.LastReason = "sms_ready"
+		s.UpdatedAt = time.Now()
+	}) {
+		swulogger.Warn("pipeline: updateStateForGeneration (sms_ready) returned false",
+			swulogger.String("trace_id", i.traceID),
+			swulogger.String("device_id", i.deviceID),
+			swulogger.Uint64("generation", generation))
+		return
+	}
+	swulogger.Info("pipeline: sms_ready pushed, entering blocking wait",
+		swulogger.String("trace_id", i.traceID),
+		swulogger.String("device_id", i.deviceID),
+		swulogger.Uint64("generation", generation))
+	i.notifyObserversForGeneration(ctx, generation)
+
+	// Keep the pipeline alive until Stop is called or the parent context
+	// is cancelled. Without this, the pipeline returns immediately after
+	// IMS setup, cancelling lifecycleCtx and tearing down all goroutines
+	// (TCP writer, port_s listeners, secure messaging readLoop).
+	<-pipelineCtx.Done()
 }
 
 func resolveEPDGHost(req StartRequest) (string, string) {
