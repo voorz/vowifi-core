@@ -188,7 +188,8 @@ func eeUKBaseTemplate() IMSRegisterTemplate {
 //   - UsePlainDigestPlaceholder: true for initial REGISTER
 //   - SupportedHeader: path,sec-agree (no gruu)
 //   - AllowHeader: REGISTER,INVITE,MESSAGE,SUBSCRIBE
-func eeUKBaseTemplate(id string) IMSRegisterTemplate {
+
+func eeUKBaseTpl(id string) IMSRegisterTemplate {
 	return IMSRegisterTemplate{
 		ID:                          id,
 		EnableInitialRejectFallback: false,
@@ -209,7 +210,43 @@ func eeUKBaseTemplate(id string) IMSRegisterTemplate {
 	}
 }
 
-// EEUKTemplate is the EE UK host network template (PLMN 234/30).
+// EEUKTemplate matches EE UK's (MCC 234 / MNC 30) standard Qualcomm IMS profile.
+// It applies to EE Direct, BT Mobile, and legacy Virgin Mobile (on EE network).
+func eeUKBaseTemplate(id string) IMSRegisterTemplate {
+	return IMSRegisterTemplate{
+		ID:                                     id,
+		SecAgreeMode:                           "on",
+		IncludePANI:                            true,  // EE 在 VoWiFi 下首次 REGISTER 必须携带 PANI (WLAN)
+		IncludePANIAuthenticated:               true,  // 鉴权成功后也必须包含 PANI
+		StrictSecurityServerOffer:              true,  // EE P-CSCF 对算法 (hmac-sha-1-96, aes-cbc) 匹配度要求高
+		UsePlainDigestPlaceholder:              true,
+		EnableInitialRejectFallback:            false,
+		OmitRoute:                              false, // 收到 401 建立 IPSec 后，第二次 REGISTER 必须加入 Route 指向 P-CSCF
+		MinimalInitialHeaders:                  false,
+		RequireSecAgree:                        true,  // 强制开启 sec-agree 机制
+		ProxyRequireSecAgree:                   false,
+		OmitInitialSecurityClientProtocol:      false,
+		ProbeInitialSecurityClientOnBadRequest: true,
+		UserAgent:                              "EE VoWiFi UE/1.0 (Qualcomm IMS)",
+		SupportedHeader:                        "path,sec-agree,timer",
+		// 覆盖特规 PANI：如果置空，你的引擎可以动态填充当前 Wi-Fi 的 BSSID
+		// EE 核心网通常接受 IEEE-802.11i 并校验 country=GB
+		FixedPANI:                              `IEEE-802.11i; i-wlan-node-id="a1b2c3d4e5f6";country=GB`,
+		
+		ContactParamOrder: []string{
+			"access_type",
+			"audio",
+			"icsi_ref",  // Voice (MMTEL) 描述符
+			"smsip",     // 必须包含 +g.3gpp.smsip，保证 EE 核心网通过 IP-SM-GW 下发短信
+			"sip_instance",
+			"reg_id",
+		},
+		AllowHeader:              "REGISTER,INVITE,MESSAGE,SUBSCRIBE",
+		SecurityClientMechanisms: DefaultSecurityClientMechanisms(),
+	}
+}
+
+// EEUKTemplate matches EE UK Direct (MCC 234 / MNC 30).
 func EEUKTemplate() IMSRegisterTemplate {
 	return eeUKBaseTemplate("ee_uk_23430")
 }

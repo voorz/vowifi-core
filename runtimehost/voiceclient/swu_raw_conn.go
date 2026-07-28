@@ -10,6 +10,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/voorz/swu-go/pkg/logger"
 )
 
 const (
@@ -157,6 +159,11 @@ func (c *swuRawIPConn) Write(p []byte) (int, error) {
 			return 0, err
 		}
 	}
+	logger.Debug("SWu raw IP write",
+		logger.String("local_ip", c.localIP.String()),
+		logger.String("remote_ip", c.remoteIP.String()),
+		logger.Int("protocol", int(c.protocol)),
+		logger.Int("packet_len", len(p)))
 	return len(p), nil
 }
 
@@ -274,6 +281,14 @@ func (c *swuRawIPConn) matchesInbound(metadata rawIPPacketMetadata) bool {
 }
 
 func (c *swuRawIPConn) deliver(packet []byte) {
+	metadata, ok := parseRawIPPacketMetadata(packet)
+	if ok {
+		logger.Debug("SWu raw IP deliver inbound",
+			logger.String("src_ip", metadata.src.String()),
+			logger.String("dst_ip", metadata.dst.String()),
+			logger.Int("protocol", int(metadata.protocol)),
+			logger.Int("packet_len", len(packet)))
+	}
 	select {
 	case <-c.closed:
 		return

@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/voorz/swu-go/pkg/logger"
+	"github.com/voorz/sipgo"
 	"github.com/voorz/sipgo/sip"
 	"github.com/google/uuid"
 
@@ -42,6 +43,8 @@ type registerSession struct {
 	jitter        bool
 
 	conn      *connRegisterTransport
+	sipClient *sipgo.Client // TCP 模式下走 sipgo 标准传输层
+	sipUA     *sipgo.UserAgent
 	callID    string
 	cseq      uint32
 	localPort int
@@ -136,7 +139,22 @@ func (s *registerSession) dialRegisterConn(ctx context.Context) (*connRegisterTr
 	}
 
 	installSIPTrace(s.cfg.TraceID, s.cfg.DeviceID)
-	s.conn = newConnRegisterTransport(rawConn, s.cfg.TraceID, s.cfg.DeviceID, transport)
+
+	// TCP 模式：创建 sipgo Client，走标准传输层（对齐 v1.5.5）
+	if transport == "tcp" {
+		ua, client, sipErr := newRegisterSIPStack(s.cfg, rawConn, s.swu, s.localPort)
+		if sipErr != nil {
+			_ = rawConn.Close()
+			return nil, fmt.Errorf("register sip stack: %w", sipErr)
+		}
+		s.sipUA = ua
+		s.sipClient = client
+		// connRegisterTransport 仅作为连接生命周期占位（受保护 REGISTER 使用独立连接）
+		s.conn = newConnRegisterTransport(rawConn, s.cfg.TraceID, s.cfg.DeviceID, transport)
+	} else {
+		s.conn = newConnRegisterTransport(rawConn, s.cfg.TraceID, s.cfg.DeviceID, transport)
+	}
+
 	logger.Info("IMS REGISTER transport connected",
 		logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
 		logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
@@ -148,11 +166,23 @@ func (s *registerSession) dialRegisterConn(ctx context.Context) (*connRegisterTr
 }
 
 func (s *registerSession) closeConn() {
-	if s == nil || s.conn == nil {
+	if s == nil {
 		return
 	}
-	_ = s.conn.Close()
-	s.conn = nil
+	// TCP 模式：连接由 sipgo UA 管理，只关闭 UA（会自动关闭底层连接）
+	if s.sipUA != nil {
+		_ = s.sipUA.Close()
+		s.sipUA = nil
+		s.sipClient = nil
+		// connRegisterTransport 仅作占位，底层连接已被 sipgo 关闭，跳过 Close 避免 panic
+		s.conn = nil
+		return
+	}
+	// UDP 模式或未创建 sipgo Client：由 connRegisterTransport 管理连接
+	if s.conn != nil {
+		_ = s.conn.Close()
+		s.conn = nil
+	}
 }
 
 func (s *registerSession) logFSM(event, reason string, variantIndex, variantTotal, mechanismCount int, variant initialRegisterVariant) {
@@ -315,7 +345,11 @@ func shouldRetryInitialRegisterAfterSecAgreeChallenge(cfg Config, variant initia
 	}
 	requireSecAgree := cfg.Template.RequireSecAgree || variant.requireSecAgree
 	proxyRequireSecAgree := cfg.Template.ProxyRequireSecAgree || variant.proxyRequireSecAgree
-	if requireSecAgree || proxyRequireSecAgree {
+	// Only skip retry when BOTH are already set — a 421 for sec-agree means
+	// the P-CSCF wants something we haven't sent yet. If only Require is set
+	// but Proxy-Require is missing (common for EE/CMlink UK), the retry will
+	// add Proxy-Require: sec-agree on the next attempt.
+	if requireSecAgree && proxyRequireSecAgree {
 		return false
 	}
 	for _, header := range res.GetHeaders("Require") {
@@ -543,6 +577,10 @@ func (s *registerSession) registerOnce(ctx context.Context, transport *connRegis
 			logger.String("sip_message", req.String()))
 	}
 	if initial && strings.EqualFold(strings.TrimSpace(s.cfg.Template.ID), "vodafone_uk_23415") {
+		if s.sipClient != nil {
+			res, err := doRegisterTransaction(ctx, s.sipClient, req)
+			return res, req, err
+		}
 		payload, err := buildVodafoneInitialRegisterPayload(req)
 		if err != nil {
 			return nil, nil, err
@@ -551,6 +589,10 @@ func (s *registerSession) registerOnce(ctx context.Context, transport *connRegis
 			return nil, nil, err
 		}
 		res, err := transport.ReadResponse(ctx)
+		return res, req, err
+	}
+	if s.sipClient != nil {
+		res, err := doRegisterTransaction(ctx, s.sipClient, req)
 		return res, req, err
 	}
 	if err := transport.Send(ctx, req); err != nil {
@@ -602,6 +644,9 @@ func (s *registerSession) answerRegisterChallenge(ctx context.Context, transport
 }
 
 func (s *registerSession) sendRegisterRequest(ctx context.Context, transport *connRegisterTransport, req *sip.Request) (*sip.Response, error) {
+	if s.sipClient != nil {
+		return doRegisterTransaction(ctx, s.sipClient, req)
+	}
 	if err := transport.Send(ctx, req); err != nil {
 		return nil, err
 	}
@@ -609,6 +654,9 @@ func (s *registerSession) sendRegisterRequest(ctx context.Context, transport *co
 }
 
 func (s *registerSession) sendResyncRegisterRequest(ctx context.Context, transport *connRegisterTransport, req *sip.Request) (*sip.Response, error) {
+	if s.sipClient != nil {
+		return doRegisterTransaction(ctx, s.sipClient, req)
+	}
 	if strings.EqualFold(strings.TrimSpace(s.cfg.Template.ID), "vodafone_uk_23415") {
 		payload, err := buildVodafoneInitialRegisterPayload(req)
 		if err != nil {

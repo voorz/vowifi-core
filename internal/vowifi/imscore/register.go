@@ -149,6 +149,16 @@ func runSecureAuthenticatedRegister(ctx context.Context, cfg Config, swuTCP voic
 	}
 
 	secureTransport := newConnRegisterTransport(secureConn, cfg.TraceID, cfg.DeviceID, "udp")
+	logger.Info("IMS protected REGISTER ESP channel ready",
+		logger.String("trace_id", strings.TrimSpace(cfg.TraceID)),
+		logger.String("local_ip", cfg.LocalIP.String()),
+		logger.String("remote_ip", net.IP(state.ipsecPolicy.RemoteIP).String()),
+		logger.Int("flowc_local_port", state.ipsecPolicy.FlowC.LocalPort),
+		logger.Int("flowc_remote_port", state.ipsecPolicy.FlowC.RemotePort),
+		logger.String("flowc_outbound_spi", fmt.Sprintf("0x%08x", state.ipsecPolicy.FlowC.OutboundSPI)),
+		logger.String("flowc_inbound_spi", fmt.Sprintf("0x%08x", state.ipsecPolicy.FlowC.InboundSPI)),
+		logger.Int("ck_len", len(state.ck)),
+		logger.Int("ik_len", len(state.ik)))
 	var sendErr error
 	if strings.EqualFold(strings.TrimSpace(cfg.Template.ID), "vodafone_uk_23415") {
 		payload, err := buildVodafoneProtectedRegisterPayload(authRes)
@@ -164,8 +174,13 @@ func runSecureAuthenticatedRegister(ctx context.Context, cfg Config, swuTCP voic
 		_ = secureTransport.Close()
 		return nil, fmt.Errorf("authenticated REGISTER: %w", sendErr)
 	}
+	logger.Info("IMS protected REGISTER sent via ESP, awaiting response",
+		logger.String("trace_id", strings.TrimSpace(cfg.TraceID)))
 	finalRes, err := secureTransport.ReadResponse(ctx)
 	if err != nil {
+		logger.Warn("IMS protected REGISTER response failed",
+			logger.String("trace_id", strings.TrimSpace(cfg.TraceID)),
+			logger.String("error", err.Error()))
 		_ = secureTransport.Close()
 		return nil, fmt.Errorf("authenticated REGISTER: %w", err)
 	}
@@ -236,6 +251,11 @@ func installIPSecFromChallenge(cfg Config, state *registerState, res *sip.Respon
 	}
 	state.ipsecPolicy = pol
 	state.transport = transport
+	// IPsec ESP operates at the IP layer (UDP); the protected REGISTER must
+	// use UDP regardless of the initial transport (TCP). This allows the
+	// initial REGISTER to use TCP for reliability while the protected
+	// REGISTER correctly uses UDP/IPsec.
+	state.transportMode = "udp"
 	return nil
 }
 
@@ -580,10 +600,36 @@ func buildCellularNetworkInfo(cfg Config) string {
 // computeAKAAuth runs a single USIM AKA and builds the Digest Authorization
 // header. On SQN mismatch it returns an AUTS resync header with empty CK/IK
 // (caller must not install IPsec until a later success challenge yields keys).
+//
+// When the challenge algorithm is plain "MD5" (not AKAv1-MD5/AKAv2-MD5), the
+// nonce is a standard Digest nonce — not base64(RAND||AUTN). In that case we
+// skip AKA entirely and let simauth.ComputeDigest compute a standard RFC 2617
+// response with an empty password (some carriers accept this for VoWiFi IMS).
+// The returned AKAResult has empty CK/IK, so the caller sends an unprotected
+// authenticated REGISTER without IPsec.
 func computeAKAAuth(cfg Config, chal *digest.Challenge, req *sip.Request) (sim.AKAResult, string, bool, error) {
 	if cfg.AKA == nil {
 		return sim.AKAResult{}, "", false, fmt.Errorf("AKA provider required")
 	}
+	digestURI := digestAuthorizationURI(cfg, req)
+
+	// Plain MD5 Digest (non-AKA): skip RAND||AUTN extraction and AKA computation.
+	if isPlainMD5Algorithm(chal.Algorithm) {
+		logger.Info("IMS REGISTER plain MD5 digest (non-AKA)",
+			logger.String("trace_id", strings.TrimSpace(cfg.TraceID)),
+			logger.String("algorithm", chal.Algorithm),
+			logger.String("realm", chal.Realm))
+		result, err := simauth.ComputeDigest(cfg.AKA, chal, digest.Options{
+			Method:   req.Method.String(),
+			URI:      digestURI,
+			Username: cfg.PrivateID,
+		})
+		if err != nil {
+			return sim.AKAResult{}, "", false, err
+		}
+		return sim.AKAResult{}, result.Header, result.SyncFailure, nil
+	}
+
 	rawNonce, err := decodeChallengeNonce(chal.Nonce)
 	if err != nil {
 		logger.Debug("IMS REGISTER nonce decode failed",
@@ -606,7 +652,6 @@ func computeAKAAuth(cfg Config, chal *digest.Challenge, req *sip.Request) (sim.A
 	}
 	akaResult, akaErr := cfg.AKA.CalculateAKA(rawNonce[:16], rawNonce[16:32])
 
-	digestURI := digestAuthorizationURI(cfg, req)
 	// simauth.ComputeDigest would re-run AKA; build the header from this
 	// single AKA result so AUTS and success paths never double-hit the USIM.
 	result, err := simauth.ComputeDigest(fixedAKAResult{akaResult, akaErr}, chal, digest.Options{
@@ -618,6 +663,17 @@ func computeAKAAuth(cfg Config, chal *digest.Challenge, req *sip.Request) (sim.A
 		return sim.AKAResult{}, "", false, err
 	}
 	return akaResult, result.Header, result.SyncFailure, nil
+}
+
+// isPlainMD5Algorithm reports whether the challenge algorithm is standard MD5
+// (not AKAv1-MD5 or AKAv2-MD5). An empty algorithm defaults to AKAv1-MD5 in
+// the IMS context, so it returns false.
+func isPlainMD5Algorithm(algorithm string) bool {
+	alg := strings.TrimSpace(algorithm)
+	if alg == "" {
+		return false
+	}
+	return strings.EqualFold(alg, "MD5")
 }
 
 type fixedAKAResult struct {
