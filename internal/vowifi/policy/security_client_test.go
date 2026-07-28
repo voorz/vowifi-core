@@ -6,7 +6,7 @@ import (
 )
 
 func TestBuildSecurityClientHeaderGiffgaff(t *testing.T) {
-	tmpl := DefaultGiffgaffTemplate()
+	tmpl := GiffgaffTemplate()
 	got := BuildSecurityClientHeader(tmpl, 1389119324, 1486172233, 43661, 40137)
 
 	if strings.Count(got, "ipsec-3gpp") != 6 {

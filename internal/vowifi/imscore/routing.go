@@ -27,7 +27,7 @@ func effectiveIPSecGatewayAddr(cfg Config) string {
 	if currentAttempt := strings.TrimSpace(cfg.TransportPCSCFAddr); currentAttempt != "" {
 		return currentAttempt
 	}
-	if gateway := pickIKEGatewayCandidate(registrarCandidates(cfg), cfg.LocalIP); gateway != "" {
+	if gateway := pickIKEGatewayCandidate(registrarCandidates(cfg), cfg.LocalIP, cfg.Template.IKEGatewayPrefixScores); gateway != "" {
 		return gateway
 	}
 	return effectiveTransportAddr(cfg)

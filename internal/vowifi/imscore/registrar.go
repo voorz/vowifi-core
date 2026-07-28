@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/emiago/sipgo/sip"
+	"github.com/iniwex5/vowifi-go/internal/vowifi/policy"
 	"github.com/voorz/swu-go/pkg/logger"
 )
 
@@ -48,7 +49,7 @@ func expandRegistrarCandidates(cfg Config) []registrarCandidate {
 	if len(registrars) == 0 {
 		registrars = addrs
 	}
-	gateways := rankedIKEGatewayCandidates(addrs, cfg.LocalIP)
+	gateways := rankedIKEGatewayCandidates(addrs, cfg.LocalIP, cfg.Template.IKEGatewayPrefixScores)
 
 	out := make([]registrarCandidate, 0, len(registrars)*maxInt(1, len(gateways)))
 	seen := make(map[string]struct{})
@@ -96,7 +97,7 @@ func expandRegistrarCandidates(cfg Config) []registrarCandidate {
 	return out
 }
 
-func rankedIKEGatewayCandidates(addrs []string, localIP net.IP) []string {
+func rankedIKEGatewayCandidates(addrs []string, localIP net.IP, scores []policy.IKEGatewayPrefixScore) []string {
 	type scored struct {
 		addr  string
 		score int
@@ -112,7 +113,7 @@ func rankedIKEGatewayCandidates(addrs []string, localIP net.IP) []string {
 		}
 		items = append(items, scored{
 			addr:  addr,
-			score: scoreIKEGatewayHost(strings.ToLower(host)),
+			score: scoreIKEGatewayHost(strings.ToLower(host), scores),
 		})
 	}
 	sort.Slice(items, func(i, j int) bool {
@@ -134,24 +135,20 @@ func rankedIKEGatewayCandidates(addrs []string, localIP net.IP) []string {
 	return out
 }
 
-func scoreIKEGatewayHost(host string) int {
-	switch {
-	case strings.HasPrefix(host, "2a03:dd00:1f80:"):
-		return 100
-	case strings.HasPrefix(host, "2a03:dd00:1f81:810:"):
-		return 80
-	case strings.HasPrefix(host, "2a03:dd00:1f81:10:"),
-		strings.HasPrefix(host, "2a03:dd00:1f81:5010:"):
-		return 10
-	case strings.HasPrefix(host, "2a03:dd00:1f81:"):
-		return 40
-	default:
-		return 30
+func scoreIKEGatewayHost(host string, scores []policy.IKEGatewayPrefixScore) int {
+	if len(scores) == 0 {
+		scores = policy.DefaultIKEGatewayPrefixScores()
 	}
+	for _, s := range scores {
+		if strings.HasPrefix(host, s.Prefix) {
+			return s.Score
+		}
+	}
+	return policy.DefaultIKEGatewayScore
 }
 
-func pickIKEGatewayCandidate(addrs []string, localIP net.IP) string {
-	gateways := rankedIKEGatewayCandidates(addrs, localIP)
+func pickIKEGatewayCandidate(addrs []string, localIP net.IP, scores []policy.IKEGatewayPrefixScore) string {
+	gateways := rankedIKEGatewayCandidates(addrs, localIP, scores)
 	if len(gateways) == 0 {
 		return ""
 	}

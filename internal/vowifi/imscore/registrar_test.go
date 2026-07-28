@@ -83,7 +83,7 @@ func TestPickIKEGatewayCandidatePrefers1f80(t *testing.T) {
 		"[2a03:dd00:1381:7dce:fb36:ef7b:d917:548b]:5060",
 		"[2a03:dd00:1f81:3010::4]:5060",
 		"[2a03:dd00:1f80:4860::4]:5060",
-	}, local)
+	}, local, nil)
 	if got != "[2a03:dd00:1f80:4860::4]:5060" {
 		t.Fatalf("gateway=%q", got)
 	}

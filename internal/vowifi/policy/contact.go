@@ -45,7 +45,7 @@ func BuildIMSContactHeader(tmpl IMSRegisterTemplate, input ContactBuildInput) st
 
 	order := tmpl.ContactParamOrder
 	if len(order) == 0 {
-		order = DefaultGiffgaffTemplate().ContactParamOrder
+		order = GiffgaffTemplate().ContactParamOrder
 	}
 
 	b := strings.Builder{}

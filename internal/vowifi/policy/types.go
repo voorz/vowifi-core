@@ -36,6 +36,9 @@ type IMSRegisterTemplate struct {
 	EnableInitialRejectFallback            bool
 	FallbackIncludesServerParamsInSecCl    bool
 	RegisterPolicy                         IMSRegisterPolicy
+	// IKEGatewayPrefixScores ranks ePDG/P-CSCF IPv6 gateway candidates by
+	// prefix. When nil, callers fall back to DefaultIKEGatewayPrefixScores().
+	IKEGatewayPrefixScores []IKEGatewayPrefixScore
 }
 
 // IPSec3GPPSecurityMechanism is one ipsec-3gpp offer the client advertises in
@@ -54,4 +57,11 @@ type IMSRegisterPolicy struct {
 	ForbiddenStatusCodes             []int  `yaml:"forbidden_status_codes"`
 	InitialRejectFallbackStatusCodes []int  `yaml:"initial_reject_fallback_status_codes"`
 	TemporaryRetrySeconds            int    `yaml:"temporary_retry_seconds"`
+}
+
+// IKEGatewayPrefixScore assigns a priority score to an IPv6 prefix for ePDG
+// gateway candidate ranking. Higher score = higher priority.
+type IKEGatewayPrefixScore struct {
+	Prefix string
+	Score  int
 }

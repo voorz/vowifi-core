@@ -40,9 +40,11 @@ type Preset struct {
 	// IMSPcscfAddr optionally overrides the IKE-discovered P-CSCF ("host:port").
 	// Useful when ePDG assigns a silent node but a known-good P-CSCF responds.
 	IMSPcscfAddr string `json:"ims_pcscf_addr,omitempty"`
-	E911Enabled      bool   `json:"e911_enabled,omitempty"`
-	E911Provider     string `json:"e911_provider,omitempty"`
-	Blocked          bool   `json:"blocked,omitempty"`
+	E911Enabled              bool   `json:"e911_enabled,omitempty"`
+	E911Provider             string `json:"e911_provider,omitempty"`
+	E911Websheet             string `json:"e911_websheet,omitempty"`
+	E911EntitlementEndpoint  string `json:"e911_entitlement_endpoint,omitempty"`
+	Blocked                  bool   `json:"blocked,omitempty"`
 }
 
 type EffectiveCarrierConfigInput struct {
@@ -78,9 +80,52 @@ var (
 // configured. An entry loaded via LoadCarrierOverrides for the same PLMN
 // always takes priority over its built-in counterpart.
 var builtinDefaults = map[string]Preset{
-	// AT&T (US): VoWiFi requires an e911 registered address via their TS.43-style
-	// entitlement server before the network will admit the session.
-	"310-280": {ID: "att-us", MCC: "310", MNC: "280", E911Enabled: true, E911Provider: "att"},
+	// AT&T (US): non-standard ePDG (epdg.epc.att.net); VoWiFi requires an e911
+	// registered address via their TS.43-style entitlement server.
+	"310-280": {
+		ID: "att_310280", MCC: "310", MNC: "280",
+		EPDGAddr: "epdg.epc.att.net",
+		E911Enabled: true, E911Provider: "att-ts43",
+		E911Websheet:             "https://www.att.com/acctmgmt/wireless/e911",
+		E911EntitlementEndpoint:  "https://sentitlement2.mobile.att.net/WFC",
+	},
+	// LycaMobile (US): AT&T MVNO, shares AT&T ePDG + E911.
+	"310-410": {
+		ID: "LycaMobile_310410", MCC: "310", MNC: "410",
+		EPDGAddr: "epdg.epc.att.net",
+		E911Enabled: true, E911Provider: "att-ts43",
+		E911Websheet:             "https://www.att.com/acctmgmt/wireless/e911",
+		E911EntitlementEndpoint:  "https://sentitlement2.mobile.att.net/WFC",
+	},
+	// T-Mobile US (310/260): VoWiFi requires e911 entitlement via T-Mobile server.
+	"310-260": {
+		ID: "T-Mobile_260", MCC: "310", MNC: "260",
+		E911Enabled: true, E911Provider: "T-Mobile_entitlement",
+		E911EntitlementEndpoint: "https://eas3.msg.t-mobile.com/",
+		E911Websheet:            "public_https",
+	},
+	// T-Mobile US alias (310/240).
+	"310-240": {
+		ID: "T-Mobile_240", MCC: "310", MNC: "240",
+		E911Enabled: true, E911Provider: "T-Mobile_entitlement",
+		E911EntitlementEndpoint: "https://eas3.msg.t-mobile.com/",
+		E911Websheet:            "public_https",
+	},
+	// Spark NZ (530/05): non-standard ePDG suffix .spark.co.nz.
+	"530-5": {
+		ID: "spark_nz_53005", MCC: "530", MNC: "005",
+		EPDGAddr: "epdg.epc.mnc005.mcc530.pub.3gppnetwork.spark.co.nz",
+	},
+	// 2degrees NZ (530/24): non-standard ePDG.
+	"530-24": {
+		ID: "2degrees_nz_53024", MCC: "530", MNC: "024",
+		EPDGAddr: "epdg.ims.2degrees.net.nz",
+	},
+	// Three HK (454/003): non-standard ePDG.
+	"454-3": {
+		ID: "three_hk_454003", MCC: "454", MNC: "003",
+		EPDGAddr: "wlan.three.com.hk",
+	},
 	// giffgaff (O2 MVNO): recommended LTE TAC/ECI for UK VoWiFi when QMI is unavailable.
 	"234-10": {ID: "giffgaff_23410", MCC: "234", MNC: "10", IMSTAC: 28673, IMSCellID: 12345678},
 	// EE UK host network (giffgaff roaming core); same O2/EE-style identifiers.
@@ -202,6 +247,8 @@ func ResolveEffectiveCarrierConfig(input EffectiveCarrierConfigInput) EffectiveC
 	cfg.AKAAppPreference = strings.TrimSpace(preset.AKAAppPreference)
 	cfg.E911.Enabled = preset.E911Enabled
 	cfg.E911.Provider = strings.TrimSpace(preset.E911Provider)
+	cfg.E911.Websheet = strings.TrimSpace(preset.E911Websheet)
+	cfg.E911.EntitlementEndpoint = strings.TrimSpace(preset.E911EntitlementEndpoint)
 	return cfg
 }
 

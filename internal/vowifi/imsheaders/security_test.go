@@ -67,7 +67,7 @@ func TestSelectSecurityServerOfferStrict(t *testing.T) {
 		t.Fatalf("ParseSecurityServer: %v", err)
 	}
 
-	selected, err := SelectSecurityServerOffer(offers, policy.DefaultGiffgaffTemplate().SecurityClientMechanisms, true)
+	selected, err := SelectSecurityServerOffer(offers, policy.GiffgaffTemplate().SecurityClientMechanisms, true)
 	if err != nil {
 		t.Fatalf("SelectSecurityServerOffer: %v", err)
 	}
@@ -114,7 +114,7 @@ func TestBuildSecurityVerify(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ParseSecurityServer: %v", err)
 	}
-	selected, err := SelectSecurityServerOffer(offers, policy.DefaultGiffgaffTemplate().SecurityClientMechanisms, true)
+	selected, err := SelectSecurityServerOffer(offers, policy.GiffgaffTemplate().SecurityClientMechanisms, true)
 	if err != nil {
 		t.Fatalf("SelectSecurityServerOffer: %v", err)
 	}

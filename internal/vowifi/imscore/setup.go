@@ -30,7 +30,7 @@ func SetupService(imsCfg IMSConfig, network IMSNetwork, in StartSessionInput) (*
 
 	template := imsCfg.IMSRegisterTemplate
 	if strings.TrimSpace(template.ID) == "" {
-		template = policy.DefaultGiffgaffTemplate()
+		template = policy.GenericTemplate()
 	}
 	imsCfg.IMSRegisterTemplate = template
 	imsCfg.Registrar = registrar

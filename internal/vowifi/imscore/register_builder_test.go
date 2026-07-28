@@ -9,7 +9,7 @@ import (
 )
 
 func TestBuildTemplateSecurityClientSingleMechanism(t *testing.T) {
-	got := buildTemplateSecurityClient(policy.DefaultGiffgaffTemplate(), 1, 2, 5064, 5063)
+	got := buildTemplateSecurityClient(policy.GiffgaffTemplate(), 1, 2, 5064, 5063)
 	if strings.Count(got, "ipsec-3gpp") != 1 {
 		t.Fatalf("expected single mechanism, got %q", got)
 	}
