@@ -160,8 +160,9 @@ func runSecureAuthenticatedRegister(ctx context.Context, cfg Config, swuTCP voic
 	}
 
 	secureTransport := newConnRegisterTransport(secureConn, cfg.TraceID, cfg.DeviceID, "tcp")
-	logger.Info("IMS protected REGISTER TCP+ESP channel ready",
+	logger.Info(fmt.Sprintf("[%s] IMS 受保护 REGISTER TCP+ESP 通道就绪", strings.TrimSpace(cfg.DeviceID)),
 		logger.String("trace_id", strings.TrimSpace(cfg.TraceID)),
+		logger.String("device_id", strings.TrimSpace(cfg.DeviceID)),
 		logger.String("local_ip", cfg.LocalIP.String()),
 		logger.String("remote_ip", rip.String()),
 		logger.Int("local_port", localPort),
@@ -185,12 +186,14 @@ func runSecureAuthenticatedRegister(ctx context.Context, cfg Config, swuTCP voic
 		_ = secureTransport.Close()
 		return nil, fmt.Errorf("authenticated REGISTER: %w", sendErr)
 	}
-	logger.Info("IMS protected REGISTER sent via TCP+ESP, awaiting response",
-		logger.String("trace_id", strings.TrimSpace(cfg.TraceID)))
+	logger.Info(fmt.Sprintf("[%s] IMS 受保护 REGISTER 已通过 TCP+ESP 发送，等待响应", strings.TrimSpace(cfg.DeviceID)),
+		logger.String("trace_id", strings.TrimSpace(cfg.TraceID)),
+		logger.String("device_id", strings.TrimSpace(cfg.DeviceID)))
 	finalRes, err := secureTransport.ReadResponse(ctx)
 	if err != nil {
-		logger.Warn("IMS protected REGISTER response failed",
+		logger.Warn(fmt.Sprintf("[%s] IMS 受保护 REGISTER 响应失败", strings.TrimSpace(cfg.DeviceID)),
 			logger.String("trace_id", strings.TrimSpace(cfg.TraceID)),
+			logger.String("device_id", strings.TrimSpace(cfg.DeviceID)),
 			logger.String("error", err.Error()))
 		_ = secureTransport.Close()
 		return nil, fmt.Errorf("authenticated REGISTER: %w", err)
@@ -482,6 +485,7 @@ func finalizeRegisterSuccess(cfg Config, state registerState, res *sip.Response)
 	}
 	logger.Info(fmt.Sprintf("[%s] IMS REGISTER 成功", strings.TrimSpace(cfg.DeviceID)),
 		logger.String("trace_id", strings.TrimSpace(cfg.TraceID)),
+		logger.String("device_id", strings.TrimSpace(cfg.DeviceID)),
 		logger.Int("code", res.StatusCode),
 		logger.Int("expires_seconds", expires),
 		logger.String("sip_security_mode", "ipsec3gpp"),
@@ -634,8 +638,9 @@ func computeAKAAuth(cfg Config, chal *digest.Challenge, req *sip.Request) (sim.A
 
 	// Plain MD5 Digest (non-AKA): skip RAND||AUTN extraction and AKA computation.
 	if isPlainMD5Algorithm(chal.Algorithm) {
-		logger.Info("IMS REGISTER plain MD5 digest (non-AKA)",
+		logger.Info(fmt.Sprintf("[%s] IMS REGISTER 纯 MD5 摘要(非 AKA)", strings.TrimSpace(cfg.DeviceID)),
 			logger.String("trace_id", strings.TrimSpace(cfg.TraceID)),
+			logger.String("device_id", strings.TrimSpace(cfg.DeviceID)),
 			logger.String("algorithm", chal.Algorithm),
 			logger.String("realm", chal.Realm))
 		result, err := simauth.ComputeDigest(cfg.AKA, chal, digest.Options{
@@ -651,8 +656,9 @@ func computeAKAAuth(cfg Config, chal *digest.Challenge, req *sip.Request) (sim.A
 
 	rawNonce, err := decodeChallengeNonce(chal.Nonce)
 	if err != nil {
-		logger.Debug("IMS REGISTER nonce decode failed",
+		logger.Debug(fmt.Sprintf("[%s] IMS REGISTER nonce 解码失败", strings.TrimSpace(cfg.DeviceID)),
 			logger.String("trace_id", strings.TrimSpace(cfg.TraceID)),
+			logger.String("device_id", strings.TrimSpace(cfg.DeviceID)),
 			logger.String("raw_nonce", chal.Nonce),
 			logger.String("algorithm", chal.Algorithm),
 			logger.String("realm", chal.Realm),
@@ -660,8 +666,9 @@ func computeAKAAuth(cfg Config, chal *digest.Challenge, req *sip.Request) (sim.A
 		return sim.AKAResult{}, "", false, err
 	}
 	if len(rawNonce) < 32 {
-		logger.Debug("IMS REGISTER nonce too short",
+		logger.Debug(fmt.Sprintf("[%s] IMS REGISTER nonce 过短", strings.TrimSpace(cfg.DeviceID)),
 			logger.String("trace_id", strings.TrimSpace(cfg.TraceID)),
+			logger.String("device_id", strings.TrimSpace(cfg.DeviceID)),
 			logger.String("raw_nonce", chal.Nonce),
 			logger.String("algorithm", chal.Algorithm),
 			logger.String("realm", chal.Realm),

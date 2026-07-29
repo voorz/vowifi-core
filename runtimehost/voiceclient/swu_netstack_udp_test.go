@@ -25,7 +25,7 @@ func TestSWUNetstackUDPReadDeliversMatchingDatagram(t *testing.T) {
 	dp := newRecordingPacketDataplane()
 	localIP := net.ParseIP("10.0.0.2")
 	remoteIP := net.ParseIP("10.0.0.3")
-	netstack, err := newSWUNetstack(localIP, dp)
+	netstack, err := newSWUNetstack(localIP, dp, "", "")
 	if err != nil {
 		t.Fatalf("newSWUNetstack: %v", err)
 	}
@@ -67,7 +67,7 @@ func TestSWUNetstackUDPWriteUsesBoundSourcePort(t *testing.T) {
 	dp := newRecordingPacketDataplane()
 	localIP := net.ParseIP("10.0.0.2")
 	remoteIP := net.ParseIP("10.0.0.3")
-	netstack, err := newSWUNetstack(localIP, dp)
+	netstack, err := newSWUNetstack(localIP, dp, "", "")
 	if err != nil {
 		t.Fatalf("newSWUNetstack: %v", err)
 	}
@@ -105,7 +105,7 @@ func TestSWUNetstackRawIPConnRoutesESPThroughSingleDataplaneConsumer(t *testing.
 	dp := newRecordingPacketDataplane()
 	localIP := net.ParseIP("10.0.0.2")
 	remoteIP := net.ParseIP("10.0.0.3")
-	netstack, err := newSWUNetstack(localIP, dp)
+	netstack, err := newSWUNetstack(localIP, dp, "", "")
 	if err != nil {
 		t.Fatalf("newSWUNetstack: %v", err)
 	}
@@ -150,7 +150,7 @@ func TestSWUNetstackRawIPConnFragmentsOversizedIPv4Packet(t *testing.T) {
 	dp.sent = make(chan []byte, 8)
 	localIP := net.ParseIP("10.0.0.2")
 	remoteIP := net.ParseIP("10.0.0.3")
-	netstack, err := newSWUNetstack(localIP, dp)
+	netstack, err := newSWUNetstack(localIP, dp, "", "")
 	if err != nil {
 		t.Fatalf("newSWUNetstack: %v", err)
 	}

@@ -159,7 +159,9 @@ func (c *swuRawIPConn) Write(p []byte) (int, error) {
 			return 0, err
 		}
 	}
-	logger.Debug("SWu raw IP write",
+	logger.Debug(fmt.Sprintf("[%s] SWu 原始 IP 写入", c.owner.deviceID),
+		logger.String("trace_id", c.owner.traceID),
+		logger.String("device_id", c.owner.deviceID),
 		logger.String("local_ip", c.localIP.String()),
 		logger.String("remote_ip", c.remoteIP.String()),
 		logger.Int("protocol", int(c.protocol)),
@@ -283,7 +285,9 @@ func (c *swuRawIPConn) matchesInbound(metadata rawIPPacketMetadata) bool {
 func (c *swuRawIPConn) deliver(packet []byte) {
 	metadata, ok := parseRawIPPacketMetadata(packet)
 	if ok {
-		logger.Debug("SWu raw IP deliver inbound",
+		logger.Debug(fmt.Sprintf("[%s] SWu 原始 IP 入站投递", c.owner.deviceID),
+			logger.String("trace_id", c.owner.traceID),
+			logger.String("device_id", c.owner.deviceID),
 			logger.String("src_ip", metadata.src.String()),
 			logger.String("dst_ip", metadata.dst.String()),
 			logger.Int("protocol", int(metadata.protocol)),

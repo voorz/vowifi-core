@@ -235,7 +235,7 @@ func Dial(ctx context.Context, cfg Config) (*Client, error) {
 	if strings.TrimSpace(cfg.HomeDomain) == "" {
 		return nil, fmt.Errorf("voiceclient: Config.HomeDomain is required")
 	}
-	logger.Info("IMS voiceclient dialing",
+	logger.Info(fmt.Sprintf("[%s] IMS voiceclient 拨号中", strings.TrimSpace(cfg.DeviceID)),
 		logger.String("trace_id", strings.TrimSpace(cfg.TraceID)),
 		logger.String("device_id", strings.TrimSpace(cfg.DeviceID)),
 		logger.String("pcscf", cfg.PCSCFAddr),
@@ -247,7 +247,7 @@ func Dial(ctx context.Context, cfg Config) (*Client, error) {
 	var err error
 	var swuTCP *swuNetstack
 	if cfg.Dataplane != nil && cfg.transportNetwork() == "tcp" {
-		swuTCP, err = newSWUNetstack(cfg.LocalIP, cfg.Dataplane)
+		swuTCP, err = newSWUNetstack(cfg.LocalIP, cfg.Dataplane, cfg.TraceID, cfg.DeviceID)
 		if err != nil {
 			return nil, err
 		}
@@ -392,14 +392,14 @@ func Dial(ctx context.Context, cfg Config) (*Client, error) {
 			_ = c.shutdownSIPStack()
 			return nil, fmt.Errorf("voiceclient: register: %w", err)
 		}
-		logger.Info("IMS voiceclient registered",
+		logger.Info(fmt.Sprintf("[%s] IMS voiceclient 已注册", strings.TrimSpace(cfg.DeviceID)),
 			logger.String("trace_id", strings.TrimSpace(cfg.TraceID)),
 			logger.String("device_id", strings.TrimSpace(cfg.DeviceID)),
 			logger.String("pcscf", cfg.PCSCFAddr),
 			logger.String("transport", cfg.transportNetwork()))
 		go c.reregisterLoop()
 	} else {
-		logger.Info("IMS voiceclient skipping REGISTER (already registered)",
+		logger.Info(fmt.Sprintf("[%s] IMS voiceclient 跳过 REGISTER (已注册)", strings.TrimSpace(cfg.DeviceID)),
 			logger.String("trace_id", strings.TrimSpace(cfg.TraceID)),
 			logger.String("device_id", strings.TrimSpace(cfg.DeviceID)),
 			logger.String("pcscf", cfg.PCSCFAddr))

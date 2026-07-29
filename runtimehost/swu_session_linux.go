@@ -94,6 +94,8 @@ func (i *Instance) startSWuSession(ctx context.Context, req StartRequest, epdgIP
 		IMSI:                   strings.TrimSpace(req.Profile.IMSI),
 		LocalPort:              0,
 		DisableEAPMACValidation: true,
+		DeviceID:               req.DeviceID,
+		TraceID:                req.TraceID,
 	}
 	applySimAdminSWuProfile(cfg, req.Profile.MCC, req.Profile.MNC)
 	if factory := buildSWuTransportFactory(req.Proxy); factory != nil {
@@ -136,7 +138,7 @@ func (i *Instance) startSWuSession(ctx context.Context, req StartRequest, epdgIP
 			readyOnce.Do(func() { close(readyCh) })
 		}
 
-		session := externalswu.NewSession(cfg, nil)
+		session := externalswu.NewSession(cfg, logger.Get())
 		errCh := make(chan error, 1)
 		go func() { errCh <- session.Connect(ctx) }()
 

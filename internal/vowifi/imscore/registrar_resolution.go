@@ -1,6 +1,7 @@
 package imscore
 
 import (
+	"fmt"
 	"net"
 	"strings"
 
@@ -137,7 +138,7 @@ func defaultRegistrarPort() string {
 }
 
 func reportRegistrarDiscoveryProgress(traceID, deviceID, registrar, source string, candidateCount int) {
-	logger.Info("IMS registrar discovery",
+	logger.Info(fmt.Sprintf("[%s] IMS 注册发现", strings.TrimSpace(deviceID)),
 		logger.String("trace_id", strings.TrimSpace(traceID)),
 		logger.String("device_id", strings.TrimSpace(deviceID)),
 		logger.String("registrar", strings.TrimSpace(registrar)),

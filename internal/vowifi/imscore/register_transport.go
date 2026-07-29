@@ -112,7 +112,7 @@ func (s *Service) registerWithTransportCandidates(ctx context.Context) (*registe
 		if len(candidates) == 0 {
 			continue
 		}
-		logger.Info("IMS REGISTER transport",
+		logger.Info(fmt.Sprintf("[%s] IMS REGISTER 传输", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
 			logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.String("transport_mode", mode),
@@ -136,7 +136,7 @@ func (s *Service) registerWithTransportCandidates(ctx context.Context) (*registe
 
 		fallbackReason := classifySecurityFallbackReason(s.cfg, lastStatus, lastReason, reachedAuth)
 		if shouldRetryNextRegisterTransport(lastStatus, err, modeIndex, len(modes), reachedAuth) {
-			logger.Info("IMS REGISTER transport retry",
+			logger.Info(fmt.Sprintf("[%s] IMS REGISTER 传输重试", strings.TrimSpace(s.cfg.DeviceID)),
 				logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
 				logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
 				logger.String("transport_mode", mode),
@@ -283,7 +283,7 @@ func nextRegisterTransportAttemptCSeq(previous uint32) uint32 {
 }
 
 func logRegisterTransportAttempt(cfg Config, transportMode string, index, total int, candidate registerAttemptCandidate) {
-	logger.Info("IMS REGISTER probing registrar candidate",
+	logger.Info(fmt.Sprintf("[%s] IMS REGISTER 探测注册候选", strings.TrimSpace(cfg.DeviceID)),
 		logger.String("trace_id", strings.TrimSpace(cfg.TraceID)),
 		logger.String("device_id", strings.TrimSpace(cfg.DeviceID)),
 		logger.String("transport_mode", transportMode),

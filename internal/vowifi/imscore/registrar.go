@@ -220,7 +220,7 @@ func shouldAdvanceRegistrarForNextRetry(statusCode int, reason string, hasMore b
 }
 
 func logRegistrarProbe(traceID, deviceID string, index, total int, pcscf string) {
-	logger.Info("IMS REGISTER probing registrar candidate",
+	logger.Info(fmt.Sprintf("[%s] IMS REGISTER 探测注册候选", strings.TrimSpace(deviceID)),
 		logger.String("trace_id", strings.TrimSpace(traceID)),
 		logger.String("device_id", strings.TrimSpace(deviceID)),
 		logger.Int("candidate_index", index),
@@ -229,7 +229,7 @@ func logRegistrarProbe(traceID, deviceID string, index, total int, pcscf string)
 }
 
 func logRegistrarRejected(traceID, deviceID, pcscf string, statusCode int, reason string, index, total int) {
-	logger.Warn("IMS REGISTER registrar rejected, trying next candidate",
+	logger.Warn(fmt.Sprintf("[%s] IMS REGISTER 注册被拒绝，尝试下一个候选", strings.TrimSpace(deviceID)),
 		logger.String("trace_id", strings.TrimSpace(traceID)),
 		logger.String("device_id", strings.TrimSpace(deviceID)),
 		logger.String("pcscf", pcscf),

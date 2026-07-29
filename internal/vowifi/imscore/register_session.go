@@ -155,7 +155,7 @@ func (s *registerSession) dialRegisterConn(ctx context.Context) (*connRegisterTr
 		s.conn = newConnRegisterTransport(rawConn, s.cfg.TraceID, s.cfg.DeviceID, transport)
 	}
 
-	logger.Info("IMS REGISTER transport connected",
+	logger.Info(fmt.Sprintf("[%s] IMS REGISTER 传输已连接", strings.TrimSpace(s.cfg.DeviceID)),
 		logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
 		logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
 		logger.String("transport_mode", s.transportMode),
@@ -192,7 +192,7 @@ func (s *registerSession) logFSM(event, reason string, variantIndex, variantTota
 		alg = strings.TrimSpace(variant.securityClientMechanism.Alg)
 		ealg = canonicalTemplateEAlg(variant.securityClientMechanism.EAlg)
 	}
-	logger.Info(fmt.Sprintf("FSM(reg): %s", event),
+	logger.Info(fmt.Sprintf("[%s] 注册状态机: %s", strings.TrimSpace(s.cfg.DeviceID), event),
 		logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
 		logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
 		logger.String("phase", string(s.phase)),
@@ -242,8 +242,9 @@ func (s *registerSession) runInitialRegisterFlow(ctx context.Context) (*register
 			continue
 		}
 
-		logger.Info("IMS REGISTER initial response",
+			logger.Info(fmt.Sprintf("[%s] IMS REGISTER 初始响应", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+			logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.String("pcscf", s.cfg.PCSCFAddr),
 			logger.String("variant_name", strings.TrimSpace(variant.name)),
 			logger.String("initial_auth_mode", variant.initialAuth),
@@ -253,8 +254,9 @@ func (s *registerSession) runInitialRegisterFlow(ctx context.Context) (*register
 			logger.Bool("include_cellular", variant.includeCellular),
 			logger.Int("status", res.StatusCode),
 			logger.String("reason", res.Reason))
-		logger.Info("IMS REGISTER response profile",
+		logger.Info(fmt.Sprintf("[%s] IMS REGISTER 响应画像", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+			logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.Int("status", res.StatusCode),
 			logger.Int("header_count", len(res.Headers())),
 			logger.Bool("has_www_authenticate", res.GetHeader("WWW-Authenticate") != nil),
@@ -264,17 +266,20 @@ func (s *registerSession) runInitialRegisterFlow(ctx context.Context) (*register
 			logger.Bool("has_service_route", res.GetHeader("Service-Route") != nil))
 
 		if wwwAuth := res.GetHeader("WWW-Authenticate"); wwwAuth != nil {
-			logger.Debug("IMS REGISTER 401 WWW-Authenticate",
+			logger.Debug(fmt.Sprintf("[%s] IMS REGISTER 401 WWW-Authenticate", strings.TrimSpace(s.cfg.DeviceID)),
 				logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+				logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
 				logger.String("www_authenticate", wwwAuth.Value()))
 		}
 		if proxyAuth := res.GetHeader("Proxy-Authenticate"); proxyAuth != nil {
-			logger.Debug("IMS REGISTER 407 Proxy-Authenticate",
+			logger.Debug(fmt.Sprintf("[%s] IMS REGISTER 407 Proxy-Authenticate", strings.TrimSpace(s.cfg.DeviceID)),
 				logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+				logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
 				logger.String("proxy_authenticate", proxyAuth.Value()))
 		}
-		logger.Debug("IMS REGISTER initial full SIP response",
+		logger.Debug(fmt.Sprintf("[%s] IMS REGISTER 初始完整 SIP 响应", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+			logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.String("sip_message", res.String()))
 
 		switch res.StatusCode {
@@ -315,17 +320,18 @@ func (s *registerSession) runInitialRegisterFlow(ctx context.Context) (*register
 			}
 			outcome := decideRegisterFailureOutcome(s.cfg, res.StatusCode, res.Reason, i, len(variants), false)
 			if outcome.retryVariant {
-				logger.Info("IMS REGISTER initial reject fallback",
-					logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
-					logger.Int("status", res.StatusCode),
-					logger.String("reason", res.Reason),
-					logger.Int("variant_index", i+1),
-					logger.Int("variant_total", len(variants)),
-					logger.String("variant_name", strings.TrimSpace(variant.name)),
-					logger.String("next_variant_name", strings.TrimSpace(variants[i+1].name)),
-					logger.String("next_initial_auth_mode", variants[i+1].initialAuth),
-					logger.Bool("next_include_pani", variants[i+1].includePANI),
-					logger.Bool("next_include_cellular", variants[i+1].includeCellular))
+			logger.Info(fmt.Sprintf("[%s] IMS REGISTER 初始拒绝回退", strings.TrimSpace(s.cfg.DeviceID)),
+				logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+				logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
+				logger.Int("status", res.StatusCode),
+				logger.String("reason", res.Reason),
+				logger.Int("variant_index", i+1),
+				logger.Int("variant_total", len(variants)),
+				logger.String("variant_name", strings.TrimSpace(variant.name)),
+				logger.String("next_variant_name", strings.TrimSpace(variants[i+1].name)),
+				logger.String("next_initial_auth_mode", variants[i+1].initialAuth),
+				logger.Bool("next_include_pani", variants[i+1].includePANI),
+				logger.Bool("next_include_cellular", variants[i+1].includeCellular))
 				i++
 				continue
 			}
@@ -404,8 +410,9 @@ func (s *registerSession) runAuthRegisterPhase(ctx context.Context, transport *c
 				nonceFingerprint,
 			)
 		}
-		logger.Info("IMS REGISTER AKA challenge",
+		logger.Info(fmt.Sprintf("[%s] IMS REGISTER AKA 挑战", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+			logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.Int("challenge_round", round+1),
 			logger.String("nonce_fingerprint", nonceFingerprint))
 		previousNonceFingerprint = nonceFingerprint
@@ -433,8 +440,9 @@ func (s *registerSession) runAuthRegisterPhase(ctx context.Context, transport *c
 			previousSyncFailureAUTS = append(previousSyncFailureAUTS[:0], akaResult.AUTS...)
 			requireFreshChallenge = true
 			// RFC 3310: AUTS resync stays unprotected; network should re-401.
-			logger.Info("IMS REGISTER AKA resync (AUTS) sent, awaiting fresh challenge",
+			logger.Info(fmt.Sprintf("[%s] IMS REGISTER AKA 重同步(AUTS)已发送，等待新挑战", strings.TrimSpace(s.cfg.DeviceID)),
 				logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+				logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
 				logger.Int("challenge_round", round+1),
 				logger.Bool("sync_failure", true),
 				logger.Bool("auts_present", true),
@@ -453,8 +461,9 @@ func (s *registerSession) runAuthRegisterPhase(ctx context.Context, transport *c
 		// then send Authorization+Security-Verify on the protected channel.
 		if len(akaResult.CK) == 0 || len(akaResult.IK) == 0 {
 			// Plain MD5 digest (no AKA keys): send unprotected authenticated REGISTER
-			logger.Info("IMS REGISTER digest auth (no IPsec keys)",
+			logger.Info(fmt.Sprintf("[%s] IMS REGISTER 摘要认证(无 IPsec 密钥)", strings.TrimSpace(s.cfg.DeviceID)),
 				logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+				logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
 				logger.Int("challenge_round", round+1),
 				logger.String("nonce_fingerprint", nonceFingerprint))
 			res, err := s.sendRegisterRequest(ctx, transport, newReq)
@@ -467,8 +476,9 @@ func (s *registerSession) runAuthRegisterPhase(ctx context.Context, transport *c
 			}
 			continue
 		}
-		logger.Info("IMS REGISTER AKA success",
+		logger.Info(fmt.Sprintf("[%s] IMS REGISTER AKA 成功", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+			logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.Int("challenge_round", round+1),
 			logger.Bool("sync_failure", false),
 			logger.Int("res_len", len(akaResult.RES)),
@@ -499,13 +509,15 @@ func (s *registerSession) runAuthRegisterPhase(ctx context.Context, transport *c
 		if err := installIPSecFromChallenge(s.cfg, s.state, lastRes); err != nil {
 			return nil, fmt.Errorf("ipsec install: %w", err)
 		}
-		logger.Info("IMS IPsec installed",
+		logger.Info(fmt.Sprintf("[%s] IMS IPsec 已安装", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+			logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.Int("challenge_round", round+1),
 			logger.Bool("ipsec_installed", true),
 			logger.Bool("security_verify_present", strings.TrimSpace(s.state.verifyHeader) != ""))
-		logger.Info("IMS protected authenticated REGISTER sending",
+		logger.Info(fmt.Sprintf("[%s] IMS 受保护已认证 REGISTER 发送中", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+			logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.Int("challenge_round", round+1),
 			logger.Bool("protected", true),
 			logger.Bool("security_verify_present", strings.TrimSpace(s.state.verifyHeader) != ""))
@@ -513,8 +525,9 @@ func (s *registerSession) runAuthRegisterPhase(ctx context.Context, transport *c
 		if err != nil {
 			return nil, err
 		}
-		logger.Info("IMS protected authenticated REGISTER accepted",
+		logger.Info(fmt.Sprintf("[%s] IMS 受保护已认证 REGISTER 已接受", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+			logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.Int("challenge_round", round+1),
 			logger.Int("status", sip.StatusOK),
 			logger.Bool("protected", true))
@@ -555,25 +568,30 @@ func (s *registerSession) registerOnce(ctx context.Context, transport *connRegis
 				headerNames = append(headerNames, h.Name())
 			}
 		}
-		logger.Debug("IMS REGISTER initial request headers",
+		logger.Debug(fmt.Sprintf("[%s] IMS REGISTER 初始请求头", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+			logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.String("template_id", strings.TrimSpace(s.cfg.Template.ID)),
 			logger.String("headers", strings.Join(headerNames, ",")))
 		if authH := req.GetHeader("Authorization"); authH != nil {
-			logger.Debug("IMS REGISTER initial Authorization",
+			logger.Debug(fmt.Sprintf("[%s] IMS REGISTER 初始 Authorization", strings.TrimSpace(s.cfg.DeviceID)),
 				logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+				logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
 				logger.String("authorization", authH.Value()))
 		} else {
-			logger.Debug("IMS REGISTER initial Authorization missing",
-				logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)))
+			logger.Debug(fmt.Sprintf("[%s] IMS REGISTER 初始 Authorization 缺失", strings.TrimSpace(s.cfg.DeviceID)),
+				logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+				logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)))
 		}
 		if secH := req.GetHeader("Security-Client"); secH != nil {
-			logger.Debug("IMS REGISTER initial Security-Client",
+			logger.Debug(fmt.Sprintf("[%s] IMS REGISTER 初始 Security-Client", strings.TrimSpace(s.cfg.DeviceID)),
 				logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+				logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
 				logger.String("security_client", secH.Value()))
 		}
-		logger.Debug("IMS REGISTER initial full SIP request",
+		logger.Debug(fmt.Sprintf("[%s] IMS REGISTER 初始完整 SIP 请求", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+			logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.String("sip_message", req.String()))
 	}
 	if initial && strings.EqualFold(strings.TrimSpace(s.cfg.Template.ID), "vodafone_uk_23415") {

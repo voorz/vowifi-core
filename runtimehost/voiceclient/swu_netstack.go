@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"strings"
 	"sync"
 
 	"github.com/voorz/swu-go/pkg/logger"
@@ -52,17 +53,19 @@ type SWUIPsecCapable interface {
 }
 
 // NewSWUTCPDialer returns a dialer bound to the tunnel virtual IP.
-func NewSWUTCPDialer(localIP net.IP, dp PacketDataplane) (SWUTCPDialer, error) {
-	return newSWUNetstack(localIP, dp)
+func NewSWUTCPDialer(localIP net.IP, dp PacketDataplane, traceID, deviceID string) (SWUTCPDialer, error) {
+	return newSWUNetstack(localIP, dp, traceID, deviceID)
 }
 
 type swuNetstack struct {
-	dp      PacketDataplane
-	linkEP  *channel.Endpoint
-	stack   *stack.Stack
-	localIP net.IP
-	rawMu   sync.RWMutex
-	rawConn map[*swuRawIPConn]struct{}
+	dp       PacketDataplane
+	linkEP   *channel.Endpoint
+	stack    *stack.Stack
+	localIP  net.IP
+	traceID  string
+	deviceID string
+	rawMu    sync.RWMutex
+	rawConn  map[*swuRawIPConn]struct{}
 
 	ipsecMu        sync.RWMutex
 	ipsecTransport ESPTransformer
@@ -71,7 +74,7 @@ type swuNetstack struct {
 	closed    chan struct{}
 }
 
-func newSWUNetstack(localIP net.IP, dp PacketDataplane) (*swuNetstack, error) {
+func newSWUNetstack(localIP net.IP, dp PacketDataplane, traceID, deviceID string) (*swuNetstack, error) {
 	if dp == nil {
 		return nil, fmt.Errorf("voiceclient: SWu netstack requires dataplane")
 	}
@@ -80,11 +83,13 @@ func newSWUNetstack(localIP net.IP, dp PacketDataplane) (*swuNetstack, error) {
 	}
 
 	ns := &swuNetstack{
-		dp:      dp,
-		linkEP:  channel.New(512, swuNetstackMTU, ""),
-		localIP: append(net.IP(nil), localIP...),
-		rawConn: make(map[*swuRawIPConn]struct{}),
-		closed:  make(chan struct{}),
+		dp:       dp,
+		linkEP:   channel.New(512, swuNetstackMTU, ""),
+		localIP:  append(net.IP(nil), localIP...),
+		traceID:  strings.TrimSpace(traceID),
+		deviceID: strings.TrimSpace(deviceID),
+		rawConn:  make(map[*swuRawIPConn]struct{}),
+		closed:   make(chan struct{}),
 	}
 
 	ns.stack = stack.New(stack.Options{
@@ -130,7 +135,9 @@ func (n *swuNetstack) SetIPsecTransport(transformer ESPTransformer) {
 	n.ipsecMu.Lock()
 	n.ipsecTransport = transformer
 	n.ipsecMu.Unlock()
-	logger.Info("SWu netstack IPsec ESP transformer registered")
+	logger.Info(fmt.Sprintf("[%s] SWu 网络栈 IPsec ESP 转换器已注册", n.deviceID),
+		logger.String("trace_id", n.traceID),
+		logger.String("device_id", n.deviceID))
 }
 
 func (n *swuNetstack) DialContextTCP(ctx context.Context, localIP net.IP, localPort int, remoteIP net.IP, remotePort int) (net.Conn, error) {
@@ -156,7 +163,9 @@ func (n *swuNetstack) DialContextTCP(ctx context.Context, localIP net.IP, localP
 	if err != nil {
 		return nil, fmt.Errorf("voiceclient: SWu userspace TCP dial %s:%d: %w", remoteIP.String(), remotePort, err)
 	}
-	logger.Info("IMS SWu TCP connected",
+	logger.Info(fmt.Sprintf("[%s] IMS SWu TCP 已连接", n.deviceID),
+		logger.String("trace_id", n.traceID),
+		logger.String("device_id", n.deviceID),
 		logger.String("local_ip", localIP.String()),
 		logger.Int("local_port", localPort),
 		logger.String("remote_ip", remoteIP.String()),
@@ -197,7 +206,9 @@ func (n *swuNetstack) DialContextUDP(ctx context.Context, localIP net.IP, localP
 		return nil, ctx.Err()
 	default:
 	}
-	logger.Info("IMS SWu UDP connected",
+	logger.Info(fmt.Sprintf("[%s] IMS SWu UDP 已连接", n.deviceID),
+		logger.String("trace_id", n.traceID),
+		logger.String("device_id", n.deviceID),
 		logger.String("local_ip", localIP.String()),
 		logger.Int("local_port", localPort),
 		logger.String("remote_ip", remoteIP.String()),
@@ -222,7 +233,9 @@ func (n *swuNetstack) ListenContextTCP(ctx context.Context, localIP net.IP, loca
 	if err != nil {
 		return nil, fmt.Errorf("voiceclient: SWu userspace TCP listen %s:%d: %w", localIP.String(), localPort, err)
 	}
-	logger.Info("IMS SWu TCP listening",
+	logger.Info(fmt.Sprintf("[%s] IMS SWu TCP 监听中", n.deviceID),
+		logger.String("trace_id", n.traceID),
+		logger.String("device_id", n.deviceID),
 		logger.String("local_ip", localIP.String()),
 		logger.Int("local_port", localPort))
 	return &swuTCPListener{inner: ln, ctx: ctx}, nil
@@ -250,7 +263,9 @@ func (n *swuNetstack) ListenContextUDP(ctx context.Context, localIP net.IP, loca
 	if err != nil {
 		return nil, fmt.Errorf("voiceclient: SWu userspace UDP listen %s:%d: %w", localIP.String(), localPort, err)
 	}
-	logger.Info("IMS SWu UDP listening",
+	logger.Info(fmt.Sprintf("[%s] IMS SWu UDP 监听中", n.deviceID),
+		logger.String("trace_id", n.traceID),
+		logger.String("device_id", n.deviceID),
 		logger.String("local_ip", localIP.String()),
 		logger.Int("local_port", localPort))
 	return conn, nil
@@ -322,9 +337,11 @@ func (n *swuNetstack) inboundLoop() {
 			if transformer != nil {
 				decrypted, err := transformer.TransformInbound(packet)
 				if err != nil {
-					logger.Debug("SWu inbound ESP transform failed",
-						logger.String("error", err.Error()),
-						logger.Int("packet_len", len(packet)))
+			logger.Debug(fmt.Sprintf("[%s] SWu 入站 ESP 转换失败", n.deviceID),
+					logger.String("trace_id", n.traceID),
+					logger.String("device_id", n.deviceID),
+					logger.String("error", err.Error()),
+					logger.Int("packet_len", len(packet)))
 					continue
 				}
 				packet = decrypted
@@ -375,16 +392,20 @@ func (n *swuNetstack) outboundLoop() {
 		if transformer != nil {
 			transformed, err := transformer.TransformOutbound(payload)
 			if err != nil {
-				logger.Warn("SWu outbound ESP transform failed",
-					logger.String("error", err.Error()),
-					logger.Int("packet_len", len(payload)))
+logger.Warn(fmt.Sprintf("[%s] SWu 出站 ESP 转换失败", n.deviceID),
+			logger.String("trace_id", n.traceID),
+			logger.String("device_id", n.deviceID),
+				logger.String("error", err.Error()),
+				logger.Int("packet_len", len(payload)))
 				continue
 			}
 			payload = transformed
 		}
 
 		if err := n.dp.SendInnerPacket(payload); err != nil {
-			logger.Warn("SWu outbound inner packet rejected",
+logger.Warn(fmt.Sprintf("[%s] SWu 出站内部数据包被拒绝", n.deviceID),
+			logger.String("trace_id", n.traceID),
+			logger.String("device_id", n.deviceID),
 				logger.String("error", err.Error()),
 				logger.Int("packet_len", len(payload)))
 		}

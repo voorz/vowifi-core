@@ -182,34 +182,6 @@ func eeUKBaseTemplate() IMSRegisterTemplate {
 	}
 }
 */
-// eeUKBaseTemplate is the common IMS REGISTER template for EE UK and its MVNOs
-// (CMlink UK, CTE UK). Key behaviors:
-//   - IncludePANI: true with fixed IEEE-802.11 PANI for WiFi access
-//   - UsePlainDigestPlaceholder: true for initial REGISTER
-//   - SupportedHeader: path,sec-agree (no gruu)
-//   - AllowHeader: REGISTER,INVITE,MESSAGE,SUBSCRIBE
-
-func eeUKBaseTpl(id string) IMSRegisterTemplate {
-	return IMSRegisterTemplate{
-		ID:                          id,
-		EnableInitialRejectFallback: false,
-		IncludePANIAuthenticated:    false,
-		IncludePANI:                 true,
-		FixedPANI:                   `IEEE-802.11; i-wlan-node-id="000000000000";country=GB`,
-		UsePlainDigestPlaceholder:   true,
-		SupportedHeader:             "path,sec-agree",
-		ContactParamOrder: []string{
-			"access_type",
-			"audio",
-			"smsip",
-			"icsi_ref",
-			"sip_instance",
-		},
-		AllowHeader:              "REGISTER,INVITE,MESSAGE,SUBSCRIBE",
-		SecurityClientMechanisms: DefaultSecurityClientMechanisms(),
-	}
-}
-
 // EEUKTemplate matches EE UK's (MCC 234 / MNC 30) standard Qualcomm IMS profile.
 // It applies to EE Direct, BT Mobile, and legacy Virgin Mobile (on EE network).
 func eeUKBaseTemplate(id string) IMSRegisterTemplate {

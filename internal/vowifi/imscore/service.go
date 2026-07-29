@@ -77,7 +77,7 @@ func Dial(ctx context.Context, cfg Config) (*Service, error) {
 		voiceCfg.RegisterExpiry = time.Duration(cfg.RegisterExpirySeconds) * time.Second
 	}
 
-	network, err := NewUserspaceIMSNetwork(cfg.LocalIP, cfg.Dataplane)
+	network, err := NewUserspaceIMSNetwork(cfg.LocalIP, cfg.Dataplane, cfg.TraceID, cfg.DeviceID)
 	if err != nil {
 		return nil, err
 	}

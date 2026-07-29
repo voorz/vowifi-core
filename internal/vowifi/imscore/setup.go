@@ -74,7 +74,7 @@ func SetupService(imsCfg IMSConfig, network IMSNetwork, in StartSessionInput) (*
 }
 
 func logIMSConfigResolved(imsCfg IMSConfig, cfg Config, candidateCount int) {
-	logger.Info("IMS config resolved",
+	logger.Info(fmt.Sprintf("[%s] IMS 配置已解析", strings.TrimSpace(imsCfg.DeviceID)),
 		logger.String("device_id", strings.TrimSpace(imsCfg.DeviceID)),
 		logger.String("trace_id", strings.TrimSpace(cfg.TraceID)),
 		logger.String("registrar", strings.TrimSpace(imsCfg.Registrar)),

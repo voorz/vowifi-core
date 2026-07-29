@@ -26,11 +26,11 @@ type UserspaceIMSNetwork struct {
 }
 
 // NewUserspaceIMSNetwork builds an IMSNetwork backed by the established SWu dataplane.
-func NewUserspaceIMSNetwork(localIP net.IP, dataplane voiceclient.PacketDataplane) (*UserspaceIMSNetwork, error) {
+func NewUserspaceIMSNetwork(localIP net.IP, dataplane voiceclient.PacketDataplane, traceID, deviceID string) (*UserspaceIMSNetwork, error) {
 	if localIP == nil {
 		return nil, fmt.Errorf("imscore: local IP is required")
 	}
-	swu, err := newSWUNetstack(localIP, dataplane)
+	swu, err := newSWUNetstack(localIP, dataplane, traceID, deviceID)
 	if err != nil {
 		return nil, err
 	}

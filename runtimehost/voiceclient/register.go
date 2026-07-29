@@ -48,7 +48,7 @@ func (c *Client) registerWithResync(ctx context.Context) error {
 		}
 		c.registerProfile = profile.Normalized()
 		c.applyRegisterVariantIdentity(c.registerProfile)
-		logger.Info("IMS REGISTER sending initial request",
+		logger.Info(fmt.Sprintf("[%s] IMS REGISTER 发送初始请求", strings.TrimSpace(c.cfg.DeviceID)),
 			logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
 			logger.String("device_id", strings.TrimSpace(c.cfg.DeviceID)),
 			logger.String("pcscf", c.cfg.PCSCFAddr),
@@ -66,8 +66,9 @@ func (c *Client) registerWithResync(ctx context.Context) error {
 		if !isRegisterVariantRetryable(err) || idx+1 >= len(variants) {
 			return err
 		}
-		logger.Info("IMS REGISTER variant failed, trying next",
+		logger.Info(fmt.Sprintf("[%s] IMS REGISTER 变体失败，尝试下一个", strings.TrimSpace(c.cfg.DeviceID)),
 			logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
+			logger.String("device_id", strings.TrimSpace(c.cfg.DeviceID)),
 			logger.Int("variant", idx+1),
 			logger.String("error", err.Error()))
 	}
@@ -130,8 +131,9 @@ func (c *Client) registerOnce(ctx context.Context) error {
 	var lastErr error
 	for attempt := 0; attempt < maxRegisterTimeoutRetries; attempt++ {
 		if attempt > 0 {
-			logger.Warn("IMS REGISTER retrying after timeout",
+			logger.Warn(fmt.Sprintf("[%s] IMS REGISTER 超时后重试", strings.TrimSpace(c.cfg.DeviceID)),
 				logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
+				logger.String("device_id", strings.TrimSpace(c.cfg.DeviceID)),
 				logger.Int("attempt", attempt+1),
 				logger.Int("attempt_total", maxRegisterTimeoutRetries))
 		}
@@ -157,32 +159,36 @@ func (c *Client) registerOnceAttempt(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("initial REGISTER: %w", err)
 	}
-	logger.Info("IMS REGISTER received response",
-		logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
-		logger.Int("status", res.StatusCode),
-		logger.String("reason", res.Reason))
+logger.Info(fmt.Sprintf("[%s] IMS REGISTER 收到响应", strings.TrimSpace(c.cfg.DeviceID)),
+			logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
+			logger.String("device_id", strings.TrimSpace(c.cfg.DeviceID)),
+			logger.Int("status", res.StatusCode),
+			logger.String("reason", res.Reason))
 	if res.StatusCode == 423 {
 		res, req, err = c.retryRegisterAfterIntervalTooBrief(ctx, res)
 		if err != nil {
 			return fmt.Errorf("interval-too-brief retry: %w", err)
 		}
-		logger.Info("IMS REGISTER received interval retry response",
-			logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
-			logger.Int("status", res.StatusCode),
-			logger.String("reason", res.Reason))
+logger.Info(fmt.Sprintf("[%s] IMS REGISTER 收到间隔重试响应", strings.TrimSpace(c.cfg.DeviceID)),
+				logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
+				logger.String("device_id", strings.TrimSpace(c.cfg.DeviceID)),
+				logger.Int("status", res.StatusCode),
+				logger.String("reason", res.Reason))
 	}
 
 	for round := 0; round < maxChallengeRounds && (res.StatusCode == 401 || res.StatusCode == 407); round++ {
-		logger.Info("IMS REGISTER answering challenge",
+		logger.Info(fmt.Sprintf("[%s] IMS REGISTER 应答挑战", strings.TrimSpace(c.cfg.DeviceID)),
 			logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
+			logger.String("device_id", strings.TrimSpace(c.cfg.DeviceID)),
 			logger.Int("round", round+1),
 			logger.Int("status", res.StatusCode))
 		res, req, err = c.answerChallenge(ctx, req, res)
 		if err != nil {
 			return fmt.Errorf("challenge round %d: %w", round+1, err)
 		}
-		logger.Info("IMS REGISTER received challenged response",
+		logger.Info(fmt.Sprintf("[%s] IMS REGISTER 收到挑战响应", strings.TrimSpace(c.cfg.DeviceID)),
 			logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
+			logger.String("device_id", strings.TrimSpace(c.cfg.DeviceID)),
 			logger.Int("round", round+1),
 			logger.Int("status", res.StatusCode),
 			logger.String("reason", res.Reason))
@@ -191,9 +197,10 @@ func (c *Client) registerOnceAttempt(ctx context.Context) error {
 	if res.StatusCode != 200 {
 		return fmt.Errorf("unexpected final REGISTER response: %d %s", res.StatusCode, res.Reason)
 	}
-	logger.Info("IMS REGISTER completed",
-		logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
-		logger.Int("status", res.StatusCode))
+logger.Info(fmt.Sprintf("[%s] IMS REGISTER 完成", strings.TrimSpace(c.cfg.DeviceID)),
+			logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
+			logger.String("device_id", strings.TrimSpace(c.cfg.DeviceID)),
+			logger.Int("status", res.StatusCode))
 	return nil
 }
 
@@ -235,9 +242,10 @@ func (c *Client) retryRegisterAfterIntervalTooBrief(ctx context.Context, prevRes
 		}
 	}
 	c.cfg.RegisterExpiry = time.Duration(expires) * time.Second
-	logger.Info("IMS REGISTER retrying with larger Expires",
-		logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
-		logger.Int("expires", expires))
+logger.Info(fmt.Sprintf("[%s] IMS REGISTER 使用更大 Expires 重试", strings.TrimSpace(c.cfg.DeviceID)),
+			logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
+			logger.String("device_id", strings.TrimSpace(c.cfg.DeviceID)),
+			logger.Int("expires", expires))
 	req, err := c.newRequest(sip.REGISTER, c.cfg.PCSCFAddr, false)
 	if err != nil {
 		return nil, nil, err
@@ -304,8 +312,9 @@ func (c *Client) selectDigestChallenge(prevRes *sip.Response) (*digest.Challenge
 				continue
 			}
 			score := c.scoreDigestChallenge(chal)
-			logger.Info("IMS REGISTER challenge candidate",
-				logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
+logger.Info(fmt.Sprintf("[%s] IMS REGISTER 挑战候选", strings.TrimSpace(c.cfg.DeviceID)),
+					logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
+					logger.String("device_id", strings.TrimSpace(c.cfg.DeviceID)),
 				logger.String("realm", chal.Realm),
 				logger.String("algorithm", chal.Algorithm),
 				logger.Int("nonce_len", decodedNonceLen(chal.Nonce)),
@@ -319,8 +328,9 @@ func (c *Client) selectDigestChallenge(prevRes *sip.Response) (*digest.Challenge
 	if best == nil {
 		return nil, fmt.Errorf("parse challenge: no usable digest challenge found")
 	}
-	logger.Info("IMS REGISTER selected challenge",
+	logger.Info(fmt.Sprintf("[%s] IMS REGISTER 已选挑战", strings.TrimSpace(c.cfg.DeviceID)),
 		logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
+		logger.String("device_id", strings.TrimSpace(c.cfg.DeviceID)),
 		logger.String("realm", best.Realm),
 		logger.String("algorithm", best.Algorithm),
 		logger.Int("nonce_len", decodedNonceLen(best.Nonce)),

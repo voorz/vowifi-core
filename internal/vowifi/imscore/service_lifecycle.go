@@ -55,7 +55,7 @@ func (s *Service) Start(ctx context.Context) error {
 
 	reg, err := s.runRegisterFlow(registerCtx)
 	if err != nil {
-		logger.Warn("IMS register failed",
+		logger.Warn(fmt.Sprintf("[%s] IMS 注册失败", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
 			logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.String("pcscf", s.cfg.PCSCFAddr),
@@ -83,8 +83,9 @@ func (s *Service) Start(ctx context.Context) error {
 	if reg.secureConn != nil && reg.transport != nil && !reg.secureConn.PacketMode() {
 		rt, err := startTransportRuntime(lifecycleCtx, s.cfg, swu, reg.ipsecPolicy, reg.transport, reg.secureConn)
 		if err != nil {
-			logger.Warn("IMS transport runtime start failed",
+			logger.Warn(fmt.Sprintf("[%s] IMS 传输运行时启动失败", strings.TrimSpace(s.cfg.DeviceID)),
 				logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+				logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
 				logger.String("error", err.Error()))
 		} else {
 			s.transportRuntime = rt
@@ -96,9 +97,10 @@ func (s *Service) Start(ctx context.Context) error {
 		// Start TCP writer log, port_s inbound listeners, and SMS notification.
 		s.logTCPWriterLoop(lifecycleCtx, reg.tcpConn)
 		if err := s.startPortSListeners(lifecycleCtx, swu, reg.ipsecPolicy); err != nil {
-			logger.Warn("IMS port_s 入站监听启动失败",
-				logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
-				logger.String("error", err.Error()))
+logger.Warn(fmt.Sprintf("[%s] IMS port_s 入站监听启动失败", strings.TrimSpace(s.cfg.DeviceID)),
+			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+			logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
+			logger.String("error", err.Error()))
 		}
 		s.notifySMSCapability()
 	}
@@ -119,7 +121,7 @@ func (s *Service) resolveSWUDialer() (voiceclient.SWUTCPDialer, error) {
 			return dialer, nil
 		}
 	}
-	return newSWUNetstack(s.cfg.LocalIP, s.cfg.Dataplane)
+	return newSWUNetstack(s.cfg.LocalIP, s.cfg.Dataplane, s.cfg.TraceID, s.cfg.DeviceID)
 }
 
 func (s *Service) logTCPWriterLoop(ctx context.Context, conn net.Conn) {
@@ -164,8 +166,9 @@ func (s *Service) startPortSListeners(ctx context.Context, swu voiceclient.SWUTC
 	// UDP listener on port_s
 	udpConn, err := swu.ListenContextUDP(ctx, s.cfg.LocalIP, policy.LocalPortS)
 	if err != nil {
-		logger.Warn("IMS port_s UDP listen failed",
+		logger.Warn(fmt.Sprintf("[%s] IMS port_s UDP 监听失败", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+			logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.Int("port_s", policy.LocalPortS),
 			logger.String("error", err.Error()))
 	} else {
@@ -187,14 +190,16 @@ func (s *Service) drainPortSTCP(ctx context.Context, ln net.Listener) {
 			case <-ctx.Done():
 				return
 			default:
-				logger.Warn("IMS port_s TCP accept failed",
+				logger.Warn(fmt.Sprintf("[%s] IMS port_s TCP 接受失败", strings.TrimSpace(s.cfg.DeviceID)),
 					logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+					logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
 					logger.String("error", err.Error()))
 				return
 			}
 		}
-		logger.Info("IMS port_s accepted inbound push",
+		logger.Info(fmt.Sprintf("[%s] IMS port_s 接受入站推送", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+			logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.String("remote", conn.RemoteAddr().String()),
 			logger.String("local", conn.LocalAddr().String()))
 		go func(c net.Conn) {
@@ -211,9 +216,10 @@ func (s *Service) drainPortSTCP(ctx context.Context, ln net.Listener) {
 					return
 				}
 				if n > 0 {
-					logger.Debug("IMS port_s TCP inbound",
-						logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
-						logger.Int("bytes", n))
+logger.Debug(fmt.Sprintf("[%s] IMS port_s TCP 入站", strings.TrimSpace(s.cfg.DeviceID)),
+					logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+					logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
+					logger.Int("bytes", n))
 				}
 			}
 		}(conn)
@@ -234,15 +240,17 @@ func (s *Service) drainPortSUDP(ctx context.Context, conn net.PacketConn) {
 			case <-ctx.Done():
 				return
 			default:
-				logger.Warn("IMS port_s UDP read failed",
+				logger.Warn(fmt.Sprintf("[%s] IMS port_s UDP 读取失败", strings.TrimSpace(s.cfg.DeviceID)),
 					logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+					logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
 					logger.String("error", err.Error()))
 				return
 			}
 		}
 		if n > 0 {
-			logger.Debug("IMS port_s UDP inbound",
+			logger.Debug(fmt.Sprintf("[%s] IMS port_s UDP 入站", strings.TrimSpace(s.cfg.DeviceID)),
 				logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+				logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
 				logger.Int("bytes", n))
 		}
 	}
@@ -310,8 +318,9 @@ func (s *Service) attachMessaging(ctx context.Context, winningPCSCF string, reg 
 		logger.Bool("tcp_conn", msgConn != nil))
 	inner, err := voiceclient.AttachSecureMessaging(ctx, voiceCfg, msgConn)
 	if err != nil {
-		logger.Warn("IMS attachMessaging 失败",
+		logger.Warn(fmt.Sprintf("[%s] IMS attachMessaging 失败", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+			logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.String("error", err.Error()))
 		return fmt.Errorf("voiceclient attach: %w", err)
 	}

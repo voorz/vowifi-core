@@ -1,6 +1,7 @@
 package voiceclient
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -14,7 +15,7 @@ type sipTraceLogger struct {
 }
 
 func (s sipTraceLogger) SIPTraceRead(transport string, laddr string, raddr string, sipmsg []byte) {
-	logger.Info("IMS SIP read",
+	logger.Info(fmt.Sprintf("[%s] IMS SIP 读取", strings.TrimSpace(s.deviceID)),
 		logger.String("trace_id", strings.TrimSpace(s.traceID)),
 		logger.String("device_id", strings.TrimSpace(s.deviceID)),
 		logger.String("transport", strings.ToLower(strings.TrimSpace(transport))),
@@ -24,7 +25,7 @@ func (s sipTraceLogger) SIPTraceRead(transport string, laddr string, raddr strin
 }
 
 func (s sipTraceLogger) SIPTraceWrite(transport string, laddr string, raddr string, sipmsg []byte) {
-	logger.Info("IMS SIP write",
+	logger.Info(fmt.Sprintf("[%s] IMS SIP 写入", strings.TrimSpace(s.deviceID)),
 		logger.String("trace_id", strings.TrimSpace(s.traceID)),
 		logger.String("device_id", strings.TrimSpace(s.deviceID)),
 		logger.String("transport", strings.ToLower(strings.TrimSpace(transport))),

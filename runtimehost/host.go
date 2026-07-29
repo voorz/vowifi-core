@@ -840,7 +840,7 @@ func (i *Instance) runStagedPipeline(ctx context.Context, req StartRequest, gene
 	if externalDataplaneMode(req.Dataplane.Mode) == "tun" {
 		network, err = imscore.NewKernelIMSNetwork(localIP)
 	} else {
-		network, err = imscore.NewUserspaceIMSNetwork(localIP, dataplane)
+		network, err = imscore.NewUserspaceIMSNetwork(localIP, dataplane, i.traceID, i.deviceID)
 	}
 	if err != nil {
 		i.failStageForGeneration(ctx, generation, "ims", fmt.Sprintf("IMS network setup failed: %v", err), formatStageFailureReason("ims_network_failed", err))

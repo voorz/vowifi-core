@@ -508,7 +508,7 @@ func TestAUTSResyncFreshChallengeInstallsIPSecThenProtectedRegister(t *testing.T
 	cfg.Template.ProxyRequireSecAgree = true
 	cfg.AKA = aka
 	dp := newRegisterSessionTestPacketDataplane()
-	baseSWU, err := voiceclient.NewSWUTCPDialer(cfg.LocalIP, dp)
+	baseSWU, err := voiceclient.NewSWUTCPDialer(cfg.LocalIP, dp, "", "")
 	if err != nil {
 		t.Fatalf("NewSWUTCPDialer: %v", err)
 	}

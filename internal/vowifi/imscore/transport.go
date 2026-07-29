@@ -13,11 +13,11 @@ import (
 	"github.com/voorz/sipgo/sip"
 )
 
-func newSWUNetstack(localIP net.IP, dp voiceclient.PacketDataplane) (voiceclient.SWUTCPDialer, error) {
+func newSWUNetstack(localIP net.IP, dp voiceclient.PacketDataplane, traceID, deviceID string) (voiceclient.SWUTCPDialer, error) {
 	if dp == nil {
 		return nil, nil
 	}
-	return voiceclient.NewSWUTCPDialer(localIP, dp)
+	return voiceclient.NewSWUTCPDialer(localIP, dp, traceID, deviceID)
 }
 
 func dialPlainTCP(ctx context.Context, cfg Config, swu voiceclient.SWUTCPDialer) (net.Conn, error) {
