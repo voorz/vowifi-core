@@ -17,7 +17,7 @@ func BeginSession(cfg SessionConfig) *SessionResult {
 
 // AttachIMSService records the registered IMS messaging service and optional
 // status provider (imscore.Service.Status in the upstream module).
-func AttachIMSService(result *SessionResult, svc messaging.Service, status func() map[string]interface{}, localAddr, pcscf string) {
+func AttachIMSService(result *SessionResult, svc messaging.MessagingService, status func() map[string]interface{}, localAddr, pcscf string) {
 	if result == nil {
 		return
 	}

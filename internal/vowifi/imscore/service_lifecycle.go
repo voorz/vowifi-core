@@ -10,7 +10,10 @@ import (
 
 	"github.com/voorz/swu-go/pkg/logger"
 
+	"github.com/voorz/sipgo"
+	"github.com/voorz/sipgo/sip"
 	"github.com/voorz/vowifi-core/internal/vowifi/ipsec3gpp"
+	"github.com/voorz/vowifi-core/runtimehost/messaging"
 	"github.com/voorz/vowifi-core/runtimehost/voiceclient"
 )
 
@@ -80,6 +83,9 @@ func (s *Service) Start(ctx context.Context) error {
 	s.pcscf = winningPCSCF
 	s.localAddr = s.cfg.LocalIP.String()
 
+	// Create messaging.Service for inbound SMS handling.
+	s.msgSvc = messaging.NewService(s.cfg.DeviceID, s.cfg.IMSI, s.cfg.DeliveryStore, s.cfg.Dispatcher)
+
 	if reg.secureConn != nil && reg.transport != nil && !reg.secureConn.PacketMode() {
 		rt, err := startTransportRuntime(lifecycleCtx, s.cfg, swu, reg.ipsecPolicy, reg.transport, reg.secureConn)
 		if err != nil {
@@ -90,6 +96,7 @@ func (s *Service) Start(ctx context.Context) error {
 		} else {
 			s.transportRuntime = rt
 			s.logTCPWriterLoop(lifecycleCtx, reg.secureConn)
+			s.startInboundSIPServer(lifecycleCtx, rt.portSListener, nil)
 			s.notifySMSCapability()
 		}
 	} else if reg.tcpConn != nil {
@@ -102,6 +109,7 @@ logger.Warn(fmt.Sprintf("[%s] IMS port_s 入站监听启动失败", strings.Trim
 			logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.String("error", err.Error()))
 		}
+		s.startInboundSIPServer(lifecycleCtx, s.portSListener, s.portSUDP)
 		s.notifySMSCapability()
 	}
 
@@ -183,80 +191,143 @@ func (s *Service) startPortSListeners(ctx context.Context, swu voiceclient.SWUTC
 }
 
 func (s *Service) drainPortSTCP(ctx context.Context, ln net.Listener) {
-	for {
-		conn, err := ln.Accept()
-		if err != nil {
-			select {
-			case <-ctx.Done():
-				return
-			default:
-				logger.Warn(fmt.Sprintf("[%s] IMS port_s TCP 接受失败", strings.TrimSpace(s.cfg.DeviceID)),
-					logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
-					logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
-					logger.String("error", err.Error()))
-				return
-			}
-		}
-		logger.Info(fmt.Sprintf("[%s] IMS port_s 接受入站推送", strings.TrimSpace(s.cfg.DeviceID)),
-			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
-			logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
-			logger.String("remote", conn.RemoteAddr().String()),
-			logger.String("local", conn.LocalAddr().String()))
-		go func(c net.Conn) {
-			defer c.Close()
-			buf := make([]byte, 64*1024)
-			for {
-				select {
-				case <-ctx.Done():
-					return
-				default:
-				}
-				n, err := c.Read(buf)
-				if err != nil {
-					return
-				}
-				if n > 0 {
-logger.Debug(fmt.Sprintf("[%s] IMS port_s TCP 入站", strings.TrimSpace(s.cfg.DeviceID)),
-					logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
-					logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
-					logger.Int("bytes", n))
-				}
-			}
-		}(conn)
-	}
+	// Replaced by startInboundSIPServer — sipgo Server handles inbound SIP.
+	_ = ctx
+	_ = ln
 }
 
 func (s *Service) drainPortSUDP(ctx context.Context, conn net.PacketConn) {
-	buf := make([]byte, 64*1024)
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		default:
-		}
-		n, _, err := conn.ReadFrom(buf)
-		if err != nil {
-			select {
-			case <-ctx.Done():
-				return
-			default:
-				logger.Warn(fmt.Sprintf("[%s] IMS port_s UDP 读取失败", strings.TrimSpace(s.cfg.DeviceID)),
+	// Replaced by startInboundSIPServer — sipgo Server handles inbound SIP.
+	_ = ctx
+	_ = conn
+}
+
+// startInboundSIPServer creates a sipgo Server that listens on port_s for
+// inbound SIP MESSAGE requests (SMS delivery reports, incoming SMS).
+// The server uses the SWu TCP/UDP listener directly — connections accepted
+// by the SWu listener are processed by sipgo's transport layer, which parses
+// SIP messages and dispatches them to the OnMessage handler.
+func (s *Service) startInboundSIPServer(ctx context.Context, tcpLn net.Listener, udpConn net.PacketConn) {
+	if s.msgSvc == nil {
+		return
+	}
+	ua, err := sipgo.NewUA(
+		sipgo.WithUserAgent(s.cfg.UserAgent),
+	)
+	if err != nil {
+		logger.Warn(fmt.Sprintf("[%s] 入站 SIP Server UA 创建失败", strings.TrimSpace(s.cfg.DeviceID)),
+			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+			logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
+			logger.String("error", err.Error()))
+		return
+	}
+	srv, err := sipgo.NewServer(ua)
+	if err != nil {
+		_ = ua.Close()
+		logger.Warn(fmt.Sprintf("[%s] 入站 SIP Server 创建失败", strings.TrimSpace(s.cfg.DeviceID)),
+			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+			logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
+			logger.String("error", err.Error()))
+		return
+	}
+	srv.OnMessage(func(req *sip.Request, tx sip.ServerTransaction) {
+		s.handleInboundSIPMessage(ctx, req, tx)
+	})
+	s.sipServer = srv
+
+	if tcpLn != nil {
+		go func() {
+		if err := srv.ServeTCP(tcpLn); err != nil {
+				logger.Warn(fmt.Sprintf("[%s] 入站 SIP Server TCP 退出", strings.TrimSpace(s.cfg.DeviceID)),
 					logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
 					logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
 					logger.String("error", err.Error()))
-				return
 			}
-		}
-		if n > 0 {
-			logger.Debug(fmt.Sprintf("[%s] IMS port_s UDP 入站", strings.TrimSpace(s.cfg.DeviceID)),
-				logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
-				logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
-				logger.Int("bytes", n))
-		}
+		}()
 	}
+	if udpConn != nil {
+		go func() {
+		if err := srv.ServeUDP(udpConn); err != nil {
+				logger.Warn(fmt.Sprintf("[%s] 入站 SIP Server UDP 退出", strings.TrimSpace(s.cfg.DeviceID)),
+					logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+					logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
+					logger.String("error", err.Error()))
+			}
+		}()
+	}
+
+	logger.Info(fmt.Sprintf("[%s] 入站 SIP Server 已启动", strings.TrimSpace(s.cfg.DeviceID)),
+		logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+		logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
+		logger.Bool("tcp", tcpLn != nil),
+		logger.Bool("udp", udpConn != nil))
 }
 
-// notifySMSCapability logs that IMS SMS capability is ready.
+// handleInboundSIPMessage processes an inbound SIP MESSAGE request: extracts
+// the RP-DATA body, calls messaging.Service.HandleIMSMessage for TPdu decode
+// and event dispatch, and responds with 200 OK + RP-ACK (or error).
+func (s *Service) handleInboundSIPMessage(ctx context.Context, req *sip.Request, tx sip.ServerTransaction) {
+	if s.msgSvc == nil {
+		_ = tx.Respond(sip.NewResponseFromRequest(req, 500, "Messaging service unavailable", nil))
+		return
+	}
+
+	msgReq := messaging.IMSMessageRequest{
+		Body: req.Body(),
+	}
+	if ct := req.GetHeader("Content-Type"); ct != nil {
+		msgReq.ContentType = strings.TrimSpace(ct.Value())
+	}
+	if from := req.From(); from != nil {
+		msgReq.FromURI = from.Address.String()
+	}
+	if to := req.To(); to != nil {
+		msgReq.ToURI = to.Address.String()
+	}
+	if callID := req.CallID(); callID != nil {
+		msgReq.CallID = callID.Value()
+	}
+	if cseq := req.CSeq(); cseq != nil {
+		msgReq.CSeq = int(cseq.SeqNo)
+	}
+	msgReq.Headers = make(map[string][]string)
+	for _, hdr := range req.GetHeaders("") {
+		msgReq.Headers[string(hdr.Name())] = append(msgReq.Headers[string(hdr.Name())], hdr.Value())
+	}
+
+	result, err := s.msgSvc.HandleIMSMessage(ctx, msgReq)
+	if err != nil {
+		logger.Warn(fmt.Sprintf("[%s] 入站 IMS MESSAGE 处理失败", strings.TrimSpace(s.cfg.DeviceID)),
+			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+			logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
+			logger.String("error", err.Error()))
+		_ = tx.Respond(sip.NewResponseFromRequest(req, 500, "Internal Error", nil))
+		return
+	}
+
+	statusCode := result.StatusCode
+	if statusCode == 0 {
+		statusCode = 200
+	}
+	reason := result.Reason
+	if reason == "" {
+		reason = "OK"
+	}
+	resp := sip.NewResponseFromRequest(req, statusCode, reason, result.ReplyBody)
+	if result.ReplyContentType != "" && len(result.ReplyBody) > 0 {
+		resp.AppendHeader(sip.NewHeader("Content-Type", result.ReplyContentType))
+	}
+	if result.Incoming != nil {
+		logger.Info(fmt.Sprintf("[%s] 收到 IMS 短信", strings.TrimSpace(s.cfg.DeviceID)),
+			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+			logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
+			logger.String("sender", result.Incoming.Sender),
+			logger.Int("len", len(result.Incoming.Content)),
+			logger.String("transport", "tcp"))
+	}
+	_ = tx.Respond(resp)
+}
+
 func (s *Service) notifySMSCapability() {
 	logger.Info(fmt.Sprintf("[%s] IMS SMS 能力已就绪", strings.TrimSpace(s.cfg.DeviceID)),
 		logger.String("reason", "inbound_transport_ready"),

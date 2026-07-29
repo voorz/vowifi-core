@@ -17,6 +17,7 @@ import (
 	"github.com/voorz/vowifi-core/internal/vowifi/policy"
 	"github.com/voorz/vowifi-core/internal/vowifi/runtimecore"
 	"github.com/voorz/vowifi-core/runtimehost/identity"
+	"github.com/voorz/vowifi-core/runtimehost/eventhost"
 	"github.com/voorz/vowifi-core/runtimehost/messaging"
 	"github.com/voorz/vowifi-core/runtimehost/transport"
 	"github.com/voorz/vowifi-core/runtimehost/voiceclient"
@@ -221,7 +222,7 @@ type Instance struct {
 	stopped             bool
 	lifecycleGeneration uint64
 
-	svc             messaging.Service
+	svc             messaging.MessagingService
 	session         *runtimecore.SessionResult
 	transport       transport.DatagramTransport
 	swuCancel       context.CancelFunc
@@ -231,7 +232,7 @@ type Instance struct {
 	stopCleanupDone chan struct{}
 }
 
-func (i *Instance) Service() messaging.Service {
+func (i *Instance) Service() messaging.MessagingService {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 	if i.stopped {
@@ -242,7 +243,7 @@ func (i *Instance) Service() messaging.Service {
 
 const messagingServiceCleanupTimeout = 5 * time.Second
 
-func closeMessagingService(_ context.Context, svc messaging.Service) {
+func closeMessagingService(_ context.Context, svc messaging.MessagingService) {
 	if closer, ok := svc.(interface{ Close(context.Context) error }); ok && closer != nil {
 		cleanupCtx, cancel := context.WithTimeout(context.Background(), messagingServiceCleanupTimeout)
 		defer cancel()
@@ -265,7 +266,7 @@ func isClosed(ch <-chan struct{}) bool {
 func (i *Instance) installService(
 	ctx context.Context,
 	generation uint64,
-	svc messaging.Service,
+	svc messaging.MessagingService,
 	status func() map[string]interface{},
 	localAddr string,
 	pcscf string,
@@ -463,7 +464,7 @@ func (i *Instance) finishStopCleanup(
 	ctx context.Context,
 	done <-chan struct{},
 	serviceIdle <-chan struct{},
-	svc messaging.Service,
+	svc messaging.MessagingService,
 	tp transport.DatagramTransport,
 	cleanupDone chan struct{},
 ) {
@@ -583,6 +584,15 @@ func (i *Instance) failStageForGeneration(ctx context.Context, generation uint64
 		return
 	}
 	i.notifyObserversForGeneration(ctx, generation)
+}
+
+// toEventhostDispatcher casts the opaque Dispatch from StartRequest into an
+// eventhost.Dispatcher. Returns nil if the value is not a Dispatcher.
+func toEventhostDispatcher(v interface{}) eventhost.Dispatcher {
+	if d, ok := v.(eventhost.Dispatcher); ok {
+		return d
+	}
+	return nil
 }
 
 func Start(ctx context.Context, req StartRequest) (*Instance, error) {
@@ -856,6 +866,7 @@ func (i *Instance) runStagedPipeline(ctx context.Context, req StartRequest, gene
 		RegistrarCandidates:   pcscfCandidates,
 		AKA:                   i.akaProvider,
 		DeliveryStore:         i.deliveryStore,
+		Dispatcher:            toEventhostDispatcher(req.Dispatch),
 		IMSI:                  i.imsIMSI,
 		SMSC:                  strings.TrimSpace(req.Profile.SMSC),
 		MCC:                   i.imsMCC,

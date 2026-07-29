@@ -5,6 +5,7 @@ import (
 
 	"github.com/voorz/vowifi-core/engine/sim"
 	"github.com/voorz/vowifi-core/internal/vowifi/policy"
+	"github.com/voorz/vowifi-core/runtimehost/eventhost"
 	"github.com/voorz/vowifi-core/runtimehost/messaging"
 	"github.com/voorz/vowifi-core/runtimehost/voiceclient"
 )
@@ -45,5 +46,6 @@ type Config struct {
 
 	RegisterExpirySeconds int
 
-	DeliveryStore messaging.DeliveryStore
+	DeliveryStore   messaging.DeliveryStore
+	Dispatcher       eventhost.Dispatcher
 }

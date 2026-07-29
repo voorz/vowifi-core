@@ -6,9 +6,7 @@ import (
 )
 
 // Event is the marker interface for all event types.
-type Event interface {
-	isEvent()
-}
+type Event interface{}
 
 // SMSReceived is emitted when an incoming SMS arrives over IMS.
 type SMSReceived struct {
@@ -19,8 +17,6 @@ type SMSReceived struct {
 	IMSI    string
 }
 
-func (SMSReceived) isEvent() {}
-
 // SMSSent is emitted when an outgoing SMS is submitted over IMS.
 type SMSSent struct {
 	DevID      string
@@ -30,7 +26,17 @@ type SMSSent struct {
 	TotalParts int
 }
 
-func (SMSSent) isEvent() {}
+// USSDUpdated is emitted when a USSD session is updated.
+type USSDUpdated struct {
+	DevID     string
+	SessionID string
+	Text      string
+	RawText   string
+	Status    int
+	DCS       int
+	Done      bool
+	Time      time.Time
+}
 
 // LocalNumberLearned is emitted when the IMS stack learns the local phone number.
 type LocalNumberLearned struct {
@@ -42,14 +48,12 @@ type LocalNumberLearned struct {
 	Source string
 }
 
-func (LocalNumberLearned) isEvent() {}
-
 // LogNotify is emitted for log-style notifications.
 type LogNotify struct {
+	DevID   string
 	Message string
+	Time    time.Time
 }
-
-func (LogNotify) isEvent() {}
 
 // Dispatcher dispatches events to handlers.
 type Dispatcher interface {

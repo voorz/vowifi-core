@@ -44,6 +44,6 @@ type SessionResult struct {
 	TraceID    string
 	LocalAddr  string
 	PCSCFAddr  string
-	IMSService messaging.Service
+	IMSService messaging.MessagingService
 	IMSStatus  func() map[string]interface{}
 }

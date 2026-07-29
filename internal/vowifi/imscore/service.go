@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/voorz/vowifi-core/internal/vowifi/policy"
+	"github.com/voorz/sipgo"
 	"github.com/voorz/vowifi-core/runtimehost/messaging"
 	"github.com/voorz/vowifi-core/runtimehost/voiceclient"
 )
@@ -36,6 +37,9 @@ type Service struct {
 	lifecycleCancel context.CancelFunc
 
 	inner *voiceclient.Client
+
+	msgSvc    *messaging.Service
+	sipServer *sipgo.Server
 }
 
 // Dial is a compatibility wrapper around StartSessionIMSCore for legacy callers.
@@ -143,6 +147,10 @@ func (s *Service) Close(ctx context.Context) error {
 	if s.transportRuntime != nil {
 		s.transportRuntime.Close()
 		s.transportRuntime = nil
+	}
+	if s.sipServer != nil {
+		_ = s.sipServer.Close()
+		s.sipServer = nil
 	}
 	if s.portSListener != nil {
 		_ = s.portSListener.Close()

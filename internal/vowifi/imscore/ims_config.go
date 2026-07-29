@@ -6,6 +6,7 @@ import (
 
 	"github.com/voorz/vowifi-core/engine/sim"
 	"github.com/voorz/vowifi-core/internal/vowifi/policy"
+	"github.com/voorz/vowifi-core/runtimehost/eventhost"
 	"github.com/voorz/vowifi-core/runtimehost/messaging"
 	"github.com/voorz/vowifi-core/runtimehost/voiceclient"
 )
@@ -51,6 +52,7 @@ type StartSessionInput struct {
 	RegistrarCandidates   []string
 	AKA                   sim.AKAProvider
 	DeliveryStore         messaging.DeliveryStore
+	Dispatcher            eventhost.Dispatcher
 	IMSI                  string
 	SMSC                  string
 	MCC                   string
@@ -127,6 +129,7 @@ func internalConfigFromIMS(ims IMSConfig, in StartSessionInput) Config {
 		UserAgent:             strings.TrimSpace(ims.UserAgent),
 		RegisterExpirySeconds: in.RegisterExpirySeconds,
 		DeliveryStore:         in.DeliveryStore,
+	Dispatcher:            in.Dispatcher,
 	}
 	if cfg.UserAgent == "" {
 		cfg.UserAgent = "SimAdmin VoWiFi"
