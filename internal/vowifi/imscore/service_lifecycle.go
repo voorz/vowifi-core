@@ -300,7 +300,10 @@ func (s *Service) handleInboundSIPMessage(ctx context.Context, req *sip.Request,
 		logger.Warn(fmt.Sprintf("[%s] 入站 IMS MESSAGE 处理失败", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
 			logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
-			logger.String("error", err.Error()))
+			logger.String("error", err.Error()),
+			logger.String("content_type", msgReq.ContentType),
+			logger.Int("body_len", len(msgReq.Body)),
+			logger.String("body_hex", fmt.Sprintf("%x", msgReq.Body)))
 		_ = tx.Respond(sip.NewResponseFromRequest(req, 500, "Internal Error", nil))
 		return
 	}

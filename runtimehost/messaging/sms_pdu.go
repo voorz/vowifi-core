@@ -1214,9 +1214,9 @@ func smsAddressOctets(digits int, toa byte) (int, error) {
 	if digits < 0 {
 		return 0, errors.New("sms address digit count is invalid")
 	}
-	if toa&0x70 == 0x50 {
-		return (digits*7 + 7) / 8, nil
-	}
+	// In 3GPP TS 23.040, the Address-Length field is always the number of
+	// useful semi-octets, regardless of address type (numeric or alphanumeric).
+	// The byte count is ceil(digits / 2) for all types.
 	return (digits + 1) / 2, nil
 }
 
