@@ -400,8 +400,7 @@ func (s *Service) attachMessaging(ctx context.Context, winningPCSCF string, reg 
 	}
 	s.inner = inner
 	s.msgSvc.SetSMSTransport(inner)
-	// TODO: SetUSSDTransport requires voiceclient.Client to implement messaging.USSDTransport
-	// s.msgSvc.SetUSSDTransport(inner)
+	s.msgSvc.SetUSSDTransport(voiceclient.NewUSSDTransport(inner))
 	logger.Info(fmt.Sprintf("[%s] IMS attachMessaging 成功", strings.TrimSpace(s.cfg.DeviceID)),
 		logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)))
 	return nil

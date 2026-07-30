@@ -118,24 +118,24 @@ func (s *Service) SendSMSWithOptions(ctx context.Context, to, text string, opts 
 }
 
 func (s *Service) SendUSSD(ctx context.Context, command string) (*messaging.USSDResult, error) {
-	if s == nil || s.inner == nil {
+	if s == nil || s.msgSvc == nil {
 		return nil, fmt.Errorf("IMS service not ready")
 	}
-	return s.inner.SendUSSD(ctx, command)
+	return s.msgSvc.SendUSSD(ctx, command)
 }
 
 func (s *Service) ContinueUSSD(ctx context.Context, sessionID, input string) (*messaging.USSDResult, error) {
-	if s == nil || s.inner == nil {
+	if s == nil || s.msgSvc == nil {
 		return nil, fmt.Errorf("IMS service not ready")
 	}
-	return s.inner.ContinueUSSD(ctx, sessionID, input)
+	return s.msgSvc.ContinueUSSD(ctx, sessionID, input)
 }
 
 func (s *Service) CancelUSSD(ctx context.Context, sessionID string) error {
-	if s == nil || s.inner == nil {
+	if s == nil || s.msgSvc == nil {
 		return fmt.Errorf("IMS service not ready")
 	}
-	return s.inner.CancelUSSD(ctx, sessionID)
+	return s.msgSvc.CancelUSSD(ctx, sessionID)
 }
 
 func (s *Service) Close(ctx context.Context) error {

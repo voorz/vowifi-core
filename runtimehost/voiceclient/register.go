@@ -491,3 +491,37 @@ func (c *Client) doTransaction(ctx context.Context, req *sip.Request, opts ...si
 		return nil, ctx.Err()
 	}
 }
+
+// doTransactionFinal sends a request and waits for a non-provisional (non-1xx) final response.
+// Used for INVITE and other dialog-initiating requests where provisional responses like
+// 100 Trying / 183 Session Progress are expected before the final 2xx/3xx/4xx/5xx/6xx.
+func (c *Client) doTransactionFinal(ctx context.Context, req *sip.Request) (*sip.Response, error) {
+	if c.secure != nil {
+		return c.secure.RoundTrip(ctx, req)
+	}
+	tx, err := c.client.TransactionRequest(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	var terminateOnce sync.Once
+	terminate := func() { terminateOnce.Do(func() { tx.Terminate() }) }
+	defer terminate()
+
+	for {
+		select {
+		case <-tx.Done():
+			if err := tx.Err(); err != nil {
+				return nil, fmt.Errorf("transaction ended: %w", err)
+			}
+			return nil, fmt.Errorf("transaction ended without a final response")
+		case res := <-tx.Responses():
+			if res.IsProvisional() {
+				continue
+			}
+			return res, nil
+		case <-ctx.Done():
+			terminate()
+			return nil, ctx.Err()
+		}
+	}
+}

@@ -12,6 +12,7 @@ import (
 
 	"github.com/voorz/sipgo/sip"
 	"github.com/google/uuid"
+	"github.com/voorz/swu-go/pkg/logger"
 )
 
 // AttachSecureMessaging binds the messaging client to an already-authenticated
@@ -110,7 +111,7 @@ func (t *secureMessagingTransport) RoundTrip(ctx context.Context, req *sip.Reque
 	if err != nil {
 		return nil, err
 	}
-	responses := make(chan *sip.Response, 1)
+	responses := make(chan *sip.Response, 16)
 	t.mu.Lock()
 	if _, exists := t.pending[key]; exists {
 		t.mu.Unlock()
@@ -131,13 +132,23 @@ func (t *secureMessagingTransport) RoundTrip(ctx context.Context, req *sip.Reque
 		return nil, writeErr
 	}
 
-	select {
-	case response := <-responses:
-		return response, nil
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	case <-t.done:
-		return nil, net.ErrClosed
+	logger.Debug(fmt.Sprintf("[%s] IMS SIP 发送", strings.TrimSpace(t.client.cfg.DeviceID)),
+		logger.String("trace_id", strings.TrimSpace(t.client.cfg.TraceID)),
+		logger.String("method", req.Method.String()),
+		logger.String("call_id", key))
+
+	for {
+		select {
+		case response := <-responses:
+			if response.IsProvisional() {
+				continue
+			}
+			return response, nil
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-t.done:
+			return nil, net.ErrClosed
+		}
 	}
 }
 
@@ -230,6 +241,11 @@ func (t *secureMessagingTransport) deliverResponse(response *sip.Response) {
 	if err != nil {
 		return
 	}
+	logger.Debug(fmt.Sprintf("[%s] IMS SIP 接收", strings.TrimSpace(t.client.cfg.DeviceID)),
+		logger.String("trace_id", strings.TrimSpace(t.client.cfg.TraceID)),
+		logger.Int("status_code", response.StatusCode),
+		logger.String("reason", response.Reason),
+		logger.String("call_id", key))
 	t.mu.Lock()
 	responses := t.pending[key]
 	t.mu.Unlock()
