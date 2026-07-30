@@ -130,14 +130,16 @@ var builtinDefaults = map[string]Preset{
 	"234-10": {ID: "giffgaff_23410", MCC: "234", MNC: "10", IMSTAC: 28673, IMSCellID: 12345678},
 	// EE UK host network (giffgaff roaming core); same O2/EE-style identifiers.
 	"234-33": {ID: "ee-uk", MCC: "234", MNC: "33", IMSTAC: 28673, IMSCellID: 12345678},
+	// Three UK (234/20): standard 3GPP ePDG FQDN, own network infrastructure.
+	"234-20": {ID: "three_uk_23420", MCC: "234", MNC: "20"},
 	// China Mobile (CMCC) — 3GPP standard ePDG FQDN.
 	"460-0": {ID: "cmcc_46000", MCC: "460", MNC: "0"},
 	// China Unicom — 3GPP standard ePDG FQDN.
 	"460-1": {ID: "china_unicom_46001", MCC: "460", MNC: "1"},
-// China Telecom — CDMA legacy MNC=3 and LTE MNC=11.
-// LTE SIMs use MNC 11; standard 3GPP ePDG FQDN is auto-generated.
-"460-3":  {ID: "china_telecom_46003", MCC: "460", MNC: "3"},
-"460-11": {ID: "china_telecom_46011", MCC: "460", MNC: "11"},
+	// China Telecom — CDMA legacy MNC=3 and LTE MNC=11.
+	// LTE SIMs use MNC 11; standard 3GPP ePDG FQDN is auto-generated.
+	"460-3":  {ID: "china_telecom_46003", MCC: "460", MNC: "3"},
+	"460-11": {ID: "china_telecom_46011", MCC: "460", MNC: "11"},
 }
 
 // blockedMCCs are entire countries where VoWiFi is policy-blocked regardless

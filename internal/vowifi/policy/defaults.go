@@ -153,35 +153,6 @@ func VodafoneUKTemplate() IMSRegisterTemplate {
 	}
 }
 
-// eeUKBaseTemplate 旧版多参数实现，排障期间使用但未成功，保留供回退
-/*
-func eeUKBaseTemplate() IMSRegisterTemplate {
-	return IMSRegisterTemplate{
-		ID:                                     "cmlink_23433",
-		SecAgreeMode:                           "on",
-		UserAgent:                              "iOS/26.6 iPhone",
-		FixedPANI:                              `IEEE-802.11; i-wlan-node-id="000000000000";country=GB`,
-		IncludePANI:                            true,
-		IncludePANIAuthenticated:                true,
-		StrictSecurityServerOffer:              true,
-		UsePlainDigestPlaceholder:              false,
-		EnableInitialRejectFallback:            false,
-		OmitRoute:                              false,
-		MinimalInitialHeaders:                  true,
-		ProbeInitialSecurityClientOnBadRequest: true,
-		SupportedHeader:                        "path,sec-agree,gruu",
-		ContactParamOrder: []string{
-			"access_type",
-			"audio",
-			"smsip",
-			"icsi_ref",
-			"sip_instance",
-		},
-		SecurityClientMechanisms: DefaultSecurityClientMechanisms(),
-		TransportModes:          []string{"tcp", "udp"},
-	}
-}
-*/
 // EEUKTemplate matches EE UK's (MCC 234 / MNC 30) standard Qualcomm IMS profile.
 // It applies to EE Direct, BT Mobile, and legacy Virgin Mobile (on EE network).
 func eeUKBaseTemplate(id string) IMSRegisterTemplate {
@@ -234,15 +205,26 @@ func CTEUKTemplate() IMSRegisterTemplate {
 	return eeUKBaseTemplate("cte_uk")
 }
 
-// ThreeUKTemplate matches three_uk_234020.yaml from v1.5.5.
+// ThreeUKTemplate 匹配 Three UK (PLMN 234/20)。
+// Three 的 P-CSCF 要求首次 REGISTER 即携带 sec-agree（缺失时返回 494），
+// 因此 Require 和 Proxy-Require 均设为 true。
+// UsePlainDigestPlaceholder 使首次 REGISTER 携带空 AKA Authorization 头，
+// 否则 P-CSCF 无法识别用户身份直接返回 403 Forbidden。
+// Security-Client 机制与已验证的 YAML 预设一致 (hmac-sha-1-96 / null)。
 func ThreeUKTemplate() IMSRegisterTemplate {
 	return IMSRegisterTemplate{
-		ID:                          "three_uk_234020",
-		AllowHeader:                 "INVITE,BYE,CANCEL,ACK,NOTIFY,UPDATE,PRACK,INFO,MESSAGE,OPTIONS",
-		ICSIRef:                     "urn%3Aurn-7%3A3gpp-service.ims.icsi.mmtel",
-		IncludePANIAuthenticated:    true,
-		StrictSecurityServerOffer:   true,
-		EnableInitialRejectFallback: false,
+		ID:                                     "three_uk_23420",
+		SecAgreeMode:                           "on",
+		RequireSecAgree:                        true,
+		ProxyRequireSecAgree:                   true,
+		UsePlainDigestPlaceholder:              true,
+		ProbeInitialSecurityClientOnBadRequest: true,
+		AllowHeader:                            "INVITE,BYE,CANCEL,ACK,NOTIFY,UPDATE,PRACK,INFO,MESSAGE,OPTIONS",
+		ICSIRef:                                "urn%3Aurn-7%3A3gpp-service.ims.icsi.mmtel",
+		IncludePANIAuthenticated:               true,
+		StrictSecurityServerOffer:              true,
+		EnableInitialRejectFallback:            false,
+		SupportedHeader:                        "path,sec-agree",
 		SecurityClientMechanisms: []IPSec3GPPSecurityMechanism{
 			{Alg: "hmac-sha-1-96", EAlg: "null", Prot: "esp", Mode: "trans"},
 		},

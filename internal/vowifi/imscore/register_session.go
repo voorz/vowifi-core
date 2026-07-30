@@ -312,6 +312,23 @@ func (s *registerSession) runInitialRegisterFlow(ctx context.Context) (*register
 				reason:     res.Reason,
 			}
 			return nil, lastErr
+		case sip.StatusSecurityAgreeRequired:
+			// RFC 3329: P-CSCF demands sec-agree. Unlike 421, 494 is a
+			// definitive sec-agree demand, so retry without requiring
+			// ProbeInitialSecurityClientOnBadRequest.
+			requireSecAgree := s.cfg.Template.RequireSecAgree || variant.requireSecAgree
+			proxyRequireSecAgree := s.cfg.Template.ProxyRequireSecAgree || variant.proxyRequireSecAgree
+			if !requireSecAgree || !proxyRequireSecAgree {
+				secAgreeRequiredByChallenge = true
+				s.logFSM("initial_register_sec_agree_retry", "494_sec_agree_required", i+1, len(variants), securityClientMechanismCount(s.cfg.Template), variant)
+				continue
+			}
+			lastErr = &registrarAttemptError{
+				pcscf:      s.cfg.PCSCFAddr,
+				statusCode: res.StatusCode,
+				reason:     res.Reason,
+			}
+			return nil, lastErr
 		default:
 			lastErr = &registrarAttemptError{
 				pcscf:      s.cfg.PCSCFAddr,
