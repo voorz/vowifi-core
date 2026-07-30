@@ -108,11 +108,13 @@ func (s *Service) SendSMS(ctx context.Context, peer, content string, parts []mes
 	return s.inner.SendSMS(ctx, peer, content, parts)
 }
 
-// SendSMSWithOptions is a stub that returns "not implemented" — the imscore
-// path does not support high-level SMS encoding; callers should pre-encode
-// parts and use SendSMS directly.
-func (s *Service) SendSMSWithOptions(_ context.Context, _, _ string, _ messaging.SendOptions) (messaging.SendOutcome, error) {
-	return messaging.SendOutcome{}, fmt.Errorf("SendSMSWithOptions not supported in imscore path")
+// SendSMSWithOptions delegates to msgSvc, which handles TPDU encoding and event dispatch.
+// This replaces the pre-encode bridge in vohive-next with a standard messaging path.
+func (s *Service) SendSMSWithOptions(ctx context.Context, to, text string, opts messaging.SendOptions) (messaging.SendOutcome, error) {
+	if s == nil || s.msgSvc == nil {
+		return messaging.SendOutcome{}, fmt.Errorf("IMS service not ready")
+	}
+	return s.msgSvc.SendSMSWithOptions(ctx, to, text, opts)
 }
 
 func (s *Service) SendUSSD(ctx context.Context, command string) (*messaging.USSDResult, error) {

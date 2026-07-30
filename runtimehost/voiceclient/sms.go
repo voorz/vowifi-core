@@ -9,6 +9,7 @@ import (
 	"github.com/voorz/sipgo/sip"
 	"github.com/google/uuid"
 
+	"github.com/voorz/swu-go/pkg/logger"
 	"github.com/voorz/vowifi-core/runtimehost/messaging"
 )
 
@@ -26,6 +27,11 @@ func (c *Client) SendSMS(ctx context.Context, peer, content string, parts []mess
 	if len(parts) == 0 {
 		return messaging.SendOutcome{}, fmt.Errorf("voiceclient: no parts to send")
 	}
+	logger.Info(fmt.Sprintf("[%s] IMS SMS 发送开始", strings.TrimSpace(c.cfg.DeviceID)),
+		logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
+		logger.String("device_id", strings.TrimSpace(c.cfg.DeviceID)),
+		logger.String("peer", peer),
+		logger.Int("parts", len(parts)))
 	serviceCentreURI, err := c.smsServiceCentreURI()
 	if err != nil {
 		return messaging.SendOutcome{}, err
@@ -51,11 +57,31 @@ func (c *Client) SendSMS(ctx context.Context, peer, content string, parts []mess
 
 		res, err := c.doTransaction(ctx, req)
 		if err != nil {
+			logger.Warn(fmt.Sprintf("[%s] IMS SMS 发送失败", strings.TrimSpace(c.cfg.DeviceID)),
+				logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
+				logger.String("device_id", strings.TrimSpace(c.cfg.DeviceID)),
+				logger.String("peer", peer),
+				logger.Int("part", partNo),
+				logger.String("error", err.Error()))
 			return messaging.SendOutcome{}, fmt.Errorf("voiceclient: submit part %d: %w", partNo, err)
 		}
 		if res.StatusCode != 202 {
+			logger.Warn(fmt.Sprintf("[%s] IMS SMS 响应异常", strings.TrimSpace(c.cfg.DeviceID)),
+				logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
+				logger.String("device_id", strings.TrimSpace(c.cfg.DeviceID)),
+				logger.String("peer", peer),
+				logger.Int("part", partNo),
+				logger.Int("sip_code", res.StatusCode),
+				logger.String("reason", res.Reason))
 			return messaging.SendOutcome{}, fmt.Errorf("voiceclient: submit part %d: unexpected response %d %s", partNo, res.StatusCode, res.Reason)
 		}
+		logger.Info(fmt.Sprintf("[%s] IMS SMS 分片已提交", strings.TrimSpace(c.cfg.DeviceID)),
+			logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
+			logger.String("device_id", strings.TrimSpace(c.cfg.DeviceID)),
+			logger.String("peer", peer),
+			logger.Int("part", partNo),
+			logger.Int("parts_total", len(parts)),
+			logger.Int("sip_code", res.StatusCode))
 
 		if c.cfg.DeliveryStore != nil {
 			callID := req.CallID().Value()
@@ -65,6 +91,12 @@ func (c *Client) SendSMS(ctx context.Context, peer, content string, parts []mess
 		}
 	}
 
+	logger.Info(fmt.Sprintf("[%s] IMS SMS 发送完成", strings.TrimSpace(c.cfg.DeviceID)),
+		logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
+		logger.String("device_id", strings.TrimSpace(c.cfg.DeviceID)),
+		logger.String("peer", peer),
+		logger.Int("parts_total", len(parts)),
+		logger.String("message_id", messageID))
 	return messaging.SendOutcome{
 		MessageID:     messageID,
 		PartsTotal:    len(parts),
@@ -197,4 +229,88 @@ func (c *Client) incomingMessageResponse(req *sip.Request) *sip.Response {
 	}
 
 	return sip.NewResponseFromRequest(req, 200, "OK", nil)
+}
+
+// SendSMSPart implements messaging.SMSTransport by sending a single SMS part via SIP MESSAGE.
+// This method is called by messaging.Service.SendSMSWithOptions() after segmenting the message.
+func (c *Client) SendSMSPart(ctx context.Context, req messaging.SMSSendRequest) (messaging.SMSSendResult, error) {
+	part := req.Part
+	logger.Info(fmt.Sprintf("[%s] IMS SMS 分片发送", strings.TrimSpace(c.cfg.DeviceID)),
+		logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
+		logger.String("device_id", strings.TrimSpace(c.cfg.DeviceID)),
+		logger.String("peer", req.Peer),
+		logger.Int("part_no", part.PartNo),
+		logger.Int("total_parts", part.TotalParts))
+	tpdu, err := messaging.BuildSMSSubmitTPDU(req.Peer, part, byte(req.Part.PartNo))
+	if err != nil {
+		return messaging.SMSSendResult{State: "failed", ErrorText: fmt.Sprintf("TPDU encode: %v", err)}, err
+	}
+	rpData, err := messaging.BuildSMSRPData(byte(req.Part.PartNo), c.cfg.SMSC, tpdu)
+	if err != nil {
+		return messaging.SMSSendResult{State: "failed", ErrorText: fmt.Sprintf("RP-DATA encode: %v", err)}, err
+	}
+	
+	smscURI, err := c.smsServiceCentreURI()
+	if err != nil {
+		return messaging.SMSSendResult{State: "failed", ErrorText: fmt.Sprintf("SMSC URI: %v", err)}, err
+	}
+	
+	sipReq, err := c.newRequest(sip.MESSAGE, smscURI, false)
+	if err != nil {
+		return messaging.SMSSendResult{State: "failed", ErrorText: fmt.Sprintf("SIP request: %v", err)}, err
+	}
+	
+	sipReq.AppendHeader(sip.NewHeader("Content-Type", messaging.IMS3GPPSMSContentType))
+	sipReq.AppendHeader(sip.NewHeader("P-Preferred-Identity", "<"+c.cfg.PublicURI+">"))
+	sipReq.AppendHeader(sip.NewHeader("P-Asserted-Identity", "<"+c.cfg.PublicURI+">"))
+	sipReq.SetBody(rpData)
+	
+	res, err := c.doTransaction(ctx, sipReq)
+	if err != nil {
+		logger.Warn(fmt.Sprintf("[%s] IMS SMS 分片发送失败", strings.TrimSpace(c.cfg.DeviceID)),
+			logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
+			logger.String("device_id", strings.TrimSpace(c.cfg.DeviceID)),
+			logger.String("peer", req.Peer),
+			logger.Int("part_no", part.PartNo),
+			logger.String("error", err.Error()))
+		return messaging.SMSSendResult{
+			CallID:  sipReq.CallID().Value(),
+			RPMR:    req.Part.PartNo,
+			State:   "failed",
+			SIPCode: 0,
+			ErrorText: err.Error(),
+		}, err
+	}
+	
+	result := messaging.SMSSendResult{
+		CallID: sipReq.CallID().Value(),
+		RPMR:   req.Part.PartNo,
+		SIPCode: res.StatusCode,
+	}
+	
+	if res.StatusCode < 200 || res.StatusCode >= 300 {
+		result.State = "failed"
+		result.ErrorText = res.Reason
+		logger.Warn(fmt.Sprintf("[%s] IMS SMS 分片响应异常", strings.TrimSpace(c.cfg.DeviceID)),
+			logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
+			logger.String("device_id", strings.TrimSpace(c.cfg.DeviceID)),
+			logger.String("peer", req.Peer),
+			logger.Int("part_no", part.PartNo),
+			logger.Int("sip_code", res.StatusCode),
+			logger.String("reason", res.Reason))
+		return result, fmt.Errorf("SIP MESSAGE failed: %d %s", res.StatusCode, res.Reason)
+	}
+
+	result.State = "sent"
+	if res.StatusCode == 202 {
+		result.State = "accepted"
+	}
+	logger.Info(fmt.Sprintf("[%s] IMS SMS 分片已提交", strings.TrimSpace(c.cfg.DeviceID)),
+		logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
+		logger.String("device_id", strings.TrimSpace(c.cfg.DeviceID)),
+		logger.String("peer", req.Peer),
+		logger.Int("part_no", part.PartNo),
+		logger.Int("sip_code", res.StatusCode),
+		logger.String("state", result.State))
+	return result, nil
 }
