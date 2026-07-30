@@ -165,6 +165,12 @@ type StartRequest struct {
 	Dispatch      interface{}
 	BeforeStart   func(context.Context, SessionConfig) error
 	ShouldRun     func() bool
+
+	// OnTunnelDown is called when the SWu tunnel is torn down unexpectedly
+	// (e.g. IKE SA rekey failures exceeding rekeyMaxFail). The runtimehost
+	// layer wires this to swu.Session.OnSessionDown so the caller (vohive-next)
+	// can trigger automatic recovery via ScheduleDesiredRecover.
+	OnTunnelDown func(deviceID string)
 }
 
 type ModemAccess interface {

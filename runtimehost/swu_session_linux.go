@@ -139,6 +139,14 @@ func (i *Instance) startSWuSession(ctx context.Context, req StartRequest, epdgIP
 		}
 
 		session := externalswu.NewSession(cfg, logger.Get())
+		// Wire OnSessionDown so unexpected tunnel teardown (e.g. rekey
+		// failures) can trigger automatic recovery in the caller layer.
+		if req.OnTunnelDown != nil {
+			cb := req.OnTunnelDown // capture to avoid aliasing across retries
+			session.OnSessionDown = func() {
+				cb(i.deviceID)
+			}
+		}
 		errCh := make(chan error, 1)
 		go func() { errCh <- session.Connect(ctx) }()
 
