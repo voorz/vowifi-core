@@ -22,6 +22,7 @@ import (
 	"github.com/voorz/vowifi-core/internal/vowifi/imsheaders"
 	"github.com/voorz/vowifi-core/internal/vowifi/ipsec3gpp"
 	"github.com/voorz/vowifi-core/internal/vowifi/policy"
+	"github.com/voorz/vowifi-core/runtimehost/eventhost"
 	"github.com/voorz/vowifi-core/runtimehost/simauth"
 	"github.com/voorz/vowifi-core/runtimehost/voiceclient"
 )
@@ -497,6 +498,25 @@ func finalizeRegisterSuccess(cfg Config, state registerState, res *sip.Response)
 			serviceRoutes = append(serviceRoutes, strings.TrimSpace(header.Value()))
 		}
 	}
+	// Parse P-Associated-URI to learn the local phone number (MSISDN).
+	// This is the authoritative network-assigned number, more reliable than
+	// USIM EFmsisdn which is often empty or stale on MVNO SIMs.
+	msisdn, rawAssociatedURI := extractMSISDNFromPAssociatedURI(res)
+	if msisdn != "" {
+		logger.Debug(fmt.Sprintf("[%s] 成功从 P-Associated-URI 获取到本机号码", strings.TrimSpace(cfg.DeviceID)),
+			logger.String("trace_id", strings.TrimSpace(cfg.TraceID)),
+			logger.String("device_id", strings.TrimSpace(cfg.DeviceID)),
+			logger.String("msisdn", rawAssociatedURI))
+		if cfg.Dispatcher != nil {
+			cfg.Dispatcher.Dispatch(context.Background(), eventhost.LocalNumberLearned{
+				DevID:  cfg.DeviceID,
+				IMSI:   cfg.IMSI,
+				Number: msisdn,
+				Source: "register",
+			})
+		}
+	}
+
 	return &registerResult{
 		pcscfAddr:      cfg.PCSCFAddr,
 		expiresSeconds: expires,
@@ -507,6 +527,110 @@ func finalizeRegisterSuccess(cfg Config, state registerState, res *sip.Response)
 		ipsecPolicy:    state.ipsecPolicy,
 		transport:      state.transport,
 	}, nil
+}
+
+// extractMSISDNFromPAssociatedURI parses the P-Associated-URI header from a
+// REGISTER 200 OK response and extracts the phone number (MSISDN).
+// Returns (msisdn, rawURI) where msisdn is the phone number (e.g. "+447385201189")
+// and rawURI is the full URI for logging (e.g. "+447385201189@ims.mnc015.mcc234.3gppnetwork.org").
+// Returns ("", "") if the header is absent or no phone number can be extracted.
+func extractMSISDNFromPAssociatedURI(res *sip.Response) (string, string) {
+	if res == nil {
+		return "", ""
+	}
+	for _, h := range res.GetHeaders("P-Associated-URI") {
+		if h == nil {
+			continue
+		}
+		value := strings.TrimSpace(h.Value())
+		if value == "" {
+			continue
+		}
+		for _, part := range splitSIPHeaderComma(value) {
+			uri := extractAngleBracketURI(part)
+			if uri == "" {
+				continue
+			}
+			msisdn, raw := sipURIToMSISDN(uri)
+			if msisdn != "" {
+				return msisdn, raw
+			}
+		}
+	}
+	return "", ""
+}
+
+// splitSIPHeaderComma splits a SIP header value by commas, respecting
+// angle-bracket quoting so that commas inside <...> are not split.
+func splitSIPHeaderComma(value string) []string {
+	var out []string
+	var cur strings.Builder
+	inAngle := false
+	for _, r := range value {
+		switch {
+		case r == '<':
+			inAngle = true
+			cur.WriteRune(r)
+		case r == '>':
+			inAngle = false
+			cur.WriteRune(r)
+		case r == ',' && !inAngle:
+			if part := strings.TrimSpace(cur.String()); part != "" {
+				out = append(out, part)
+			}
+			cur.Reset()
+		default:
+			cur.WriteRune(r)
+		}
+	}
+	if part := strings.TrimSpace(cur.String()); part != "" {
+		out = append(out, part)
+	}
+	return out
+}
+
+// extractAngleBracketURI extracts the URI from inside angle brackets.
+// e.g. `"User" <sip:+44@ims>` → `sip:+44@ims`.
+// Falls back to the trimmed input if no brackets are present.
+func extractAngleBracketURI(value string) string {
+	value = strings.TrimSpace(value)
+	if start := strings.IndexByte(value, '<'); start >= 0 {
+		if end := strings.IndexByte(value[start+1:], '>'); end >= 0 {
+			return strings.TrimSpace(value[start+1 : start+1+end])
+		}
+	}
+	return value
+}
+
+// sipURIToMSISDN extracts the phone number from a SIP or TEL URI.
+// Returns (msisdn, rawURI) where msisdn is just the phone number
+// and rawURI is the user@domain part (for logging).
+func sipURIToMSISDN(uri string) (string, string) {
+	uri = strings.TrimSpace(uri)
+	lower := strings.ToLower(uri)
+	if strings.HasPrefix(lower, "sip:") {
+		uri = strings.TrimSpace(uri[4:])
+	} else if strings.HasPrefix(lower, "tel:") {
+		uri = strings.TrimSpace(uri[4:])
+	}
+	// rawURI = user@domain (or just user if no @)
+	rawURI := uri
+	if idx := strings.IndexByte(uri, ';'); idx >= 0 {
+		rawURI = uri[:idx]
+	}
+	// Extract user part (before @ or ;)
+	if idx := strings.IndexAny(uri, "@;"); idx >= 0 {
+		uri = uri[:idx]
+	}
+	uri = strings.TrimSpace(strings.Trim(uri, "<>\""))
+	if uri == "" {
+		return "", ""
+	}
+	// Only accept if it looks like a phone number
+	if uri[0] == '+' || (uri[0] >= '0' && uri[0] <= '9') {
+		return uri, rawURI
+	}
+	return "", ""
 }
 
 func doRegisterTransaction(ctx context.Context, client *sipgo.Client, req *sip.Request, opts ...sipgo.ClientRequestOption) (*sip.Response, error) {
