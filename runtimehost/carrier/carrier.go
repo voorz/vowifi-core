@@ -134,8 +134,10 @@ var builtinDefaults = map[string]Preset{
 	"460-0": {ID: "cmcc_46000", MCC: "460", MNC: "0"},
 	// China Unicom — 3GPP standard ePDG FQDN.
 	"460-1": {ID: "china_unicom_46001", MCC: "460", MNC: "1"},
-	// China Telecom — 3GPP standard ePDG FQDN.
-	"460-3": {ID: "china_telecom_46003", MCC: "460", MNC: "3"},
+// China Telecom — CDMA legacy MNC=3 and LTE MNC=11.
+// LTE SIMs use MNC 11; standard 3GPP ePDG FQDN is auto-generated.
+"460-3":  {ID: "china_telecom_46003", MCC: "460", MNC: "3"},
+"460-11": {ID: "china_telecom_46011", MCC: "460", MNC: "11"},
 }
 
 // blockedMCCs are entire countries where VoWiFi is policy-blocked regardless
