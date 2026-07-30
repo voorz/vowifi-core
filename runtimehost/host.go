@@ -171,6 +171,38 @@ type StartRequest struct {
 	// layer wires this to swu.Session.OnSessionDown so the caller (vohive-next)
 	// can trigger automatic recovery via ScheduleDesiredRecover.
 	OnTunnelDown func(deviceID string)
+
+	// OnIMSReady is called after IMS REGISTER succeeds and the secure
+	// messaging channel is attached. It gives the caller (vohive-next)
+	// access to the voiceclient.Client so it can create an IMSOutboundAgent
+	// and register it with the voicehost.Gateway for VoWiFi voice calls.
+	OnIMSReady func(client *voiceclient.Client, deviceID string)
+
+	// OnInboundCall is called when an inbound INVITE arrives from the IMS
+	// network (an incoming VoWiFi call). The caller (vohive-next) forwards
+	// the call to Linphone and returns the final response (status code +
+	// SDP from Linphone). nil disables inbound call handling (IMS INVITE
+	// gets 486 Busy Here).
+	OnInboundCall func(ctx context.Context, req InboundCallRequest) (InboundCallResponse, error)
+}
+
+// InboundCallRequest carries the essential fields of an inbound IMS INVITE
+// to the caller layer (vohive-next), which forwards it to Linphone.
+type InboundCallRequest struct {
+	DeviceID  string
+	CallID    string
+	CallerURI string
+	CalleeURI string
+	RemoteSDP []byte
+	Headers   map[string]string
+}
+
+// InboundCallResponse is returned by the OnInboundCall callback. The
+// StatusCode and SDP are sent as the final response to the IMS INVITE.
+type InboundCallResponse struct {
+	StatusCode int
+	Reason     string
+	SDP        []byte
 }
 
 type ModemAccess interface {
@@ -924,6 +956,30 @@ func (i *Instance) runStagedPipeline(ctx context.Context, req StartRequest, gene
 		return
 	}
 	i.notifyObserversForGeneration(ctx, generation)
+
+	// Notify caller that IMS is ready for voice agent setup.
+	if req.OnIMSReady != nil {
+		if vc := svc.VoiceClient(); vc != nil {
+			req.OnIMSReady(vc, i.deviceID)
+		}
+	}
+
+	// Wire inbound call handler for VoWiFi incoming calls (V2b/V2c).
+	if req.OnInboundCall != nil {
+		svc.SetInboundCallHandler(func(ctx context.Context, deviceID, callID, callerURI, calleeURI string, remoteSDP []byte) (int, string, []byte, error) {
+			resp, err := req.OnInboundCall(ctx, InboundCallRequest{
+				DeviceID:   deviceID,
+				CallID:     callID,
+				CallerURI:  callerURI,
+				CalleeURI:  calleeURI,
+				RemoteSDP:  remoteSDP,
+			})
+			if err != nil {
+				return 0, "", nil, err
+			}
+			return resp.StatusCode, resp.Reason, resp.SDP, nil
+		})
+	}
 
 	// Step 2: SMS ready (attachMessaging succeeded inside svc.Start)
 	if !i.updateStateForGeneration(generation, func(s *State) {

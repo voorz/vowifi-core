@@ -473,6 +473,61 @@ func (c *Client) Close(ctx context.Context) error {
 	return c.shutdownSIPStack()
 }
 
+// SIPClient returns the underlying sipgo.Client. This is used by
+// voicehost.IMSOutboundAgent to send INVITE/BYE/CANCEL requests
+// through the same SWu-tunnel-bound transport already configured
+// by the IMS REGISTER flow.
+func (c *Client) SIPClient() *sipgo.Client {
+	if c == nil {
+		return nil
+	}
+	return c.client
+}
+
+// SIPUA returns the underlying sipgo.UserAgent.
+func (c *Client) SIPUA() *sipgo.UserAgent {
+	if c == nil {
+		return nil
+	}
+	return c.ua
+}
+
+// PublicURI returns the registered IMS public identity (IMPU).
+func (c *Client) PublicURI() string {
+	if c == nil {
+		return ""
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.basePublicURI
+}
+
+// PrivateID returns the IMS private identity (IMPI).
+func (c *Client) PrivateID() string {
+	if c == nil {
+		return ""
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.basePrivateID
+}
+
+// HomeDomain returns the IMS home domain.
+func (c *Client) HomeDomain() string {
+	if c == nil {
+		return ""
+	}
+	return c.cfg.HomeDomain
+}
+
+// LocalIP returns the tunnel's virtual IP used as the SIP contact address.
+func (c *Client) LocalIP() net.IP {
+	if c == nil {
+		return nil
+	}
+	return c.cfg.LocalIP
+}
+
 func (c *Client) shutdownSIPStack() error {
 	if c.secure != nil {
 		_ = c.secure.Close()

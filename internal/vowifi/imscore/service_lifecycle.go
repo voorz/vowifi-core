@@ -233,6 +233,67 @@ func (s *Service) startInboundSIPServer(ctx context.Context, tcpLn net.Listener,
 	srv.OnMessage(func(req *sip.Request, tx sip.ServerTransaction) {
 		s.handleInboundSIPMessage(ctx, req, tx)
 	})
+	// VoWiFi inbound voice call handling (V2b/V2c).
+	// Phase 1: acknowledge inbound INVITE/BYE/CANCEL so IMS doesn't
+	// retransmit indefinitely. Full call forwarding to Linphone will
+	// be implemented in a later phase via OnInboundCall callback.
+	srv.OnInvite(func(req *sip.Request, tx sip.ServerTransaction) {
+		callID := ""
+		if c := req.CallID(); c != nil {
+			callID = strings.TrimSpace(c.Value())
+		}
+		_ = tx.Respond(sip.NewResponseFromRequest(req, 100, "Trying", nil))
+
+		handler := s.cfg.OnInboundCall
+		if handler == nil {
+			logger.Info(fmt.Sprintf("[%s] IMS 入站 INVITE（无回调，回复 486）", strings.TrimSpace(s.cfg.DeviceID)),
+				logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+				logger.String("call_id", callID))
+			_ = tx.Respond(sip.NewResponseFromRequest(req, 486, "Busy Here", nil))
+			return
+		}
+
+		callerURI := ""
+		if from := req.From(); from != nil {
+			callerURI = strings.TrimSpace(from.Address.String())
+		}
+		calleeURI := ""
+		if to := req.To(); to != nil {
+			calleeURI = strings.TrimSpace(to.Address.String())
+		}
+
+		logger.Info(fmt.Sprintf("[%s] IMS 入站 INVITE，转发到回调", strings.TrimSpace(s.cfg.DeviceID)),
+			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+			logger.String("call_id", callID),
+			logger.String("caller", callerURI),
+			logger.String("callee", calleeURI))
+
+		statusCode, reason, sdp, err := handler(ctx, s.cfg.DeviceID, callID, callerURI, calleeURI, append([]byte(nil), req.Body()...))
+		if err != nil {
+			logger.Warn(fmt.Sprintf("[%s] IMS 入站 INVITE 回调失败", strings.TrimSpace(s.cfg.DeviceID)),
+				logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+				logger.String("call_id", callID),
+				logger.String("error", err.Error()))
+			_ = tx.Respond(sip.NewResponseFromRequest(req, 500, "Internal Server Error", nil))
+			return
+		}
+		if statusCode < 100 {
+			statusCode = 486
+		}
+		if strings.TrimSpace(reason) == "" {
+			reason = "OK"
+		}
+		_ = tx.Respond(sip.NewResponseFromRequest(req, statusCode, reason, sdp))
+	})
+	srv.OnBye(func(req *sip.Request, tx sip.ServerTransaction) {
+		_ = tx.Respond(sip.NewResponseFromRequest(req, 200, "OK", nil))
+	})
+	srv.OnCancel(func(req *sip.Request, tx sip.ServerTransaction) {
+		_ = tx.Respond(sip.NewResponseFromRequest(req, 200, "OK", nil))
+	})
+	srv.OnRequest("ACK", func(req *sip.Request, tx sip.ServerTransaction) {
+		// ACK has no response in a transactionless model; just absorb it.
+	})
 	s.sipServer = srv
 
 	if tcpLn != nil {

@@ -1,6 +1,7 @@
 package imscore
 
 import (
+	"context"
 	"net"
 
 	"github.com/voorz/vowifi-core/engine/sim"
@@ -48,4 +49,16 @@ type Config struct {
 
 	DeliveryStore   messaging.DeliveryStore
 	Dispatcher       eventhost.Dispatcher
+
+	// OnIMSReady is called after IMS REGISTER succeeds and the secure
+	// messaging channel is attached. It gives the caller access to the
+	// voiceclient.Client so it can create a voicehost.IMSOutboundAgent
+	// for VoWiFi voice calls.
+	OnIMSReady func(client *voiceclient.Client, deviceID string)
+
+	// OnInboundCall is called when an inbound INVITE arrives from the IMS
+	// network. Uses primitive types to avoid a circular dependency on
+	// runtimehost.InboundCallRequest. The runtimehost layer adapts this
+	// to its typed callback.
+	OnInboundCall func(ctx context.Context, deviceID, callID, callerURI, calleeURI string, remoteSDP []byte) (statusCode int, reason string, sdp []byte, err error)
 }

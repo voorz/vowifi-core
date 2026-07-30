@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/voorz/vowifi-core/internal/vowifi/policy"
@@ -17,6 +18,7 @@ import (
 type Service struct {
 	imsCfg IMSConfig
 	cfg    Config
+	mu     sync.Mutex
 
 	registered      bool
 	expiresSeconds  int
@@ -106,6 +108,31 @@ func (s *Service) SendSMS(ctx context.Context, peer, content string, parts []mes
 		return messaging.SendOutcome{}, fmt.Errorf("IMS service not ready")
 	}
 	return s.inner.SendSMS(ctx, peer, content, parts)
+}
+
+// VoiceClient returns the underlying voiceclient.Client created during
+// attachMessaging. Returns nil if IMS has not been registered yet.
+// Used by runtimehost.runStagedPipeline to wire OnIMSReady callback
+// for VoWiFi voice agent setup.
+func (s *Service) VoiceClient() *voiceclient.Client {
+	if s == nil {
+		return nil
+	}
+	return s.inner
+}
+
+// SetInboundCallHandler sets the callback invoked when an inbound IMS
+// INVITE arrives (an incoming VoWiFi call). The handler returns the
+// final status code, reason phrase, and SDP body to send as the SIP
+// response. Uses primitive types to avoid a circular dependency on
+// runtimehost.InboundCallRequest.
+func (s *Service) SetInboundCallHandler(f func(ctx context.Context, deviceID, callID, callerURI, calleeURI string, remoteSDP []byte) (int, string, []byte, error)) {
+	if s == nil {
+		return
+	}
+	s.mu.Lock()
+	s.cfg.OnInboundCall = f
+	s.mu.Unlock()
 }
 
 // SendSMSWithOptions delegates to msgSvc, which handles TPDU encoding and event dispatch.
