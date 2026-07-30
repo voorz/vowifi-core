@@ -124,14 +124,40 @@ func (s *Service) VoiceClient() *voiceclient.Client {
 // SetInboundCallHandler sets the callback invoked when an inbound IMS
 // INVITE arrives (an incoming VoWiFi call). The handler returns the
 // final status code, reason phrase, and SDP body to send as the SIP
-// response. Uses primitive types to avoid a circular dependency on
+// response. The respond function lets the handler send provisional
+// responses (e.g. 180 Ringing) before returning the final response.
+// Uses primitive types to avoid a circular dependency on
 // runtimehost.InboundCallRequest.
-func (s *Service) SetInboundCallHandler(f func(ctx context.Context, deviceID, callID, callerURI, calleeURI string, remoteSDP []byte) (int, string, []byte, error)) {
+func (s *Service) SetInboundCallHandler(f func(ctx context.Context, deviceID, callID, callerURI, calleeURI string, remoteSDP []byte, respond func(int, string, []byte) error) (int, string, []byte, error)) {
 	if s == nil {
 		return
 	}
 	s.mu.Lock()
 	s.cfg.OnInboundCall = f
+	s.mu.Unlock()
+}
+
+// SetInboundByeHandler sets the callback invoked when an inbound IMS BYE
+// arrives (the remote party hangs up an established call). The caller
+// should forward the BYE to Linphone and clean up any call resources.
+func (s *Service) SetInboundByeHandler(f func(ctx context.Context, deviceID, callID string) error) {
+	if s == nil {
+		return
+	}
+	s.mu.Lock()
+	s.cfg.OnInboundBye = f
+	s.mu.Unlock()
+}
+
+// SetInboundCancelHandler sets the callback invoked when an inbound IMS
+// CANCEL arrives (the remote party cancels a ringing call). The caller
+// should forward the CANCEL to Linphone and clean up any call resources.
+func (s *Service) SetInboundCancelHandler(f func(ctx context.Context, deviceID, callID string) error) {
+	if s == nil {
+		return
+	}
+	s.mu.Lock()
+	s.cfg.OnInboundCancel = f
 	s.mu.Unlock()
 }
 

@@ -59,6 +59,20 @@ type Config struct {
 	// OnInboundCall is called when an inbound INVITE arrives from the IMS
 	// network. Uses primitive types to avoid a circular dependency on
 	// runtimehost.InboundCallRequest. The runtimehost layer adapts this
-	// to its typed callback.
-	OnInboundCall func(ctx context.Context, deviceID, callID, callerURI, calleeURI string, remoteSDP []byte) (statusCode int, reason string, sdp []byte, err error)
+	// to its typed callback. The respond function allows the handler to
+	// send provisional responses (e.g. 180 Ringing) before the final
+	// response is returned.
+	OnInboundCall func(ctx context.Context, deviceID, callID, callerURI, calleeURI string, remoteSDP []byte, respond func(statusCode int, reason string, sdp []byte) error) (statusCode int, reason string, sdp []byte, err error)
+
+	// OnInboundBye is called when an inbound BYE arrives from the IMS
+	// network (the remote party hangs up). The caller (vohive-next) should
+	// forward the BYE to Linphone and close any associated relay. nil
+	// disables BYE forwarding (IMS BYE gets 200 OK with no action).
+	OnInboundBye func(ctx context.Context, deviceID, callID string) error
+
+	// OnInboundCancel is called when an inbound CANCEL arrives from the
+	// IMS network (the remote party cancels the call before it's answered).
+	// The caller (vohive-next) should forward the CANCEL to Linphone and
+	// clean up any associated relay. nil disables CANCEL forwarding.
+	OnInboundCancel func(ctx context.Context, deviceID, callID string) error
 }

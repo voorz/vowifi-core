@@ -268,7 +268,13 @@ func (s *Service) startInboundSIPServer(ctx context.Context, tcpLn net.Listener,
 			logger.String("caller", callerURI),
 			logger.String("callee", calleeURI))
 
-		statusCode, reason, sdp, err := handler(ctx, s.cfg.DeviceID, callID, callerURI, calleeURI, append([]byte(nil), req.Body()...))
+		// respondFunc allows the handler to send provisional responses
+		// (e.g. 180 Ringing) before returning the final response.
+		respondFunc := func(statusCode int, reason string, sdp []byte) error {
+			return tx.Respond(sip.NewResponseFromRequest(req, statusCode, reason, sdp))
+		}
+
+		statusCode, reason, sdp, err := handler(ctx, s.cfg.DeviceID, callID, callerURI, calleeURI, append([]byte(nil), req.Body()...), respondFunc)
 		if err != nil {
 			logger.Warn(fmt.Sprintf("[%s] IMS 入站 INVITE 回调失败", strings.TrimSpace(s.cfg.DeviceID)),
 				logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
@@ -286,9 +292,39 @@ func (s *Service) startInboundSIPServer(ctx context.Context, tcpLn net.Listener,
 		_ = tx.Respond(sip.NewResponseFromRequest(req, statusCode, reason, sdp))
 	})
 	srv.OnBye(func(req *sip.Request, tx sip.ServerTransaction) {
+		callID := ""
+		if c := req.CallID(); c != nil {
+			callID = strings.TrimSpace(c.Value())
+		}
+		if byeHandler := s.cfg.OnInboundBye; byeHandler != nil {
+			logger.Info(fmt.Sprintf("[%s] IMS 入站 BYE，转发到回调", strings.TrimSpace(s.cfg.DeviceID)),
+				logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+				logger.String("call_id", callID))
+			if err := byeHandler(ctx, s.cfg.DeviceID, callID); err != nil {
+				logger.Warn(fmt.Sprintf("[%s] IMS 入站 BYE 回调失败", strings.TrimSpace(s.cfg.DeviceID)),
+					logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+					logger.String("call_id", callID),
+					logger.String("error", err.Error()))
+			}
+		}
 		_ = tx.Respond(sip.NewResponseFromRequest(req, 200, "OK", nil))
 	})
 	srv.OnCancel(func(req *sip.Request, tx sip.ServerTransaction) {
+		callID := ""
+		if c := req.CallID(); c != nil {
+			callID = strings.TrimSpace(c.Value())
+		}
+		if cancelHandler := s.cfg.OnInboundCancel; cancelHandler != nil {
+			logger.Info(fmt.Sprintf("[%s] IMS 入站 CANCEL，转发到回调", strings.TrimSpace(s.cfg.DeviceID)),
+				logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+				logger.String("call_id", callID))
+			if err := cancelHandler(ctx, s.cfg.DeviceID, callID); err != nil {
+				logger.Warn(fmt.Sprintf("[%s] IMS 入站 CANCEL 回调失败", strings.TrimSpace(s.cfg.DeviceID)),
+					logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+					logger.String("call_id", callID),
+					logger.String("error", err.Error()))
+			}
+		}
 		_ = tx.Respond(sip.NewResponseFromRequest(req, 200, "OK", nil))
 	})
 	srv.OnRequest("ACK", func(req *sip.Request, tx sip.ServerTransaction) {

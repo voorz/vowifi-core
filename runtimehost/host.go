@@ -184,6 +184,16 @@ type StartRequest struct {
 	// SDP from Linphone). nil disables inbound call handling (IMS INVITE
 	// gets 486 Busy Here).
 	OnInboundCall func(ctx context.Context, req InboundCallRequest) (InboundCallResponse, error)
+
+	// OnInboundBye is called when an inbound BYE arrives from the IMS
+	// network (the remote party hangs up). The caller should forward the
+	// BYE to Linphone and clean up call resources.
+	OnInboundBye func(ctx context.Context, deviceID, callID string) error
+
+	// OnInboundCancel is called when an inbound CANCEL arrives from the
+	// IMS network (the remote party cancels a ringing call). The caller
+	// should forward the CANCEL to Linphone and clean up call resources.
+	OnInboundCancel func(ctx context.Context, deviceID, callID string) error
 }
 
 // InboundCallRequest carries the essential fields of an inbound IMS INVITE
@@ -195,6 +205,12 @@ type InboundCallRequest struct {
 	CalleeURI string
 	RemoteSDP []byte
 	Headers   map[string]string
+
+	// Respond, if set, allows the handler to send provisional responses
+	// (e.g. 180 Ringing) to the IMS network before returning the final
+	// response. Set by the imscore layer when the ServerTransaction is
+	// available.
+	Respond func(statusCode int, reason string, sdp []byte) error
 }
 
 // InboundCallResponse is returned by the OnInboundCall callback. The
@@ -966,19 +982,28 @@ func (i *Instance) runStagedPipeline(ctx context.Context, req StartRequest, gene
 
 	// Wire inbound call handler for VoWiFi incoming calls (V2b/V2c).
 	if req.OnInboundCall != nil {
-		svc.SetInboundCallHandler(func(ctx context.Context, deviceID, callID, callerURI, calleeURI string, remoteSDP []byte) (int, string, []byte, error) {
+		svc.SetInboundCallHandler(func(ctx context.Context, deviceID, callID, callerURI, calleeURI string, remoteSDP []byte, respond func(int, string, []byte) error) (int, string, []byte, error) {
 			resp, err := req.OnInboundCall(ctx, InboundCallRequest{
-				DeviceID:   deviceID,
-				CallID:     callID,
-				CallerURI:  callerURI,
-				CalleeURI:  calleeURI,
-				RemoteSDP:  remoteSDP,
+				DeviceID:  deviceID,
+				CallID:    callID,
+				CallerURI: callerURI,
+				CalleeURI: calleeURI,
+				RemoteSDP: remoteSDP,
+				Respond:   respond,
 			})
 			if err != nil {
 				return 0, "", nil, err
 			}
 			return resp.StatusCode, resp.Reason, resp.SDP, nil
 		})
+	}
+
+	// Wire inbound BYE/CANCEL handlers for VoWiFi call teardown.
+	if req.OnInboundBye != nil {
+		svc.SetInboundByeHandler(req.OnInboundBye)
+	}
+	if req.OnInboundCancel != nil {
+		svc.SetInboundCancelHandler(req.OnInboundCancel)
 	}
 
 	// Step 2: SMS ready (attachMessaging succeeded inside svc.Start)
