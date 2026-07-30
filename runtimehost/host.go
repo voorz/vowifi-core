@@ -104,6 +104,7 @@ type State struct {
 	TunnelReady    bool
 	IMSReady       bool
 	SMSReady       bool
+	CallReady      bool
 	RegStatus      int
 	RegStatusText  string
 	UpdatedAt      time.Time
@@ -444,6 +445,7 @@ func (i *Instance) Obs() map[string]interface{} {
 		"tunnel_ready":   st.TunnelReady,
 		"ims_ready":      st.IMSReady,
 		"sms_ready":      st.SMSReady,
+		"call_ready":     st.CallReady,
 		"phase":          st.Phase,
 		"last_reason":    st.LastReason,
 		"last_error":     st.LastError,
@@ -1006,7 +1008,21 @@ func (i *Instance) runStagedPipeline(ctx context.Context, req StartRequest, gene
 		svc.SetInboundCancelHandler(req.OnInboundCancel)
 	}
 
-	// Step 2: SMS ready (attachMessaging succeeded inside svc.Start)
+	// Step 2: Call ready (voice gateway registered + inbound handlers wired)
+	if !i.updateStateForGeneration(generation, func(s *State) {
+		s.CallReady = true
+		s.LastReason = "call_ready"
+		s.UpdatedAt = time.Now()
+	}) {
+		swulogger.Warn("pipeline: updateStateForGeneration (call_ready) returned false",
+			swulogger.String("trace_id", i.traceID),
+			swulogger.String("device_id", i.deviceID),
+			swulogger.Uint64("generation", generation))
+		return
+	}
+	i.notifyObserversForGeneration(ctx, generation)
+
+	// Step 3: SMS ready (attachMessaging succeeded inside svc.Start)
 	if !i.updateStateForGeneration(generation, func(s *State) {
 		s.SMSReady = true
 		s.LastReason = "sms_ready"
