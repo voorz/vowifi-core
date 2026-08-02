@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/voorz/sipgo/sip"
+	"github.com/voorz/swu-go/pkg/logger"
 )
 
 const (
@@ -217,6 +218,13 @@ func (t *connRegisterTransport) ReadResponse(ctx context.Context) (*sip.Response
 				}
 			})
 			if parseErr != nil {
+				if errors.Is(parseErr, sip.ErrParseSipPartial) {
+					logger.Debug(fmt.Sprintf("[%s] SIP 流式解析：部分数据已接收，等待更多数据", t.deviceID),
+						logger.String("trace_id", t.traceID),
+						logger.String("device_id", t.deviceID),
+						logger.Int("bytes_read", n))
+					continue
+				}
 				return nil, parseErr
 			}
 			if response != nil {
