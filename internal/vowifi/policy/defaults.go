@@ -111,7 +111,7 @@ func GiffgaffTemplate() IMSRegisterTemplate {
 		SecAgreeMode:                "auto",
 		IncludePANIAuthenticated:    true,
 		StrictSecurityServerOffer:   true,
-		EnableInitialRejectFallback: false,
+		EnableInitialRejectFallback: true,
 		ContactParamOrder: []string{
 			"access_type",
 			"audio",
