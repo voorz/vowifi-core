@@ -7,7 +7,7 @@
   "eap": {},
   "ims": {
     "sec_agree_mode": "on",
-    "include_pani": true,
+    "include_pani": false,
     "include_pani_authenticated": true,
     "strict_security_server_offer": true,
     "use_plain_digest_placeholder": true,

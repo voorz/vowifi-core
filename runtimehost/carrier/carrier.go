@@ -130,8 +130,11 @@ var builtinDefaults = map[string]Preset{
 	},
 	// giffgaff (O2 MVNO): recommended LTE TAC/ECI for UK VoWiFi when QMI is unavailable.
 	"234-10": {ID: "giffgaff_23410", MCC: "234", MNC: "10", IMSTAC: 28673, IMSCellID: 12345678},
-	// EE UK host network (giffgaff roaming core); same O2/EE-style identifiers.
-	"234-33": {ID: "ee-uk", MCC: "234", MNC: "33", IMSTAC: 28673, IMSCellID: 12345678},
+	// EE UK (234/30): host network, standard 3GPP ePDG FQDN.
+	"234-30": {ID: "ee_uk_23430", MCC: "234", MNC: "30"},
+	// CMlink UK / CTExcel UK (234/33): EE MVNOs sharing PLMN 234-33.
+	// Both are EE MVNOs with identical VoWiFi behaviour; profile in 234-33.json.
+	"234-33": {ID: "cmlink_uk_23433", MCC: "234", MNC: "33", IMSTAC: 28673, IMSCellID: 12345678},
 	// Three UK (234/20): standard 3GPP ePDG FQDN, own network infrastructure.
 	"234-20": {ID: "three_uk_23420", MCC: "234", MNC: "20"},
 	// China Mobile (CMCC) — 3GPP standard ePDG FQDN.
