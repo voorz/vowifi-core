@@ -63,6 +63,10 @@ func ResolveIMSRegisterTemplate(mcc, mnc string) IMSRegisterTemplate {
 	if mnc == "" {
 		mnc = "0"
 	}
+	// JSON-first: try embedded profiles before falling back to hardcoded switch.
+	if t, ok := ResolveIMSRegisterTemplateFromProfile(mcc, mnc); ok {
+		return t
+	}
 	switch mcc + ":" + mnc {
 	case "234:30":
 		return EEUKTemplate()

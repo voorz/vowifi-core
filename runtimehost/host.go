@@ -20,6 +20,7 @@ import (
 	"github.com/voorz/vowifi-core/runtimehost/eventhost"
 	"github.com/voorz/vowifi-core/runtimehost/messaging"
 	"github.com/voorz/vowifi-core/runtimehost/transport"
+	"github.com/voorz/vowifi-core/profiles"
 	"github.com/voorz/vowifi-core/runtimehost/voiceclient"
 	"go.uber.org/zap"
 )
@@ -1075,6 +1076,14 @@ func resolveEPDGHost(req StartRequest) (string, string) {
 }
 
 func simAdminEPDGHost(mcc, mnc string) string {
+	// JSON-first: try embedded profiles before falling back to hardcoded switch.
+	if p, err := profiles.Lookup(mcc, mnc); err == nil && p != nil {
+		if addr := strings.TrimSpace(p.IKE.Addr); addr != "" {
+			return addr
+		}
+	}
+
+	// Fallback: hardcoded ePDG hosts for known carriers.
 	key := simAdminProfileKeyForPLMN(mcc, mnc)
 	switch key {
 	case "234-33":

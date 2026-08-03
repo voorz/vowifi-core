@@ -1,0 +1,30 @@
+{
+  "id": "O2_de_26203",
+  "name": "O2 DE",
+  "mcc": "262",
+  "mnc": "3",
+  "ike": {},
+  "eap": {
+    "device_model": "iphone15,4"
+  },
+  "ims": {
+    "include_pani_authenticated": true,
+    "strict_security_server_offer": true,
+    "enable_initial_reject_fallback": true,
+    "contact_features": "sms_only",
+    "initial_authorization": "none",
+    "security_client_format": "full_spaced",
+    "supported_header": "path,sec-agree,gruu",
+    "user_agent": "SimAdmin VoWiFi",
+    "include_accept_contact": true,
+    "include_p_preferred_id": true,
+    "include_p_visited_network_id": true,
+    "include_p_access_network_info": true,
+    "include_route": true,
+    "include_security_client": true,
+    "include_pani_authenticated": true
+  },
+  "e911": {},
+  "device": {},
+  "blocked": false
+}

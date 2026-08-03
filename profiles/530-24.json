@@ -1,0 +1,30 @@
+{
+  "id": "2degrees_nz_53024",
+  "name": "2degrees NZ",
+  "mcc": "530",
+  "mnc": "24",
+  "ike": {
+    "addr": "epdg.ims.2degrees.net.nz",
+    "ip_stack": "ipv4",
+    "proposals": ["aes256-sha512-prfsha512-modp1024"],
+    "esp_proposals": ["aes256-sha512"]
+  },
+  "eap": {},
+  "ims": {
+    "contact_features": "sms_only",
+    "initial_authorization": "none",
+    "security_client_format": "full_spaced",
+    "supported_header": "path,sec-agree,gruu",
+    "user_agent": "SimAdmin VoWiFi",
+    "include_accept_contact": true,
+    "include_p_preferred_id": true,
+    "include_p_visited_network_id": true,
+    "include_p_access_network_info": true,
+    "include_route": true,
+    "include_security_client": true,
+    "include_pani_authenticated": true
+  },
+  "e911": {},
+  "device": {},
+  "blocked": false
+}

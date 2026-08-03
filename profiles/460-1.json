@@ -1,0 +1,36 @@
+{
+  "id": "china_unicom_46001",
+  "name": "China Unicom",
+  "mcc": "460",
+  "mnc": "1",
+  "ike": {},
+  "eap": {},
+  "ims": {
+    "sec_agree_mode": "auto",
+    "strict_security_server_offer": true,
+    "contact_param_order": ["access_type", "audio", "smsip", "icsi_ref", "sip_instance"],
+    "security_client_mechanisms": [
+      {"alg": "hmac-md5-96", "ealg": "des-ede3-cbc", "prot": "esp", "mode": "trans"},
+      {"alg": "hmac-md5-96", "ealg": "aes-cbc", "prot": "esp", "mode": "trans"},
+      {"alg": "hmac-md5-96", "ealg": "null", "prot": "esp", "mode": "trans"},
+      {"alg": "hmac-sha-1-96", "ealg": "des-ede3-cbc", "prot": "esp", "mode": "trans"},
+      {"alg": "hmac-sha-1-96", "ealg": "aes-cbc", "prot": "esp", "mode": "trans"},
+      {"alg": "hmac-sha-1-96", "ealg": "null", "prot": "esp", "mode": "trans"}
+    ],
+    "contact_features": "sms_only",
+    "initial_authorization": "none",
+    "security_client_format": "full_spaced",
+    "supported_header": "path,sec-agree,gruu",
+    "user_agent": "SimAdmin VoWiFi",
+    "include_accept_contact": true,
+    "include_p_preferred_id": true,
+    "include_p_visited_network_id": true,
+    "include_p_access_network_info": true,
+    "include_route": true,
+    "include_security_client": true,
+    "include_pani_authenticated": true
+  },
+  "e911": {},
+  "device": {},
+  "blocked": false
+}

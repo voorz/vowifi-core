@@ -1,0 +1,32 @@
+{
+  "id": "spark_nz_53005",
+  "name": "Spark NZ",
+  "mcc": "530",
+  "mnc": "5",
+  "ike": {
+    "addr": "epdg.epc.mnc005.mcc530.pub.3gppnetwork.spark.co.nz",
+    "proposals": ["aes256-sha256-prfsha256-modp2048"],
+    "esp_proposals": ["aes256-sha256"]
+  },
+  "eap": {
+    "device_model": "iphone15,4"
+  },
+  "ims": {
+    "transport_mode": "tcp",
+    "contact_features": "sms_only",
+    "initial_authorization": "none",
+    "security_client_format": "full_spaced",
+    "supported_header": "path,sec-agree,gruu",
+    "user_agent": "SimAdmin VoWiFi",
+    "include_accept_contact": true,
+    "include_p_preferred_id": true,
+    "include_p_visited_network_id": true,
+    "include_p_access_network_info": true,
+    "include_route": true,
+    "include_security_client": true,
+    "include_pani_authenticated": true
+  },
+  "e911": {},
+  "device": {},
+  "blocked": false
+}

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	externalswu "github.com/voorz/swu-go/pkg/swu"
+	"github.com/voorz/vowifi-core/profiles"
 )
 
 type simAdminSWuProfile struct {
@@ -64,6 +65,40 @@ var simAdminSWuProfiles = map[string]simAdminSWuProfile{
 
 func applySimAdminSWuProfile(cfg *externalswu.Config, mcc, mnc string) {
 	if cfg == nil {
+		return
+	}
+	// JSON-first: try embedded profiles before falling back to hardcoded map.
+	if p, err := profiles.Lookup(mcc, mnc); err == nil && p != nil {
+		if len(p.IKE.Proposals) > 0 {
+			cfg.IKEProposals = append([]string(nil), p.IKE.Proposals...)
+		}
+		if len(p.IKE.ESPProposals) > 0 {
+			cfg.ESPProposals = append([]string(nil), p.IKE.ESPProposals...)
+		}
+		if p.IKE.DPDInterval > 0 {
+			cfg.DPDInterval = p.IKE.DPDInterval
+		}
+		if p.IKE.NATKeepalive > 0 {
+			cfg.NATKeepaliveInterval = p.IKE.NATKeepalive
+		}
+		if p.IKE.ReauthInterval > 0 {
+			cfg.ReauthInterval = p.IKE.ReauthInterval
+		}
+		if p.IKE.IPStack != "" {
+			cfg.IPStack = p.IKE.IPStack
+		}
+		if p.IKE.APN != "" {
+			cfg.APN = p.IKE.APN
+		}
+		if p.EAP.ChallengeMode != "" {
+			cfg.AKAChallengeMode = p.EAP.ChallengeMode
+		}
+		if p.EAP.DeviceModel != "" {
+			cfg.DeviceModel = p.EAP.DeviceModel
+		}
+		if p.EAP.DeviceIdentityEnabled != nil {
+			cfg.DeviceIdentityEnabled = p.EAP.DeviceIdentityEnabled
+		}
 		return
 	}
 	profile, ok := simAdminSWuProfiles[simAdminProfileKey(mcc, mnc)]

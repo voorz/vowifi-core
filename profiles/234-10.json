@@ -1,0 +1,46 @@
+{
+  "id": "giffgaff",
+  "name": "giffgaff UK",
+  "mcc": "234",
+  "mnc": "10",
+  "ike": {
+    "proposals": ["aes256-sha512-prfsha512-modp2048"],
+    "esp_proposals": ["aes256-sha512"]
+  },
+  "eap": {},
+  "ims": {
+    "sec_agree_mode": "auto",
+    "include_pani_authenticated": true,
+    "strict_security_server_offer": true,
+    "enable_initial_reject_fallback": true,
+    "contact_param_order": ["access_type", "audio", "smsip", "icsi_ref", "sip_instance"],
+    "security_client_mechanisms": [
+      {"alg": "hmac-md5-96", "ealg": "des-ede3-cbc", "prot": "esp", "mode": "trans"},
+      {"alg": "hmac-md5-96", "ealg": "aes-cbc", "prot": "esp", "mode": "trans"},
+      {"alg": "hmac-md5-96", "ealg": "null", "prot": "esp", "mode": "trans"},
+      {"alg": "hmac-sha-1-96", "ealg": "des-ede3-cbc", "prot": "esp", "mode": "trans"},
+      {"alg": "hmac-sha-1-96", "ealg": "aes-cbc", "prot": "esp", "mode": "trans"},
+      {"alg": "hmac-sha-1-96", "ealg": "null", "prot": "esp", "mode": "trans"}
+    ],
+    "transport_mode": "auto",
+    "contact_features": "ims_features",
+    "initial_authorization": "aka_empty_uri_first",
+    "security_client_format": "full_spaced",
+    "supported_header": "path,sec-agree,gruu",
+    "user_agent": "SimAdmin VoWiFi",
+    "include_accept_contact": true,
+    "include_p_preferred_id": true,
+    "include_p_visited_network_id": true,
+    "include_p_access_network_info": true,
+    "include_route": true,
+    "include_cellular_network": true,
+    "include_security_client": true,
+    "include_pani_authenticated": true
+  },
+  "e911": {},
+  "device": {
+    "ims_tac": 28673,
+    "ims_cell_id": 12345678
+  },
+  "blocked": false
+}

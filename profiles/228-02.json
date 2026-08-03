@@ -1,0 +1,31 @@
+{
+  "id": "sunrise_22802",
+  "name": "Sunrise CH",
+  "mcc": "228",
+  "mnc": "2",
+  "ike": {
+    "proposals": ["aes128-sha256-modp2048"],
+    "esp_proposals": ["aes128-sha256"]
+  },
+  "eap": {
+    "challenge_mode": "checkcode",
+    "device_identity_enabled": false
+  },
+  "ims": {
+    "contact_features": "sms_only",
+    "initial_authorization": "none",
+    "security_client_format": "full_spaced",
+    "supported_header": "path,sec-agree,gruu",
+    "user_agent": "SimAdmin VoWiFi",
+    "include_accept_contact": true,
+    "include_p_preferred_id": true,
+    "include_p_visited_network_id": true,
+    "include_p_access_network_info": true,
+    "include_route": true,
+    "include_security_client": true,
+    "include_pani_authenticated": true
+  },
+  "e911": {},
+  "device": {},
+  "blocked": false
+}

@@ -1,0 +1,36 @@
+{
+  "id": "T-Mobile_260",
+  "name": "T-Mobile US",
+  "mcc": "310",
+  "mnc": "260",
+  "ike": {
+    "addr": "epdg.epc.mnc260.mcc310.pub.3gppnetwork.org",
+    "proposals": ["aes128-sha256-modp2048"],
+    "esp_proposals": ["aes128-sha256", "aes128-sha1"],
+    "apn": "ims"
+  },
+  "eap": {},
+  "ims": {
+    "transport_mode": "tcp",
+    "contact_features": "sms_only",
+    "initial_authorization": "none",
+    "security_client_format": "full_spaced",
+    "supported_header": "path,sec-agree,gruu",
+    "user_agent": "SimAdmin VoWiFi",
+    "include_accept_contact": true,
+    "include_p_preferred_id": true,
+    "include_p_visited_network_id": true,
+    "include_p_access_network_info": true,
+    "include_route": true,
+    "include_security_client": true,
+    "include_pani_authenticated": true
+  },
+  "e911": {
+    "enabled": true,
+    "provider": "T-Mobile_entitlement",
+    "websheet": "public_https",
+    "entitlement_endpoint": "https://eas3.msg.t-mobile.com/"
+  },
+  "device": {},
+  "blocked": false
+}

@@ -216,6 +216,10 @@ func registerProfileForConfig(cfg Config) RegisterProfile {
 	if mcc == "" || mnc == "" {
 		mcc, mnc = mccMncFromIMSDomain(cfg.Realm)
 	}
+	// JSON-first: try embedded profiles before falling back to hardcoded switch.
+	if rp, ok := registerProfileFromJSON(mcc, mnc); ok {
+		return rp
+	}
 	switch simAdminProfileKey(mcc, mnc) {
 	case "234-10", "234-33":
 		return DefaultGBEERegisterProfile()

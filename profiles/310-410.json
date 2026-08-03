@@ -1,0 +1,51 @@
+{
+  "id": "LycaMobile_310410",
+  "name": "LycaMobile US",
+  "mcc": "310",
+  "mnc": "410",
+  "ike": {
+    "addr": "epdg.epc.att.net",
+    "proposals": ["aes128-sha256-modp2048"],
+    "esp_proposals": ["aes128-sha256"],
+    "apn": "ims"
+  },
+  "eap": {
+    "identity_source": "isim"
+  },
+  "ims": {
+    "supported_header": "path,sec-agree,gruu",
+    "include_pani_authenticated": true,
+    "strict_security_server_offer": true,
+    "enable_initial_reject_fallback": true,
+    "security_client_mechanisms": [
+      {"alg": "hmac-sha-1-96", "ealg": "aes-cbc", "prot": "esp", "mode": "trans"}
+    ],
+    "register_policy": {
+      "id": "att_main",
+      "temporary_status_codes": [403, 480, 500, 503, 504],
+      "forbidden_status_codes": [],
+      "initial_reject_fallback_status_codes": [400, 403, 480, 500],
+      "temporary_retry_seconds": 0
+    },
+    "transport_mode": "tcp",
+    "contact_features": "sms_only",
+    "initial_authorization": "none",
+    "security_client_format": "full_spaced",
+    "user_agent": "SimAdmin VoWiFi",
+    "include_accept_contact": true,
+    "include_p_preferred_id": true,
+    "include_p_visited_network_id": true,
+    "include_p_access_network_info": true,
+    "include_route": true,
+    "include_security_client": true,
+    "include_pani_authenticated": true
+  },
+  "e911": {
+    "enabled": true,
+    "provider": "att-ts43",
+    "websheet": "https://www.att.com/acctmgmt/wireless/e911",
+    "entitlement_endpoint": "https://sentitlement2.mobile.att.net/WFC"
+  },
+  "device": {},
+  "blocked": false
+}
