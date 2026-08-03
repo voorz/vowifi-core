@@ -4,7 +4,7 @@ import "strings"
 
 // ResolveIMSPcscfAddr returns a carrier preset P-CSCF override ("host:port") when set.
 func ResolveIMSPcscfAddr(mcc, mnc string) string {
-	preset, ok := lookup(mcc, mnc)
+	preset, ok := lookupWithJSON(mcc, mnc)
 	if !ok {
 		return ""
 	}

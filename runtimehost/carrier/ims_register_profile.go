@@ -18,7 +18,7 @@ type IMSRegisterProfileOptions struct {
 // ResolveIMSRegisterProfile returns REGISTER mimic options when a carrier preset
 // requests a non-default handset profile (e.g. xiaomi_mi11 for giffgaff testing).
 func ResolveIMSRegisterProfile(mcc, mnc string) IMSRegisterProfileOptions {
-	preset, ok := lookup(mcc, mnc)
+	preset, ok := lookupWithJSON(mcc, mnc)
 	if !ok {
 		return IMSRegisterProfileOptions{}
 	}

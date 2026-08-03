@@ -158,6 +158,9 @@ var (
 	once     sync.Once
 	profiles map[string]*CarrierProfile
 	loadErr  error
+
+	userMu          sync.RWMutex
+	userOverrides   = map[string]*CarrierProfile{}
 )
 
 // normalizeMNC strips leading zeros so "010" and "10" resolve to the same key.
@@ -207,7 +210,8 @@ func load() {
 }
 
 // Lookup returns the carrier profile for the given PLMN, or nil if not found.
-// MNC is normalized (leading zeros stripped) and aliases are resolved.
+// User overrides (registered via SetUserOverride) take priority over embedded
+// JSON profiles. MNC is normalized (leading zeros stripped) and aliases are resolved.
 func Lookup(mcc, mnc string) (*CarrierProfile, error) {
 	load()
 	if loadErr != nil {
@@ -217,6 +221,14 @@ func Lookup(mcc, mnc string) (*CarrierProfile, error) {
 	if alias, ok := plmnAliases[key]; ok {
 		key = alias
 	}
+	// 1. User override (from database, active=true)
+	userMu.RLock()
+	if p, ok := userOverrides[key]; ok {
+		userMu.RUnlock()
+		return p, nil
+	}
+	userMu.RUnlock()
+	// 2. Embedded JSON profile (system default)
 	return profiles[key], nil
 }
 
@@ -238,6 +250,7 @@ func Generic() (*CarrierProfile, error) {
 }
 
 // All returns all loaded carrier profiles (excluding generic).
+// User overrides replace their system-default counterparts in the result.
 func All() (map[string]*CarrierProfile, error) {
 	load()
 	if loadErr != nil {
@@ -247,5 +260,34 @@ func All() (map[string]*CarrierProfile, error) {
 	for k, v := range profiles {
 		out[k] = v
 	}
+	userMu.RLock()
+	for k, v := range userOverrides {
+		out[k] = v
+	}
+	userMu.RUnlock()
 	return out, nil
+}
+
+// SetUserOverride registers a user-defined carrier profile that takes priority
+// over the embedded JSON system default for the same PLMN. Pass nil to remove
+// the override for a PLMN.
+func SetUserOverride(mcc, mnc string, p *CarrierProfile) {
+	key := plmnKey(mcc, mnc)
+	if alias, ok := plmnAliases[key]; ok {
+		key = alias
+	}
+	userMu.Lock()
+	defer userMu.Unlock()
+	if p == nil {
+		delete(userOverrides, key)
+		return
+	}
+	userOverrides[key] = p
+}
+
+// ClearUserOverrides removes all user-defined carrier profile overrides.
+func ClearUserOverrides() {
+	userMu.Lock()
+	userOverrides = map[string]*CarrierProfile{}
+	userMu.Unlock()
 }

@@ -135,6 +135,12 @@ func simAdminProfileKey(mcc, mnc string) string {
 }
 
 func simAdminIMSTransport(mcc, mnc string) string {
+	// JSON-first: try embedded profiles before falling back to hardcoded map.
+	if p, err := profiles.Lookup(mcc, mnc); err == nil && p != nil {
+		if tm := strings.TrimSpace(p.IMS.TransportMode); tm != "" {
+			return strings.ToLower(tm)
+		}
+	}
 	profile, ok := simAdminSWuProfiles[simAdminProfileKey(mcc, mnc)]
 	if !ok || strings.TrimSpace(profile.imsTransport) == "" {
 		return "auto"

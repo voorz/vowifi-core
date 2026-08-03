@@ -13,10 +13,14 @@ func registerProfileFromJSON(mcc, mnc string) (RegisterProfile, bool) {
 	if err != nil || p == nil {
 		return RegisterProfile{}, false
 	}
-	return carrierProfileToRegisterProfile(p), true
+	return CarrierProfileToRegisterProfile(p), true
 }
 
-func carrierProfileToRegisterProfile(p *profiles.CarrierProfile) RegisterProfile {
+// CarrierProfileToRegisterProfile maps a profiles.CarrierProfile to a
+// voiceclient.RegisterProfile, translating all IMS REGISTER-related fields.
+// Exported so that vohive-next can pre-populate StartRequest.RegisterProfile
+// from the JSON carrier profile before runtimehost.Start is called.
+func CarrierProfileToRegisterProfile(p *profiles.CarrierProfile) RegisterProfile {
 	rp := RegisterProfile{
 		ContactFeatures:           p.IMS.ContactFeatures,
 		IncludeAcceptContact:      p.IMS.IncludeAcceptContact,

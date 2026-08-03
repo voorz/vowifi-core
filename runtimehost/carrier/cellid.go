@@ -9,7 +9,7 @@ import (
 // DefaultUTRANCellIDSuffix returns the configured utran-cell-id-3gpp suffix
 // (TAC+ECI hex, without PLMN) for a PLMN when live QMI readings are unavailable.
 func DefaultUTRANCellIDSuffix(mcc, mnc string) string {
-	preset, ok := lookup(mcc, mnc)
+	preset, ok := lookupWithJSON(mcc, mnc)
 	if !ok {
 		return ""
 	}
@@ -26,7 +26,7 @@ func presetUTRANCellIDSuffix(p Preset) string {
 // IMSCellIDMode returns the configured cell-id selection mode for a PLMN.
 // Empty string means qmi_first.
 func IMSCellIDMode(mcc, mnc string) string {
-	preset, ok := lookup(mcc, mnc)
+	preset, ok := lookupWithJSON(mcc, mnc)
 	if !ok {
 		return ""
 	}

@@ -14,6 +14,8 @@ import (
 	"os"
 	"strings"
 	"sync"
+
+	"github.com/voorz/vowifi-core/profiles"
 )
 
 // Preset is a single PLMN override entry in the external carrier_overrides file.
@@ -222,11 +224,44 @@ func lookup(mcc, mnc string) (Preset, bool) {
 	return p, ok
 }
 
-// allEntries merges built-in defaults with loaded overrides (overrides win)
-// for callers that need to scan every known preset, such as IsVoWiFiBlockedMCC.
+// lookupWithJSON checks the embedded JSON profiles (including user overrides)
+// first, falling back to lookup() (loaded overrides + builtinDefaults).
+// This is the JSON-first path used by all L1 carrier functions.
+func lookupWithJSON(mcc, mnc string) (Preset, bool) {
+	if p, err := profiles.Lookup(mcc, mnc); err == nil && p != nil {
+		return carrierProfileToPreset(p), true
+	}
+	return lookup(mcc, mnc)
+}
+
+// carrierProfileToPreset maps a profiles.CarrierProfile to a carrier.Preset
+// so that L1 functions can consume JSON profile fields uniformly.
+func carrierProfileToPreset(p *profiles.CarrierProfile) Preset {
+	return Preset{
+		ID:                     p.ID,
+		MCC:                    p.MCC,
+		MNC:                    p.MNC,
+		EPDGAddr:               p.IKE.Addr,
+		AKAAppPreference:       p.EAP.AppPreference,
+		IMSTAC:                 uint32(p.Device.IMSTAC),
+		IMSCellID:              uint32(p.Device.IMSCellID),
+		IMSCellIDMode:          p.Device.IMSCellIDMode,
+		IMSRegisterProfile:     p.Device.IMSRegisterProfile,
+		PhoneIMEI:              p.Device.IMEI,
+		IMSPcscfAddr:           p.IMS.PCSCFAddr,
+		E911Enabled:            p.E911.Enabled,
+		E911Provider:           p.E911.Provider,
+		E911Websheet:           p.E911.Websheet,
+		E911EntitlementEndpoint: p.E911.EntitlementEndpoint,
+		Blocked:                p.Blocked,
+	}
+}
+
+// allEntries merges built-in defaults, loaded overrides, and JSON profiles
+// (including user overrides) for callers that need to scan every known preset,
+// such as IsVoWiFiBlockedMCC. JSON profiles take priority over built-in/loaded.
 func allEntries() map[string]Preset {
 	mu.RLock()
-	defer mu.RUnlock()
 	merged := make(map[string]Preset, len(builtinDefaults)+len(presets))
 	for k, v := range builtinDefaults {
 		merged[k] = v
@@ -234,14 +269,22 @@ func allEntries() map[string]Preset {
 	for k, v := range presets {
 		merged[k] = v
 	}
+	mu.RUnlock()
+	// JSON profiles (including user overrides) take priority
+	if all, err := profiles.All(); err == nil {
+		for k, p := range all {
+			merged[k] = carrierProfileToPreset(p)
+		}
+	}
 	return merged
 }
 
 // ResolveEffectiveCarrierConfig returns the override for the given PLMN, or a
 // zero-value config (PresetID "3gpp-default") when nothing overrides it.
+// JSON profiles (including user overrides) take priority over builtin/loaded.
 func ResolveEffectiveCarrierConfig(input EffectiveCarrierConfigInput) EffectiveCarrierConfig {
 	cfg := EffectiveCarrierConfig{PresetID: "3gpp-default"}
-	preset, ok := lookup(input.MCC, input.MNC)
+	preset, ok := lookupWithJSON(input.MCC, input.MNC)
 	if !ok {
 		return cfg
 	}
