@@ -39,7 +39,7 @@ func TestEPDGHostsMatchHardcoded(t *testing.T) {
 }
 
 // TestSWuProposalsMatchHardcoded verifies that IKE/ESP proposals in JSON profiles
-// match the hardcoded simAdminSWuProfiles map.
+// match the expected values for carriers with known SWu configurations.
 func TestSWuProposalsMatchHardcoded(t *testing.T) {
 	cases := []struct {
 		mcc, mnc      string

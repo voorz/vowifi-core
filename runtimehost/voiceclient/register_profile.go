@@ -216,29 +216,23 @@ func registerProfileForConfig(cfg Config) RegisterProfile {
 	if mcc == "" || mnc == "" {
 		mcc, mnc = mccMncFromIMSDomain(cfg.Realm)
 	}
-	// JSON-first: try embedded profiles before falling back to hardcoded switch.
 	if rp, ok := registerProfileFromJSON(mcc, mnc); ok {
 		return rp
 	}
-	switch simAdminProfileKey(mcc, mnc) {
-	case "234-10", "234-33":
-		return DefaultGBEERegisterProfile()
-	default:
-		return RegisterProfile{
-			ContactFeatures:           "sms_only",
-			IncludeAcceptContact:      true,
-			IncludePPreferredID:       true,
-			IncludePVisitedNetworkID:  true,
-			IncludePAccessNetworkInfo: true,
-			IncludeRoute:              true,
-			IncludeCellularNetwork:    false,
-			IncludeSecurityClient:     true,
-			InitialAuthorization:      "none",
-			SecurityClientFormat:      "full_spaced",
-			SupportedHeader:           "path,sec-agree,gruu",
-			IncludePANIAuthenticated:  true,
-			UserAgent:                 "SimAdmin VoWiFi",
-		}
+	return RegisterProfile{
+		ContactFeatures:           "sms_only",
+		IncludeAcceptContact:      true,
+		IncludePPreferredID:       true,
+		IncludePVisitedNetworkID:  true,
+		IncludePAccessNetworkInfo: true,
+		IncludeRoute:              true,
+		IncludeCellularNetwork:    false,
+		IncludeSecurityClient:     true,
+		InitialAuthorization:      "none",
+		SecurityClientFormat:      "full_spaced",
+		SupportedHeader:           "path,sec-agree,gruu",
+		IncludePANIAuthenticated:  true,
+		UserAgent:                 "SimAdmin VoWiFi",
 	}
 }
 
@@ -304,21 +298,6 @@ func newContactUserUUID() string {
 		b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7],
 		b[8], b[9], b[10], b[11], b[12], b[13], b[14], b[15],
 	)
-}
-
-func simAdminProfileKey(mcc, mnc string) string {
-	mcc = strings.TrimSpace(mcc)
-	mnc = strings.TrimSpace(mnc)
-	if len(mnc) > 2 {
-		mnc = strings.TrimLeft(mnc, "0")
-	}
-	if mnc == "" {
-		mnc = "0"
-	}
-	if len(mnc) == 1 {
-		mnc = "0" + mnc
-	}
-	return fmt.Sprintf("%s-%s", mcc, mnc)
 }
 
 func mccMncFromIMSDomain(domain string) (mcc, mnc string) {

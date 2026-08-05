@@ -77,75 +77,8 @@ var (
 	presets = map[string]Preset{}
 )
 
-// builtinDefaults ships known e911/ePDG exceptions that every build should
-// have out of the box, independent of whether an external overrides file is
-// configured. An entry loaded via LoadCarrierOverrides for the same PLMN
-// always takes priority over its built-in counterpart.
-var builtinDefaults = map[string]Preset{
-	// AT&T (US): non-standard ePDG (epdg.epc.att.net); VoWiFi requires an e911
-	// registered address via their TS.43-style entitlement server.
-	"310-280": {
-		ID: "att_310280", MCC: "310", MNC: "280",
-		EPDGAddr: "epdg.epc.att.net",
-		E911Enabled: true, E911Provider: "att-ts43",
-		E911Websheet:             "https://www.att.com/acctmgmt/wireless/e911",
-		E911EntitlementEndpoint:  "https://sentitlement2.mobile.att.net/WFC",
-	},
-	// LycaMobile (US): AT&T MVNO, shares AT&T ePDG + E911.
-	"310-410": {
-		ID: "LycaMobile_310410", MCC: "310", MNC: "410",
-		EPDGAddr: "epdg.epc.att.net",
-		E911Enabled: true, E911Provider: "att-ts43",
-		E911Websheet:             "https://www.att.com/acctmgmt/wireless/e911",
-		E911EntitlementEndpoint:  "https://sentitlement2.mobile.att.net/WFC",
-	},
-	// T-Mobile US (310/260): VoWiFi requires e911 entitlement via T-Mobile server.
-	"310-260": {
-		ID: "T-Mobile_260", MCC: "310", MNC: "260",
-		E911Enabled: true, E911Provider: "T-Mobile_entitlement",
-		E911EntitlementEndpoint: "https://eas3.msg.t-mobile.com/",
-		E911Websheet:            "public_https",
-	},
-	// T-Mobile US alias (310/240).
-	"310-240": {
-		ID: "T-Mobile_240", MCC: "310", MNC: "240",
-		E911Enabled: true, E911Provider: "T-Mobile_entitlement",
-		E911EntitlementEndpoint: "https://eas3.msg.t-mobile.com/",
-		E911Websheet:            "public_https",
-	},
-	// Spark NZ (530/05): non-standard ePDG suffix .spark.co.nz.
-	"530-5": {
-		ID: "spark_nz_53005", MCC: "530", MNC: "005",
-		EPDGAddr: "epdg.epc.mnc005.mcc530.pub.3gppnetwork.spark.co.nz",
-	},
-	// 2degrees NZ (530/24): non-standard ePDG.
-	"530-24": {
-		ID: "2degrees_nz_53024", MCC: "530", MNC: "024",
-		EPDGAddr: "epdg.ims.2degrees.net.nz",
-	},
-	// Three HK (454/003): non-standard ePDG.
-	"454-3": {
-		ID: "three_hk_454003", MCC: "454", MNC: "003",
-		EPDGAddr: "wlan.three.com.hk",
-	},
-	// giffgaff (O2 MVNO): recommended LTE TAC/ECI for UK VoWiFi when QMI is unavailable.
-	"234-10": {ID: "giffgaff_23410", MCC: "234", MNC: "10", IMSTAC: 28673, IMSCellID: 12345678},
-	// EE UK (234/30): host network, standard 3GPP ePDG FQDN.
-	"234-30": {ID: "ee_uk_23430", MCC: "234", MNC: "30"},
-	// CMlink UK / CTExcel UK (234/33): EE MVNOs sharing PLMN 234-33.
-	// Both are EE MVNOs with identical VoWiFi behaviour; profile in 234-33.json.
-	"234-33": {ID: "cmlink_uk_23433", MCC: "234", MNC: "33", IMSTAC: 28673, IMSCellID: 12345678},
-	// Three UK (234/20): standard 3GPP ePDG FQDN, own network infrastructure.
-	"234-20": {ID: "three_uk_23420", MCC: "234", MNC: "20"},
-	// China Mobile (CMCC) — 3GPP standard ePDG FQDN.
-	"460-0": {ID: "cmcc_46000", MCC: "460", MNC: "0"},
-	// China Unicom — 3GPP standard ePDG FQDN.
-	"460-1": {ID: "china_unicom_46001", MCC: "460", MNC: "1"},
-	// China Telecom — CDMA legacy MNC=3 and LTE MNC=11.
-	// LTE SIMs use MNC 11; standard 3GPP ePDG FQDN is auto-generated.
-	"460-3":  {ID: "china_telecom_46003", MCC: "460", MNC: "3"},
-	"460-11": {ID: "china_telecom_46011", MCC: "460", MNC: "11"},
-}
+// builtinDefaults has been removed. All carrier-specific defaults are now
+// sourced from embedded JSON profiles (profiles/*.json) via lookupWithJSON().
 
 // blockedMCCs are entire countries where VoWiFi is policy-blocked regardless
 // of which network the SIM is on. Add an MCC here to block all operators
@@ -213,22 +146,18 @@ func ClearCarrierOverrides() {
 	mu.Unlock()
 }
 
-// lookup checks loaded overrides first, falling back to the built-in table.
-// An override for a PLMN always wins over its built-in counterpart.
+// lookup checks loaded external overrides only. Carrier-specific defaults
+// are sourced from embedded JSON profiles via lookupWithJSON().
 func lookup(mcc, mnc string) (Preset, bool) {
 	key := plmnKey(mcc, mnc)
 	mu.RLock()
 	p, ok := presets[key]
 	mu.RUnlock()
-	if ok {
-		return p, true
-	}
-	p, ok = builtinDefaults[key]
 	return p, ok
 }
 
 // lookupWithJSON checks the embedded JSON profiles (including user overrides)
-// first, falling back to lookup() (loaded overrides + builtinDefaults).
+// first, falling back to lookup() (loaded external overrides).
 // This is the JSON-first path used by all L1 carrier functions.
 func lookupWithJSON(mcc, mnc string) (Preset, bool) {
 	if p, err := profiles.Lookup(mcc, mnc); err == nil && p != nil {
@@ -260,15 +189,12 @@ func carrierProfileToPreset(p *profiles.CarrierProfile) Preset {
 	}
 }
 
-// allEntries merges built-in defaults, loaded overrides, and JSON profiles
-// (including user overrides) for callers that need to scan every known preset,
-// such as IsVoWiFiBlockedMCC. JSON profiles take priority over built-in/loaded.
+// allEntries merges loaded external overrides and JSON profiles (including
+// user overrides) for callers that need to scan every known preset.
+// JSON profiles take priority over loaded overrides.
 func allEntries() map[string]Preset {
 	mu.RLock()
-	merged := make(map[string]Preset, len(builtinDefaults)+len(presets))
-	for k, v := range builtinDefaults {
-		merged[k] = v
-	}
+	merged := make(map[string]Preset, len(presets))
 	for k, v := range presets {
 		merged[k] = v
 	}
@@ -284,7 +210,7 @@ func allEntries() map[string]Preset {
 
 // ResolveEffectiveCarrierConfig returns the override for the given PLMN, or a
 // zero-value config (PresetID "3gpp-default") when nothing overrides it.
-// JSON profiles (including user overrides) take priority over builtin/loaded.
+// JSON profiles (including user overrides) take priority over loaded overrides.
 func ResolveEffectiveCarrierConfig(input EffectiveCarrierConfigInput) EffectiveCarrierConfig {
 	cfg := EffectiveCarrierConfig{PresetID: "3gpp-default"}
 	preset, ok := lookupWithJSON(input.MCC, input.MNC)

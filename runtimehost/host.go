@@ -1076,31 +1076,12 @@ func resolveEPDGHost(req StartRequest) (string, string) {
 }
 
 func simAdminEPDGHost(mcc, mnc string) string {
-	// JSON-first: try embedded profiles before falling back to hardcoded switch.
 	if p, err := profiles.Lookup(mcc, mnc); err == nil && p != nil {
 		if addr := strings.TrimSpace(p.IKE.Addr); addr != "" {
 			return addr
 		}
 	}
-
-	// Fallback: hardcoded ePDG hosts for known carriers.
-	key := simAdminProfileKeyForPLMN(mcc, mnc)
-	switch key {
-	case "234-33":
-		return "epdg.epc.mnc033.mcc234.pub.3gppnetwork.org"
-	case "204-04":
-		return "epdg.epc.mnc004.mcc204.pub.3gppnetwork.org"
-	case "310-260":
-		return "epdg.epc.mnc260.mcc310.pub.3gppnetwork.org"
-	case "310-410":
-		return "epdg.epc.att.net"
-	case "262-07":
-		return "epdg.epc.mnc007.mcc262.pub.3gppnetwork.org"
-	case "530-05":
-		return "epdg.epc.mnc005.mcc530.pub.3gppnetwork.spark.co.nz"
-	default:
-		return ""
-	}
+	return ""
 }
 
 func resolveIMSDomain(prepared *identity.PreparedSession) string {
@@ -1173,20 +1154,6 @@ func resolveIMSPublicURI(prepared *identity.PreparedSession, fallbackIMSI string
 	return "sip:" + imsi
 }
 
-func simAdminProfileKeyForPLMN(mcc, mnc string) string {
-	mcc = strings.TrimSpace(mcc)
-	mnc = strings.TrimSpace(mnc)
-	if len(mnc) > 2 {
-		mnc = strings.TrimLeft(mnc, "0")
-	}
-	if mnc == "" {
-		mnc = "0"
-	}
-	if len(mnc) == 1 {
-		mnc = "0" + mnc
-	}
-	return fmt.Sprintf("%s-%s", mcc, mnc)
-}
 
 func classifyTunnelFailure(err error) string {
 	if err == nil {

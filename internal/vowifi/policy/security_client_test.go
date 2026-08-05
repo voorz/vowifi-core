@@ -5,8 +5,8 @@ import (
 	"testing"
 )
 
-func TestBuildSecurityClientHeaderGiffgaff(t *testing.T) {
-	tmpl := GiffgaffTemplate()
+func TestBuildSecurityClientHeaderGeneric(t *testing.T) {
+	tmpl := GenericTemplate()
 	got := BuildSecurityClientHeader(tmpl, 1389119324, 1486172233, 43661, 40137)
 
 	if strings.Count(got, "ipsec-3gpp") != 6 {

@@ -36,8 +36,7 @@
     "include_p_visited_network_id": true,
     "include_p_access_network_info": true,
     "include_route": true,
-    "include_security_client": true,
-    "include_pani_authenticated": true
+    "include_security_client": true
   },
   "e911": {
     "enabled": true,

@@ -950,7 +950,7 @@ func registerSessionTestConfig() Config {
 		LocalIP:            net.ParseIP("10.0.0.2"),
 		PCSCFAddr:          "10.0.0.3:5060",
 		TransportPCSCFAddr: "10.0.0.3:5060",
-		Template:           policy.VodafoneUKTemplate(),
+		Template:           policy.ResolveIMSRegisterTemplate("234", "15"),
 		UserAgent:          "Vodafone VOLTE Qualcomm",
 	}
 }

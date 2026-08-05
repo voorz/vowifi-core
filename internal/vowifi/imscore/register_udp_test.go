@@ -39,7 +39,7 @@ func (*recordingIMSNetwork) ResolveIP(context.Context, string, bool) ([]byte, er
 }
 
 func TestVodafoneUKAutoRegisterTransportPrefersUDPThenTCP(t *testing.T) {
-	cfg := Config{Template: policy.VodafoneUKTemplate()}
+	cfg := Config{Template: policy.ResolveIMSRegisterTemplate("234", "15")}
 	want := []string{"udp", "tcp"}
 
 	if got := registerTransportCandidates(cfg, "auto"); !reflect.DeepEqual(got, want) {
@@ -57,7 +57,7 @@ func TestUDPRegisterUsesSessionPortInViaAndContact(t *testing.T) {
 		LocalIP:            net.ParseIP("10.0.0.2"),
 		PCSCFAddr:          "10.0.0.3:5060",
 		TransportPCSCFAddr: "10.0.0.3:5060",
-		Template:           policy.VodafoneUKTemplate(),
+		Template:           policy.ResolveIMSRegisterTemplate("234", "15"),
 		UserAgent:          "Vodafone VOLTE Qualcomm",
 	}
 	session := newRegisterSession(cfg, nil, nil, "udp", 1)
@@ -96,7 +96,7 @@ func TestUDPRegisterDialsUDPAddress(t *testing.T) {
 		LocalIP:            net.ParseIP("10.0.0.2"),
 		PCSCFAddr:          "10.0.0.3:5060",
 		TransportPCSCFAddr: "10.0.0.4:5060",
-		Template:           policy.VodafoneUKTemplate(),
+		Template:           policy.ResolveIMSRegisterTemplate("234", "15"),
 	}
 	network := &recordingIMSNetwork{}
 	session := newRegisterSession(cfg, nil, network, "udp", 0)
