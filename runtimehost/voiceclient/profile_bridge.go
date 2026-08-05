@@ -8,8 +8,8 @@ import (
 
 // registerProfileFromJSON attempts to load a RegisterProfile from embedded JSON.
 // Returns the profile and true if found, or zero value and false.
-func registerProfileFromJSON(mcc, mnc string) (RegisterProfile, bool) {
-	p, err := profiles.Lookup(mcc, mnc)
+func registerProfileFromJSON(mcc, mnc, spn string) (RegisterProfile, bool) {
+	p, err := profiles.LookupWithSPN(mcc, mnc, spn)
 	if err != nil || p == nil {
 		return RegisterProfile{}, false
 	}

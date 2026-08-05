@@ -52,6 +52,7 @@ type Preset struct {
 type EffectiveCarrierConfigInput struct {
 	MCC string
 	MNC string
+	SPN string // SIM SPN for MVNO disambiguation (optional)
 }
 
 type EffectiveCarrierConfig struct {
@@ -159,8 +160,8 @@ func lookup(mcc, mnc string) (Preset, bool) {
 // lookupWithJSON checks the embedded JSON profiles (including user overrides)
 // first, falling back to lookup() (loaded external overrides).
 // This is the JSON-first path used by all L1 carrier functions.
-func lookupWithJSON(mcc, mnc string) (Preset, bool) {
-	if p, err := profiles.Lookup(mcc, mnc); err == nil && p != nil {
+func lookupWithJSON(mcc, mnc, spn string) (Preset, bool) {
+	if p, err := profiles.LookupWithSPN(mcc, mnc, spn); err == nil && p != nil {
 		return carrierProfileToPreset(p), true
 	}
 	return lookup(mcc, mnc)
@@ -213,7 +214,7 @@ func allEntries() map[string]Preset {
 // JSON profiles (including user overrides) take priority over loaded overrides.
 func ResolveEffectiveCarrierConfig(input EffectiveCarrierConfigInput) EffectiveCarrierConfig {
 	cfg := EffectiveCarrierConfig{PresetID: "3gpp-default"}
-	preset, ok := lookupWithJSON(input.MCC, input.MNC)
+	preset, ok := lookupWithJSON(input.MCC, input.MNC, input.SPN)
 	if !ok {
 		return cfg
 	}

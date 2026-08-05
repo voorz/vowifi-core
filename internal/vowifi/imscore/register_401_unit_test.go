@@ -88,7 +88,7 @@ func TestComputeAKAAuthDigestURIMatchesRequestURI(t *testing.T) {
 		PublicURI:  "sip:fake.impu@ims.mnc015.mcc234.3gppnetwork.org",
 		LocalIP:    net.ParseIP("10.0.0.2"),
 		PCSCFAddr:  "10.0.0.3:5060",
-		Template:   policy.ResolveIMSRegisterTemplate("234", "15"),
+		Template:   policy.ResolveIMSRegisterTemplate("234", "15", ""),
 		AKA: fixedAKA{
 			res: bytesRepeat(0x11, 8),
 			ck:  bytesRepeat(0x22, 16),

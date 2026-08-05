@@ -125,6 +125,10 @@ type Config struct {
 	MCC string
 	MNC string
 
+	// SPN is the SIM EF_SPN service provider name, used for MVNO disambiguation
+	// when multiple carrier profiles share the same PLMN.
+	SPN string
+
 	// CellID is an optional E-UTRAN cell identity suffix (hex) appended to the
 	// home PLMN in Cellular-Network-Info. When empty, SimAdmin-style placeholder
 	// zeros are used.

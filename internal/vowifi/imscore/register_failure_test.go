@@ -11,7 +11,7 @@ import (
 )
 
 func TestVodafoneUKSecurityMechanismProbeAdvancesOnlyOnBadRequest(t *testing.T) {
-	cfg := Config{Template: policy.ResolveIMSRegisterTemplate("234", "15")}
+	cfg := Config{Template: policy.ResolveIMSRegisterTemplate("234", "15", "")}
 	tests := []struct {
 		name       string
 		statusCode int

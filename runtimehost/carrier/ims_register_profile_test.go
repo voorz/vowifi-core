@@ -16,7 +16,7 @@ func TestResolveIMSRegisterProfileXiaomiMi11(t *testing.T) {
 	if _, err := LoadCarrierOverrides(path); err != nil {
 		t.Fatalf("LoadCarrierOverrides() error = %v", err)
 	}
-	got := ResolveIMSRegisterProfile("234", "10")
+	got := ResolveIMSRegisterProfile("234", "10", "")
 	if got.Profile.ContactFeatures != "phone_xiaomi" {
 		t.Fatalf("profile = %q", got.Profile.ContactFeatures)
 	}
@@ -38,7 +38,7 @@ func TestResolveIMSRegisterProfileSimAdminGBEE(t *testing.T) {
 	if _, err := LoadCarrierOverrides(path); err != nil {
 		t.Fatalf("LoadCarrierOverrides() error = %v", err)
 	}
-	got := ResolveIMSRegisterProfile("234", "10")
+	got := ResolveIMSRegisterProfile("234", "10", "")
 	if got.Profile.VariantSet != "simadmin_gb_ee" {
 		t.Fatalf("variant set = %q", got.Profile.VariantSet)
 	}
@@ -57,7 +57,7 @@ func TestResolveIMSRegisterProfileRMX3366SIPInstance(t *testing.T) {
 	if _, err := LoadCarrierOverrides(path); err != nil {
 		t.Fatalf("LoadCarrierOverrides() error = %v", err)
 	}
-	got := ResolveIMSRegisterProfile("234", "10")
+	got := ResolveIMSRegisterProfile("234", "10", "")
 	if got.SIPInstanceURN != "urn:gsma:imei:86123456-789012-0" {
 		t.Fatalf("sip instance = %q", got.SIPInstanceURN)
 	}
@@ -73,7 +73,7 @@ func TestResolveIMSRegisterProfileSimAdminIOS(t *testing.T) {
 	if _, err := LoadCarrierOverrides(path); err != nil {
 		t.Fatalf("LoadCarrierOverrides() error = %v", err)
 	}
-	got := ResolveIMSRegisterProfile("234", "10")
+	got := ResolveIMSRegisterProfile("234", "10", "")
 	if got.Profile.UserAgent != "iphone15,4_like VoWiFi" {
 		t.Fatalf("user agent = %q", got.Profile.UserAgent)
 	}

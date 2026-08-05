@@ -15,7 +15,7 @@ func TestResolveIMSPcscfAddr(t *testing.T) {
 	if _, err := LoadCarrierOverrides(path); err != nil {
 		t.Fatalf("LoadCarrierOverrides() error = %v", err)
 	}
-	got := ResolveIMSPcscfAddr("234", "10")
+	got := ResolveIMSPcscfAddr("234", "10", "")
 	want := "[2a03:dd00:1f81:3810::4]:5060"
 	if got != want {
 		t.Fatalf("ResolveIMSPcscfAddr() = %q, want %q", got, want)

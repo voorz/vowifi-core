@@ -12,8 +12,8 @@ import (
 //
 // This is the JSON-first path; callers fall back to the hardcoded switch-case
 // in ResolveIMSRegisterTemplate when this returns false.
-func ResolveIMSRegisterTemplateFromProfile(mcc, mnc string) (IMSRegisterTemplate, bool) {
-	p, err := profiles.Lookup(mcc, mnc)
+func ResolveIMSRegisterTemplateFromProfile(mcc, mnc, spn string) (IMSRegisterTemplate, bool) {
+	p, err := profiles.LookupWithSPN(mcc, mnc, spn)
 	if err != nil || p == nil {
 		return IMSRegisterTemplate{}, false
 	}

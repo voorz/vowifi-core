@@ -97,7 +97,7 @@ func (i *Instance) startSWuSession(ctx context.Context, req StartRequest, epdgIP
 		DeviceID:               req.DeviceID,
 		TraceID:                req.TraceID,
 	}
-	applySimAdminSWuProfile(cfg, req.Profile.MCC, req.Profile.MNC)
+	applySimAdminSWuProfile(cfg, req.Profile.MCC, req.Profile.MNC, req.Profile.SPN)
 	if factory := buildSWuTransportFactory(req.Proxy); factory != nil {
 		cfg.TransportFactory = factory
 	}

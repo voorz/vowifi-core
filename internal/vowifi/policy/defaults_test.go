@@ -3,7 +3,7 @@ package policy
 import "testing"
 
 func TestResolveIMSRegisterTemplateVodafoneUK(t *testing.T) {
-	tmpl := ResolveIMSRegisterTemplate("234", "15")
+	tmpl := ResolveIMSRegisterTemplate("234", "15", "")
 
 	if tmpl.ID != "vodafone_uk_23415" {
 		t.Fatalf("template ID = %q, want vodafone_uk_23415", tmpl.ID)

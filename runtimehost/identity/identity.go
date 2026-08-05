@@ -35,6 +35,7 @@ type Profile struct {
 	MNC  string
 	IMEI string
 	SMSC string
+	SPN  string // SIM EF_SPN, used for MVNO disambiguation when multiple profiles share a PLMN
 }
 
 const (
@@ -151,6 +152,7 @@ func NormalizeProfile(p Profile) Profile {
 		MNC:  normalizeMNCDigits(strings.TrimSpace(p.MNC)),
 		IMEI: strings.TrimSpace(p.IMEI),
 		SMSC: strings.TrimSpace(p.SMSC),
+		SPN:  strings.TrimSpace(p.SPN),
 	}
 }
 
@@ -236,7 +238,7 @@ func PrepareStart(input PrepareStartInput) (PreparedSession, error) {
 		return PreparedSession{}, err
 	}
 
-	cfg := carrier.ResolveEffectiveCarrierConfig(carrier.EffectiveCarrierConfigInput{MCC: mcc, MNC: mnc})
+	cfg := carrier.ResolveEffectiveCarrierConfig(carrier.EffectiveCarrierConfigInput{MCC: mcc, MNC: mnc, SPN: profile.SPN})
 
 	prepared := PreparedSession{
 		Profile: profile,

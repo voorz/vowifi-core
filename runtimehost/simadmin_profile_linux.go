@@ -9,12 +9,12 @@ import (
 	"github.com/voorz/vowifi-core/profiles"
 )
 
-func applySimAdminSWuProfile(cfg *externalswu.Config, mcc, mnc string) {
+func applySimAdminSWuProfile(cfg *externalswu.Config, mcc, mnc, spn string) {
 	if cfg == nil {
 		return
 	}
 	// Load carrier-specific IKE/ESP/EAP settings from embedded JSON profiles.
-	if p, err := profiles.Lookup(mcc, mnc); err == nil && p != nil {
+	if p, err := profiles.LookupWithSPN(mcc, mnc, spn); err == nil && p != nil {
 		if len(p.IKE.Proposals) > 0 {
 			cfg.IKEProposals = append([]string(nil), p.IKE.Proposals...)
 		}
@@ -60,8 +60,8 @@ func applySimAdminSWuProfile(cfg *externalswu.Config, mcc, mnc string) {
 	cfg.ESPProposals = []string{"aes256-sha256", "aes128-sha256", "aes256-sha512", "aes128-sha1"}
 }
 
-func simAdminIMSTransport(mcc, mnc string) string {
-	if p, err := profiles.Lookup(mcc, mnc); err == nil && p != nil {
+func simAdminIMSTransport(mcc, mnc, spn string) string {
+	if p, err := profiles.LookupWithSPN(mcc, mnc, spn); err == nil && p != nil {
 		if tm := strings.TrimSpace(p.IMS.TransportMode); tm != "" {
 			return strings.ToLower(tm)
 		}

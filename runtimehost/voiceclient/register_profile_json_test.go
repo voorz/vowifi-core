@@ -46,8 +46,8 @@ func TestRegisterProfileForConfigJSONFirst(t *testing.T) {
 		}
 	})
 
-	// CMLink UK (234-33): hardcoded as DefaultGBEERegisterProfile
-	t.Run("CMLinkUK_234_33", func(t *testing.T) {
+	// EE UK base (234-33): no SPN → base profile, same IMS config as DefaultGBEERegisterProfile
+	t.Run("EEUK_Base_234_33", func(t *testing.T) {
 		cfg := Config{MCC: "234", MNC: "33"}
 		got := registerProfileForConfig(cfg)
 		want := DefaultGBEERegisterProfile()

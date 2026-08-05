@@ -58,13 +58,13 @@ func GenericTemplate() IMSRegisterTemplate {
 // ResolveIMSRegisterTemplate selects the IMS REGISTER behavior required by a
 // home PLMN. Carrier-specific templates are loaded from embedded JSON profiles
 // (profiles/*.json). Unknown PLMNs fall back to GenericTemplate (3GPP standard).
-func ResolveIMSRegisterTemplate(mcc, mnc string) IMSRegisterTemplate {
+func ResolveIMSRegisterTemplate(mcc, mnc, spn string) IMSRegisterTemplate {
 	mcc = strings.TrimSpace(mcc)
 	mnc = strings.TrimLeft(strings.TrimSpace(mnc), "0")
 	if mnc == "" {
 		mnc = "0"
 	}
-	if t, ok := ResolveIMSRegisterTemplateFromProfile(mcc, mnc); ok {
+	if t, ok := ResolveIMSRegisterTemplateFromProfile(mcc, mnc, spn); ok {
 		return t
 	}
 	return GenericTemplate()

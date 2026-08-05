@@ -13,7 +13,7 @@ func TestResolveIMSRegisterTemplateJSONFirst(t *testing.T) {
 		wantID   string
 	}{
 		{"234", "30", "ee_uk_23430"},
-		{"234", "33", "cmlink_uk_23433"},
+		{"234", "33", "ee_uk_23433"},
 		{"234", "15", "vodafone_uk_23415"},
 		{"234", "10", "giffgaff"},
 		{"234", "20", "three_uk_23420"},
@@ -36,7 +36,7 @@ func TestResolveIMSRegisterTemplateJSONFirst(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.mcc+":"+c.mnc, func(t *testing.T) {
-			tmpl := ResolveIMSRegisterTemplate(c.mcc, c.mnc)
+			tmpl := ResolveIMSRegisterTemplate(c.mcc, c.mnc, "")
 			if tmpl.ID != c.wantID {
 				t.Errorf("template ID = %q, want %q", tmpl.ID, c.wantID)
 			}
@@ -49,7 +49,7 @@ func TestResolveIMSRegisterTemplateJSONFirst(t *testing.T) {
 func TestResolveIMSRegisterTemplateJSONFields(t *testing.T) {
 	// Vodafone UK: rich template with many fields
 	t.Run("VodafoneUK", func(t *testing.T) {
-		tmpl := ResolveIMSRegisterTemplate("234", "15")
+		tmpl := ResolveIMSRegisterTemplate("234", "15", "")
 
 		if tmpl.ID != "vodafone_uk_23415" {
 			t.Errorf("ID = %q, want %q", tmpl.ID, "vodafone_uk_23415")
@@ -74,12 +74,12 @@ func TestResolveIMSRegisterTemplateJSONFields(t *testing.T) {
 		}
 	})
 
-	// EE UK / CMLink UK: EE base template
-	t.Run("CMLinkUK", func(t *testing.T) {
-		tmpl := ResolveIMSRegisterTemplate("234", "33")
+	// EE UK (base): returned when no SPN is provided
+	t.Run("EEUK_Base", func(t *testing.T) {
+		tmpl := ResolveIMSRegisterTemplate("234", "33", "")
 
-		if tmpl.ID != "cmlink_uk_23433" {
-			t.Errorf("ID = %q, want %q", tmpl.ID, "cmlink_uk_23433")
+		if tmpl.ID != "ee_uk_23433" {
+			t.Errorf("ID = %q, want %q", tmpl.ID, "ee_uk_23433")
 		}
 		if tmpl.SecAgreeMode != "on" {
 			t.Errorf("SecAgreeMode = %q, want %q", tmpl.SecAgreeMode, "on")
@@ -98,9 +98,27 @@ func TestResolveIMSRegisterTemplateJSONFields(t *testing.T) {
 		}
 	})
 
+	// CMLink UK: returned when SPN matches "cmlink"
+	t.Run("CMLinkUK_SPN", func(t *testing.T) {
+		tmpl := ResolveIMSRegisterTemplate("234", "33", "CMLink")
+
+		if tmpl.ID != "cmlink_uk_23433" {
+			t.Errorf("ID = %q, want %q", tmpl.ID, "cmlink_uk_23433")
+		}
+	})
+
+	// CTExcel UK: returned when SPN matches "ctexcel"
+	t.Run("CTExcelUK_SPN", func(t *testing.T) {
+		tmpl := ResolveIMSRegisterTemplate("234", "33", "CTExcel")
+
+		if tmpl.ID != "ctexcel_uk_23433" {
+			t.Errorf("ID = %q, want %q", tmpl.ID, "ctexcel_uk_23433")
+		}
+	})
+
 	// Three UK: sec-agree required, specific security mechanisms
 	t.Run("ThreeUK", func(t *testing.T) {
-		tmpl := ResolveIMSRegisterTemplate("234", "20")
+		tmpl := ResolveIMSRegisterTemplate("234", "20", "")
 
 		if tmpl.ID != "three_uk_23420" {
 			t.Errorf("ID = %q, want %q", tmpl.ID, "three_uk_23420")
@@ -118,7 +136,7 @@ func TestResolveIMSRegisterTemplateJSONFields(t *testing.T) {
 
 	// ATT: register policy with status codes
 	t.Run("ATT", func(t *testing.T) {
-		tmpl := ResolveIMSRegisterTemplate("310", "280")
+		tmpl := ResolveIMSRegisterTemplate("310", "280", "")
 
 		if tmpl.ID != "att_310280" {
 			t.Errorf("ID = %q, want %q", tmpl.ID, "att_310280")

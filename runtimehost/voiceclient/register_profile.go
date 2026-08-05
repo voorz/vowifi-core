@@ -216,7 +216,7 @@ func registerProfileForConfig(cfg Config) RegisterProfile {
 	if mcc == "" || mnc == "" {
 		mcc, mnc = mccMncFromIMSDomain(cfg.Realm)
 	}
-	if rp, ok := registerProfileFromJSON(mcc, mnc); ok {
+	if rp, ok := registerProfileFromJSON(mcc, mnc, cfg.SPN); ok {
 		return rp
 	}
 	return RegisterProfile{
