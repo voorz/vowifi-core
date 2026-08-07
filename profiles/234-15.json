@@ -3,7 +3,9 @@
   "name": "Vodafone UK",
   "mcc": "234",
   "mnc": "15",
-  "ike": {},
+  "ike": {
+    "rf_off_delay": 5
+  },
   "eap": {},
   "ims": {
     "sec_agree_mode": "on",
@@ -20,14 +22,51 @@
     "probe_initial_security_client_on_bad_request": true,
     "user_agent": "Vodafone VOLTE Qualcomm",
     "supported_header": "path,sec-agree",
-    "contact_param_order": ["access_type", "audio", "smsip", "icsi_ref", "sip_instance", "reg_id"],
+    "contact_param_order": [
+      "access_type",
+      "audio",
+      "smsip",
+      "icsi_ref",
+      "sip_instance",
+      "reg_id"
+    ],
     "security_client_mechanisms": [
-      {"alg": "hmac-md5-96", "ealg": "des-ede3-cbc", "prot": "esp", "mode": "trans"},
-      {"alg": "hmac-md5-96", "ealg": "aes-cbc", "prot": "esp", "mode": "trans"},
-      {"alg": "hmac-md5-96", "ealg": "null", "prot": "esp", "mode": "trans"},
-      {"alg": "hmac-sha-1-96", "ealg": "des-ede3-cbc", "prot": "esp", "mode": "trans"},
-      {"alg": "hmac-sha-1-96", "ealg": "aes-cbc", "prot": "esp", "mode": "trans"},
-      {"alg": "hmac-sha-1-96", "ealg": "null", "prot": "esp", "mode": "trans"}
+      {
+        "alg": "hmac-md5-96",
+        "ealg": "des-ede3-cbc",
+        "prot": "esp",
+        "mode": "trans"
+      },
+      {
+        "alg": "hmac-md5-96",
+        "ealg": "aes-cbc",
+        "prot": "esp",
+        "mode": "trans"
+      },
+      {
+        "alg": "hmac-md5-96",
+        "ealg": "null",
+        "prot": "esp",
+        "mode": "trans"
+      },
+      {
+        "alg": "hmac-sha-1-96",
+        "ealg": "des-ede3-cbc",
+        "prot": "esp",
+        "mode": "trans"
+      },
+      {
+        "alg": "hmac-sha-1-96",
+        "ealg": "aes-cbc",
+        "prot": "esp",
+        "mode": "trans"
+      },
+      {
+        "alg": "hmac-sha-1-96",
+        "ealg": "null",
+        "prot": "esp",
+        "mode": "trans"
+      }
     ],
     "contact_features": "sms_only",
     "initial_authorization": "none",

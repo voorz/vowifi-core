@@ -12,7 +12,12 @@
       "aes256-sha256-prfsha1-modp2048",
       "aes256-sha256-modp2048"
     ],
-    "esp_proposals": ["aes128-sha256", "aes128-sha1", "aes256-sha512"]
+    "esp_proposals": [
+      "aes128-sha256",
+      "aes128-sha1",
+      "aes256-sha512"
+    ],
+    "rf_off_delay": 5
   },
   "eap": {},
   "ims": {
@@ -31,15 +36,52 @@
     "user_agent": "EE VoWiFi UE/1.0 (Qualcomm IMS)",
     "supported_header": "path,sec-agree,timer",
     "fixed_pani": "IEEE-802.11i; i-wlan-node-id=\"a1b2c3d4e5f6\";country=GB",
-    "contact_param_order": ["access_type", "audio", "icsi_ref", "smsip", "sip_instance", "reg_id"],
+    "contact_param_order": [
+      "access_type",
+      "audio",
+      "icsi_ref",
+      "smsip",
+      "sip_instance",
+      "reg_id"
+    ],
     "allow_header": "REGISTER,INVITE,MESSAGE,SUBSCRIBE",
     "security_client_mechanisms": [
-      {"alg": "hmac-md5-96", "ealg": "des-ede3-cbc", "prot": "esp", "mode": "trans"},
-      {"alg": "hmac-md5-96", "ealg": "aes-cbc", "prot": "esp", "mode": "trans"},
-      {"alg": "hmac-md5-96", "ealg": "null", "prot": "esp", "mode": "trans"},
-      {"alg": "hmac-sha-1-96", "ealg": "des-ede3-cbc", "prot": "esp", "mode": "trans"},
-      {"alg": "hmac-sha-1-96", "ealg": "aes-cbc", "prot": "esp", "mode": "trans"},
-      {"alg": "hmac-sha-1-96", "ealg": "null", "prot": "esp", "mode": "trans"}
+      {
+        "alg": "hmac-md5-96",
+        "ealg": "des-ede3-cbc",
+        "prot": "esp",
+        "mode": "trans"
+      },
+      {
+        "alg": "hmac-md5-96",
+        "ealg": "aes-cbc",
+        "prot": "esp",
+        "mode": "trans"
+      },
+      {
+        "alg": "hmac-md5-96",
+        "ealg": "null",
+        "prot": "esp",
+        "mode": "trans"
+      },
+      {
+        "alg": "hmac-sha-1-96",
+        "ealg": "des-ede3-cbc",
+        "prot": "esp",
+        "mode": "trans"
+      },
+      {
+        "alg": "hmac-sha-1-96",
+        "ealg": "aes-cbc",
+        "prot": "esp",
+        "mode": "trans"
+      },
+      {
+        "alg": "hmac-sha-1-96",
+        "ealg": "null",
+        "prot": "esp",
+        "mode": "trans"
+      }
     ],
     "transport_mode": "auto",
     "contact_features": "ims_features",

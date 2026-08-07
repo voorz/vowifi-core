@@ -67,6 +67,7 @@ type EffectiveCarrierInfo struct {
 	MCC      string
 	MNC      string
 	PresetID string
+	RFOffDelay int
 }
 
 type PreparedSession struct {
@@ -243,9 +244,10 @@ func PrepareStart(input PrepareStartInput) (PreparedSession, error) {
 	prepared := PreparedSession{
 		Profile: profile,
 		EffectiveCarrier: EffectiveCarrierInfo{
-			MCC:      mcc,
-			MNC:      mnc,
-			PresetID: cfg.PresetID,
+			MCC:       mcc,
+			MNC:       mnc,
+			PresetID:  cfg.PresetID,
+			RFOffDelay: cfg.RFOffDelay,
 		},
 		IdentityIMEISource: "profile",
 	}

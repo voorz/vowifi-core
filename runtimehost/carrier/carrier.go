@@ -46,6 +46,7 @@ type Preset struct {
 	E911Provider             string `json:"e911_provider,omitempty"`
 	E911Websheet             string `json:"e911_websheet,omitempty"`
 	E911EntitlementEndpoint  string `json:"e911_entitlement_endpoint,omitempty"`
+	RFOffDelay               int    `json:"rf_off_delay,omitempty"`
 	Blocked                  bool   `json:"blocked,omitempty"`
 }
 
@@ -59,6 +60,7 @@ type EffectiveCarrierConfig struct {
 	PresetID         string
 	EPDGAddr         string
 	AKAAppPreference string
+	RFOffDelay       int
 	E911             struct {
 		Enabled             bool
 		Provider            string
@@ -186,6 +188,7 @@ func carrierProfileToPreset(p *profiles.CarrierProfile) Preset {
 		E911Provider:           p.E911.Provider,
 		E911Websheet:           p.E911.Websheet,
 		E911EntitlementEndpoint: p.E911.EntitlementEndpoint,
+		RFOffDelay:             p.IKE.RFOffDelay,
 		Blocked:                p.Blocked,
 	}
 }
@@ -225,6 +228,7 @@ func ResolveEffectiveCarrierConfig(input EffectiveCarrierConfigInput) EffectiveC
 	}
 	cfg.EPDGAddr = strings.TrimSpace(preset.EPDGAddr)
 	cfg.AKAAppPreference = strings.TrimSpace(preset.AKAAppPreference)
+	cfg.RFOffDelay = preset.RFOffDelay
 	cfg.E911.Enabled = preset.E911Enabled
 	cfg.E911.Provider = strings.TrimSpace(preset.E911Provider)
 	cfg.E911.Websheet = strings.TrimSpace(preset.E911Websheet)

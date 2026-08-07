@@ -52,7 +52,7 @@ func DefaultGBEERegisterProfile() RegisterProfile {
 		SecurityClientFormat:      "full_spaced",
 		SupportedHeader:           "path,sec-agree,gruu",
 		IncludePANIAuthenticated:  true,
-		UserAgent:                 "SimAdmin VoWiFi",
+		UserAgent:                 "User-Agent: Apple iPhone17,4/27.0 (17,4; iOS 27.0; 24A5220a) Boot/3.0.0 VoIP/1.0 Carrier/61.0",
 	}
 }
 
@@ -116,7 +116,7 @@ func (p RegisterProfile) Normalized() RegisterProfile {
 		out.SupportedHeader = "path,sec-agree,gruu"
 	}
 	if strings.TrimSpace(out.UserAgent) == "" {
-		out.UserAgent = "SimAdmin VoWiFi"
+		out.UserAgent = "User-Agent: Apple iPhone17,4/27.0 (17,4; iOS 27.0; 24A5220a) Boot/3.0.0 VoIP/1.0 Carrier/61.0"
 	}
 	return out
 }
@@ -232,7 +232,7 @@ func registerProfileForConfig(cfg Config) RegisterProfile {
 		SecurityClientFormat:      "full_spaced",
 		SupportedHeader:           "path,sec-agree,gruu",
 		IncludePANIAuthenticated:  true,
-		UserAgent:                 "SimAdmin VoWiFi",
+		UserAgent:                 "User-Agent: Apple iPhone17,4/27.0 (17,4; iOS 27.0; 24A5220a) Boot/3.0.0 VoIP/1.0 Carrier/61.0",
 	}
 }
 

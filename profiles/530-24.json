@@ -6,8 +6,13 @@
   "ike": {
     "addr": "epdg.ims.2degrees.net.nz",
     "ip_stack": "ipv4",
-    "proposals": ["aes256-sha512-prfsha512-modp1024"],
-    "esp_proposals": ["aes256-sha512"]
+    "proposals": [
+      "aes256-sha512-prfsha512-modp1024"
+    ],
+    "esp_proposals": [
+      "aes256-sha512"
+    ],
+    "rf_off_delay": 5
   },
   "eap": {},
   "ims": {
@@ -15,7 +20,7 @@
     "initial_authorization": "none",
     "security_client_format": "full_spaced",
     "supported_header": "path,sec-agree,gruu",
-    "user_agent": "SimAdmin VoWiFi",
+    "user_agent": "User-Agent: Apple iPhone17,4/27.0 (17,4; iOS 27.0; 24A5220a) Boot/3.0.0 VoIP/1.0 Carrier/61.0",
     "include_accept_contact": true,
     "include_p_preferred_id": true,
     "include_p_visited_network_id": true,

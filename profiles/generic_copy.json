@@ -1,50 +1,59 @@
 {
-  "id": "3gpp-default",
-  "name": "3GPP Standard Default",
-  "mcc": "",
-  "mnc": "",
   "ike": {
     "addr": "",
-    "port": 0,
-    "proposals": [],
-    "esp_proposals": [],
+    "port": 500,
+    "proposals": [
+      "aes256-sha256-prfsha256-modp2048",
+      "aes128-sha256-prfsha256-modp2048",
+      "aes256-sha1-prfsha1-modp2048",
+      "aes128-sha1-prfsha1-modp2048",
+      "aes256-sha256-prfsha256-modp1024",
+      "aes128-sha256-prfsha256-modp1024",
+      "aes256-sha1-prfsha1-modp1024"
+    ],
+    "esp_proposals": [
+      "aes256-sha256",
+      "aes128-sha256",
+      "aes256-sha1",
+      "aes128-sha1"
+    ],
     "dpd_interval": 0,
-    "nat_keepalive": 0,
+    "nat_keepalive": 20,
     "reauth_interval": 0,
     "ip_stack": "",
-    "apn": "",
-    "replay_window": 0,
+    "apn": "ims",
+    "replay_window": 32,
     "enable_esn": false,
     "disable_eap_mac_validation": false,
     "rf_off_delay": 5
   },
   "eap": {
-    "challenge_mode": "",
-    "app_preference": "",
-    "identity_source": "",
-    "device_identity_enabled": true,
+    "challenge_mode": "standard",
+    "app_preference": "auto",
+    "identity_source": "derived",
+    "device_identity_enabled": false,
     "device_model": ""
   },
   "ims": {
-    "sec_agree_mode": "on",
+    "sec_agree_mode": "auto",
     "require_sec_agree": false,
     "proxy_require_sec_agree": false,
     "use_plain_digest_placeholder": true,
-    "initial_authorization": "",
+    "initial_authorization": "aka_empty_uri_first",
     "include_pani": false,
     "include_pani_authenticated": true,
     "fixed_pani": "",
-    "user_agent": "rmx3366",
-    "supported_header": "path,sec-agree",
-    "allow_header": "OPTIONS, REGISTER, SUBSCRIBE, NOTIFY, PUBLISH, INVITE, ACK, BYE, CANCEL, UPDATE, PRACK, REFER, INFO, MESSAGE",
+    "user_agent": "IM-client/OMA1.0 Android/14 Vendor/Xiaomi Model/23127PN0CC Qualcomm-IMS/3.0",
+    "supported_header": "path,sec-agree,gruu",
+    "allow_header": "",
     "contact_param_order": [
       "access_type",
-      "sip_instance",
       "audio",
       "smsip",
-      "icsi_ref"
+      "icsi_ref",
+      "sip_instance"
     ],
-    "contact_features": "",
+    "contact_features": "ims_features",
     "security_client_mechanisms": [
       {
         "alg": "hmac-md5-96",
@@ -83,8 +92,8 @@
         "mode": "trans"
       }
     ],
-    "security_client_format": "",
-    "transport_mode": "udp",
+    "security_client_format": "full_spaced",
+    "transport_mode": "auto",
     "strict_security_server_offer": true,
     "enable_initial_reject_fallback": true,
     "omit_route": false,
@@ -95,7 +104,7 @@
     "include_connection_keepalive_in_auth": false,
     "security_client_includes_server_params": false,
     "fallback_includes_server_params_in_sec_cl": false,
-    "expires": 7200,
+    "expires": 600,
     "pcscf_addr": "",
     "domain": "",
     "realm": "",
@@ -109,7 +118,7 @@
     "include_security_client": false,
     "include_require_sec_agree": true,
     "contact_user_random": false,
-    "icsi_ref": "",
+    "icsi_ref": "urn%3Aurn-7%3A3gpp-service.ims.icsi.mmtel",
     "voice_supported_header": "",
     "voice_allow_header": "",
     "voice_accept_contact": "",
@@ -136,9 +145,9 @@
         "score": 40
       }
     ],
-    "tcp_keepalive_seconds": 0,
-    "options_ping_interval_seconds": 0,
-    "local_port": 0,
+    "tcp_keepalive_seconds": 30,
+    "options_ping_interval_seconds": 45,
+    "local_port": 5060,
     "register_policy": {
       "id": "adaptive-default",
       "temporary_status_codes": [
@@ -171,8 +180,12 @@
     "imei": "",
     "ims_tac": 0,
     "ims_cell_id": 0,
-    "ims_cell_id_mode": "",
+    "ims_cell_id_mode": "qmi_first",
     "ims_register_profile": ""
   },
-  "blocked": false
+  "blocked": false,
+  "id": "vodafoneuk_23415",
+  "name": "Vodafone UK",
+  "mcc": "234",
+  "mnc": "15"
 }

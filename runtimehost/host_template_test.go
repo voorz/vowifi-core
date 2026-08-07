@@ -17,7 +17,7 @@ func TestResolveIMSRegisterTemplateForVodafoneUK(t *testing.T) {
 
 func TestResolveIMSUserAgentForVodafoneUK(t *testing.T) {
 	tmpl := ResolveIMSRegisterTemplate("234", "015", "")
-	if got := resolveIMSUserAgent(tmpl, "SimAdmin VoWiFi"); got != "Vodafone VOLTE Qualcomm" {
+	if got := resolveIMSUserAgent(tmpl, "User-Agent: Apple iPhone17,4/27.0 (17,4; iOS 27.0; 24A5220a) Boot/3.0.0 VoIP/1.0 Carrier/61.0"); got != "Vodafone VOLTE Qualcomm" {
 		t.Fatalf("User-Agent = %q, want Vodafone VOLTE Qualcomm", got)
 	}
 }

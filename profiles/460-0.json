@@ -3,25 +3,63 @@
   "name": "China Mobile",
   "mcc": "460",
   "mnc": "0",
-  "ike": {},
+  "ike": {
+    "rf_off_delay": 5
+  },
   "eap": {},
   "ims": {
     "sec_agree_mode": "auto",
     "strict_security_server_offer": true,
-    "contact_param_order": ["access_type", "audio", "smsip", "icsi_ref", "sip_instance"],
+    "contact_param_order": [
+      "access_type",
+      "audio",
+      "smsip",
+      "icsi_ref",
+      "sip_instance"
+    ],
     "security_client_mechanisms": [
-      {"alg": "hmac-md5-96", "ealg": "des-ede3-cbc", "prot": "esp", "mode": "trans"},
-      {"alg": "hmac-md5-96", "ealg": "aes-cbc", "prot": "esp", "mode": "trans"},
-      {"alg": "hmac-md5-96", "ealg": "null", "prot": "esp", "mode": "trans"},
-      {"alg": "hmac-sha-1-96", "ealg": "des-ede3-cbc", "prot": "esp", "mode": "trans"},
-      {"alg": "hmac-sha-1-96", "ealg": "aes-cbc", "prot": "esp", "mode": "trans"},
-      {"alg": "hmac-sha-1-96", "ealg": "null", "prot": "esp", "mode": "trans"}
+      {
+        "alg": "hmac-md5-96",
+        "ealg": "des-ede3-cbc",
+        "prot": "esp",
+        "mode": "trans"
+      },
+      {
+        "alg": "hmac-md5-96",
+        "ealg": "aes-cbc",
+        "prot": "esp",
+        "mode": "trans"
+      },
+      {
+        "alg": "hmac-md5-96",
+        "ealg": "null",
+        "prot": "esp",
+        "mode": "trans"
+      },
+      {
+        "alg": "hmac-sha-1-96",
+        "ealg": "des-ede3-cbc",
+        "prot": "esp",
+        "mode": "trans"
+      },
+      {
+        "alg": "hmac-sha-1-96",
+        "ealg": "aes-cbc",
+        "prot": "esp",
+        "mode": "trans"
+      },
+      {
+        "alg": "hmac-sha-1-96",
+        "ealg": "null",
+        "prot": "esp",
+        "mode": "trans"
+      }
     ],
     "contact_features": "sms_only",
     "initial_authorization": "none",
     "security_client_format": "full_spaced",
     "supported_header": "path,sec-agree,gruu",
-    "user_agent": "SimAdmin VoWiFi",
+    "user_agent": "User-Agent: Apple iPhone17,4/27.0 (17,4; iOS 27.0; 24A5220a) Boot/3.0.0 VoIP/1.0 Carrier/61.0",
     "include_accept_contact": true,
     "include_p_preferred_id": true,
     "include_p_visited_network_id": true,
