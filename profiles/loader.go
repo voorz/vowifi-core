@@ -268,7 +268,19 @@ func LookupWithSPN(mcc, mnc, spn string) (*CarrierProfile, error) {
 		key = alias
 	}
 	// 1. User override (from database, active=true)
+	// Check brand-specific key first (e.g. "234-33__cmlink"), then base key
 	userMu.RLock()
+	brandKey := key
+	if spn != "" {
+		brandSlug := strings.ToLower(strings.TrimSpace(spn))
+		if brandSlug != "" {
+			brandKey = key + "__" + brandSlug
+		}
+	}
+	if p, ok := userOverrides[brandKey]; ok {
+		userMu.RUnlock()
+		return p, nil
+	}
 	if p, ok := userOverrides[key]; ok {
 		userMu.RUnlock()
 		return p, nil
@@ -347,6 +359,36 @@ func SetUserOverride(mcc, mnc string, p *CarrierProfile) {
 	key := plmnKey(mcc, mnc)
 	if alias, ok := plmnAliases[key]; ok {
 		key = alias
+	}
+	userMu.Lock()
+	defer userMu.Unlock()
+	if p == nil {
+		delete(userOverrides, key)
+		return
+	}
+	userOverrides[key] = p
+}
+
+// SetUserOverrideByKey registers a user-defined carrier profile by full key
+// (e.g. "234-33" or "234-33__cmlink"). This allows per-variant overrides for
+// MVNOs sharing the same PLMN. Pass nil to remove the override for a key.
+func SetUserOverrideByKey(key string, p *CarrierProfile) {
+	key = strings.TrimSpace(key)
+	if key == "" {
+		return
+	}
+	// Resolve alias for the base PLMN part (before __)
+	baseKey := key
+	if idx := strings.Index(key, "__"); idx >= 0 {
+		baseKey = key[:idx]
+	}
+	if alias, ok := plmnAliases[baseKey]; ok {
+		// Preserve brand suffix if present
+		if idx := strings.Index(key, "__"); idx >= 0 {
+			key = alias + key[idx:]
+		} else {
+			key = alias
+		}
 	}
 	userMu.Lock()
 	defer userMu.Unlock()
