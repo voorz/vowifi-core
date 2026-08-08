@@ -80,8 +80,8 @@ func TestRegisterProfileForConfigJSONFirst(t *testing.T) {
 		if got.SupportedHeader != "path,sec-agree,gruu" {
 			t.Errorf("SupportedHeader = %q, want path,sec-agree,gruu", got.SupportedHeader)
 		}
-		if got.UserAgent != "User-Agent: Apple iPhone17,4/27.0 (17,4; iOS 27.0; 24A5220a) Boot/3.0.0 VoIP/1.0 Carrier/61.0" {
-			t.Errorf("UserAgent = %q, want User-Agent: Apple iPhone17,4/27.0 (17,4; iOS 27.0; 24A5220a) Boot/3.0.0 VoIP/1.0 Carrier/61.0", got.UserAgent)
+		if got.UserAgent != "User-Agent: Apple iPhone17,2/26.6 (17,2; iOS 26.6; 23G82) Boot/3.0.0 VoIP/1.0 Carrier/59.0" {
+			t.Errorf("UserAgent = %q, want User-Agent: Apple iPhone17,2/26.6 (17,2; iOS 26.6; 23G82) Boot/3.0.0 VoIP/1.0 Carrier/59.0", got.UserAgent)
 		}
 		if !got.IncludePANIAuthenticated {
 			t.Error("IncludePANIAuthenticated = false, want true")
@@ -140,7 +140,7 @@ func TestRegisterProfileForConfigJSONPathUsed(t *testing.T) {
 	if got.InitialAuthorization != "none" {
 		t.Errorf("InitialAuthorization = %q, want none (from JSON)", got.InitialAuthorization)
 	}
-	if got.UserAgent != "User-Agent: Apple iPhone17,4/27.0 (17,4; iOS 27.0; 24A5220a) Boot/3.0.0 VoIP/1.0 Carrier/61.0" {
-		t.Errorf("UserAgent = %q, want User-Agent: Apple iPhone17,4/27.0 (17,4; iOS 27.0; 24A5220a) Boot/3.0.0 VoIP/1.0 Carrier/61.0 (from JSON)", got.UserAgent)
+	if got.UserAgent != "User-Agent: Apple iPhone17,2/26.6 (17,2; iOS 26.6; 23G82) Boot/3.0.0 VoIP/1.0 Carrier/59.0" {
+		t.Errorf("UserAgent = %q, want User-Agent: Apple iPhone17,2/26.6 (17,2; iOS 26.6; 23G82) Boot/3.0.0 VoIP/1.0 Carrier/59.0 (from JSON)", got.UserAgent)
 	}
 }

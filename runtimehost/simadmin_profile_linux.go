@@ -45,6 +45,12 @@ func applySimAdminSWuProfile(cfg *externalswu.Config, mcc, mnc, spn string) {
 		if p.EAP.DeviceIdentityEnabled != nil {
 			cfg.DeviceIdentityEnabled = p.EAP.DeviceIdentityEnabled
 		}
+		if p.IKE.EnableESN {
+			cfg.EnableESN = true
+		}
+		if p.IKE.ReplayWindow > 0 {
+			cfg.ReplayWindow = p.IKE.ReplayWindow
+		}
 		return
 	}
 	// Generic fallback: broad compatibility proposal set.

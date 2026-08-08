@@ -599,7 +599,11 @@ func (c *Client) newRequest(method sip.RequestMethod, target string, initialRegi
 			req.AppendHeader(sip.NewHeader("Proxy-Require", "sec-agree"))
 		}
 		req.AppendHeader(sip.NewHeader("Supported", c.registerProfile.SupportedHeader))
-		req.AppendHeader(sip.NewHeader("Allow", "INVITE,ACK,CANCEL,BYE,UPDATE,PRACK,MESSAGE,REFER,NOTIFY,INFO,OPTIONS"))
+		allowVal := strings.TrimSpace(c.registerProfile.AllowHeader)
+		if allowVal == "" {
+			allowVal = "INVITE,ACK,CANCEL,BYE,UPDATE,PRACK,MESSAGE,REFER,NOTIFY,INFO,OPTIONS"
+		}
+		req.AppendHeader(sip.NewHeader("Allow", allowVal))
 		if c.registerProfile.IncludePPreferredID {
 			req.AppendHeader(sip.NewHeader("P-Preferred-Identity", "<"+c.cfg.PublicURI+">"))
 		}
@@ -617,8 +621,12 @@ func (c *Client) newRequest(method sip.RequestMethod, target string, initialRegi
 			req.AppendHeader(sip.NewHeader("Cellular-Network-Info", buildCellularNetworkInfo(plmn, c.cfg.CellID)))
 		}
 		if c.registerProfile.IncludeAcceptContact {
+			icsiRef := strings.TrimSpace(c.registerProfile.IcsiRef)
+			if icsiRef == "" {
+				icsiRef = imsMmtelICSIRef
+			}
 			req.AppendHeader(sip.NewHeader("Accept-Contact", "*;+g.3gpp.smsip"))
-			req.AppendHeader(sip.NewHeader("Accept-Contact", "*;+g.3gpp.icsi-ref=\""+imsMmtelICSIRef+"\""))
+			req.AppendHeader(sip.NewHeader("Accept-Contact", "*;+g.3gpp.icsi-ref=\""+icsiRef+"\""))
 		}
 		if c.registerProfile.IncludeSecurityClient {
 			req.AppendHeader(sip.NewHeader("Security-Client", buildSecurityClientHeader(c.registerProfile, c.securityClient)))
@@ -627,6 +635,23 @@ func (c *Client) newRequest(method sip.RequestMethod, target string, initialRegi
 		if !c.registerProfile.IncludeRoute && strings.TrimSpace(c.cfg.PCSCFAddr) != "" {
 			// Handset-style REGISTER omits Route but still sends over the discovered P-CSCF.
 			req.SetDestination(c.cfg.PCSCFAddr)
+		}
+	}
+	// Voice session headers for non-REGISTER requests (INVITE/MESSAGE/UPDATE etc.)
+	if method != sip.REGISTER {
+		if v := strings.TrimSpace(c.registerProfile.VoiceSupportedHeader); v != "" {
+			req.AppendHeader(sip.NewHeader("Supported", v))
+		}
+		if v := strings.TrimSpace(c.registerProfile.VoiceAllowHeader); v != "" {
+			req.AppendHeader(sip.NewHeader("Allow", v))
+		} else {
+			req.AppendHeader(sip.NewHeader("Allow", "INVITE,ACK,CANCEL,BYE,UPDATE,PRACK,MESSAGE,REFER,NOTIFY,INFO,OPTIONS"))
+		}
+		if v := strings.TrimSpace(c.registerProfile.VoiceAcceptContact); v != "" {
+			req.AppendHeader(sip.NewHeader("Accept-Contact", v))
+		}
+		if v := strings.TrimSpace(c.registerProfile.VoicePPreferredService); v != "" {
+			req.AppendHeader(sip.NewHeader("P-Preferred-Service", v))
 		}
 	}
 	if c.cfg.transportNetwork() == "udp" {

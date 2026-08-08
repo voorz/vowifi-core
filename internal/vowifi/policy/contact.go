@@ -18,6 +18,7 @@ type ContactBuildInput struct {
 	Transport          string
 	SIPInstanceURN     string
 	RegisterExpirySecs int
+	IcsiRef            string
 }
 
 // BuildIMSContactHeader renders Contact per carrier contact_param_order.
@@ -81,8 +82,12 @@ func appendContactParam(b *strings.Builder, name string, input ContactBuildInput
 	case "smsip":
 		b.WriteString(";+g.3gpp.smsip")
 	case "icsi_ref":
+		ref := strings.TrimSpace(input.IcsiRef)
+		if ref == "" {
+			ref = IMSMmtelICSIRef
+		}
 		b.WriteString(`;+g.3gpp.icsi-ref="`)
-		b.WriteString(IMSMmtelICSIRef)
+		b.WriteString(ref)
 		b.WriteString(`"`)
 	case "mid_call":
 		b.WriteString(";+g.3gpp.mid-call")

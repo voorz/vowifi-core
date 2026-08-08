@@ -24,10 +24,17 @@ type RegisterProfile struct {
 	InitialAuthorization     string
 	SecurityClientFormat     string
 	SupportedHeader          string
+	AllowHeader              string
+	IcsiRef                  string
 	IncludePANIAuthenticated bool
 	UserAgent                string
 	ContactUserRandom        bool
 	RegisterExpirySeconds    int
+	// Voice session headers (INVITE/MESSAGE/UPDATE etc.)
+	VoiceSupportedHeader   string
+	VoiceAllowHeader       string
+	VoiceAcceptContact     string
+	VoicePPreferredService string
 	// VariantSet enables multi-variant REGISTER retries (e.g. "simadmin_gb_ee").
 	VariantSet string
 	// AuthorizationIdentity selects the digest username shape for REGISTER.
@@ -52,7 +59,7 @@ func DefaultGBEERegisterProfile() RegisterProfile {
 		SecurityClientFormat:      "full_spaced",
 		SupportedHeader:           "path,sec-agree,gruu",
 		IncludePANIAuthenticated:  true,
-		UserAgent:                 "User-Agent: Apple iPhone17,4/27.0 (17,4; iOS 27.0; 24A5220a) Boot/3.0.0 VoIP/1.0 Carrier/61.0",
+		UserAgent:                 "User-Agent: Apple iPhone17,2/26.6 (17,2; iOS 26.6; 23G82) Boot/3.0.0 VoIP/1.0 Carrier/59.0",
 	}
 }
 
@@ -116,7 +123,7 @@ func (p RegisterProfile) Normalized() RegisterProfile {
 		out.SupportedHeader = "path,sec-agree,gruu"
 	}
 	if strings.TrimSpace(out.UserAgent) == "" {
-		out.UserAgent = "User-Agent: Apple iPhone17,4/27.0 (17,4; iOS 27.0; 24A5220a) Boot/3.0.0 VoIP/1.0 Carrier/61.0"
+		out.UserAgent = "User-Agent: Apple iPhone17,2/26.6 (17,2; iOS 26.6; 23G82) Boot/3.0.0 VoIP/1.0 Carrier/59.0"
 	}
 	return out
 }
@@ -232,7 +239,7 @@ func registerProfileForConfig(cfg Config) RegisterProfile {
 		SecurityClientFormat:      "full_spaced",
 		SupportedHeader:           "path,sec-agree,gruu",
 		IncludePANIAuthenticated:  true,
-		UserAgent:                 "User-Agent: Apple iPhone17,4/27.0 (17,4; iOS 27.0; 24A5220a) Boot/3.0.0 VoIP/1.0 Carrier/61.0",
+		UserAgent:                 "User-Agent: Apple iPhone17,2/26.6 (17,2; iOS 26.6; 23G82) Boot/3.0.0 VoIP/1.0 Carrier/59.0",
 	}
 }
 
@@ -372,8 +379,12 @@ func (c Config) buildContactHeader(profile RegisterProfile, sipInstance, contact
 	case "phone_xiaomi":
 		b.WriteString(`;+g.3gpp.accesstype="wlan1"`)
 		b.WriteString(";audio")
+		ref := strings.TrimSpace(profile.IcsiRef)
+		if ref == "" {
+			ref = imsMmtelICSIRef
+		}
 		b.WriteString(`;+g.3gpp.icsi-ref="`)
-		b.WriteString(imsMmtelICSIRef)
+		b.WriteString(ref)
 		b.WriteString(`"`)
 		if strings.TrimSpace(sipInstance) != "" {
 			b.WriteString(`;+sip.instance="<`)
@@ -387,8 +398,12 @@ func (c Config) buildContactHeader(profile RegisterProfile, sipInstance, contact
 		b.WriteString(`;+g.3gpp.accesstype="IEEE-802.11"`)
 		b.WriteString(";audio")
 		b.WriteString(";+g.3gpp.smsip")
+		ref := strings.TrimSpace(profile.IcsiRef)
+		if ref == "" {
+			ref = imsMmtelICSIRef
+		}
 		b.WriteString(`;+g.3gpp.icsi-ref="`)
-		b.WriteString(imsMmtelICSIRef)
+		b.WriteString(ref)
 		b.WriteString(`"`)
 		if strings.TrimSpace(sipInstance) != "" {
 			b.WriteString(`;+sip.instance="<`)

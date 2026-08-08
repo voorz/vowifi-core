@@ -34,10 +34,16 @@ func CarrierProfileToRegisterProfile(p *profiles.CarrierProfile) RegisterProfile
 		InitialAuthorization:      p.IMS.InitialAuthorization,
 		SecurityClientFormat:      p.IMS.SecurityClientFormat,
 		SupportedHeader:           p.IMS.SupportedHeader,
+		AllowHeader:              p.IMS.AllowHeader,
+		IcsiRef:                  p.IMS.ICSIRef,
 		IncludePANIAuthenticated:  p.IMS.IncludePANIAuthenticated,
 		UserAgent:                 p.IMS.UserAgent,
 		ContactUserRandom:         p.IMS.ContactUserRandom,
 		RegisterExpirySeconds:     p.IMS.Expires,
+		VoiceSupportedHeader:      p.IMS.VoiceSupportedHeader,
+		VoiceAllowHeader:          p.IMS.VoiceAllowHeader,
+		VoiceAcceptContact:        p.IMS.VoiceAcceptContact,
+		VoicePPreferredService:    p.IMS.VoicePPreferredService,
 	}
 	if authID := strings.TrimSpace(p.IMS.AuthorizationIdentity); authID != "" {
 		rp.AuthorizationIdentity = authID
