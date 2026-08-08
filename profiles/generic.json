@@ -1,0 +1,178 @@
+{
+  "id": "3gpp-default",
+  "name": "3GPP Standard Default",
+  "mcc": "",
+  "mnc": "",
+  "ike": {
+    "addr": "",
+    "port": 0,
+    "proposals": [],
+    "esp_proposals": [],
+    "dpd_interval": 0,
+    "nat_keepalive": 0,
+    "reauth_interval": 0,
+    "ip_stack": "",
+    "apn": "",
+    "replay_window": 0,
+    "enable_esn": false,
+    "disable_eap_mac_validation": false,
+    "rf_off_delay": 5
+  },
+  "eap": {
+    "challenge_mode": "",
+    "app_preference": "",
+    "identity_source": "",
+    "device_identity_enabled": true,
+    "device_model": ""
+  },
+  "ims": {
+    "sec_agree_mode": "on",
+    "require_sec_agree": false,
+    "proxy_require_sec_agree": false,
+    "use_plain_digest_placeholder": true,
+    "initial_authorization": "",
+    "include_pani": false,
+    "include_pani_authenticated": true,
+    "fixed_pani": "IEEE-802.11i; i-wlan-node-id=\"000000000000\"",
+    "user_agent": "User-Agent: Apple iPhone17,2/26.6 (17,2; iOS 26.6; 23G82) Boot/3.0.0 VoIP/1.0 Carrier/59.0",
+    "supported_header": "path,sec-agree",
+    "allow_header": "OPTIONS, REGISTER, SUBSCRIBE, NOTIFY, PUBLISH, INVITE, ACK, BYE, CANCEL, UPDATE, PRACK, REFER, INFO, MESSAGE",
+    "contact_param_order": [
+      "access_type",
+      "sip_instance",
+      "audio",
+      "smsip",
+      "icsi_ref"
+    ],
+    "contact_features": "",
+    "security_client_mechanisms": [
+      {
+        "alg": "hmac-md5-96",
+        "ealg": "des-ede3-cbc",
+        "prot": "esp",
+        "mode": "trans"
+      },
+      {
+        "alg": "hmac-md5-96",
+        "ealg": "aes-cbc",
+        "prot": "esp",
+        "mode": "trans"
+      },
+      {
+        "alg": "hmac-md5-96",
+        "ealg": "null",
+        "prot": "esp",
+        "mode": "trans"
+      },
+      {
+        "alg": "hmac-sha-1-96",
+        "ealg": "des-ede3-cbc",
+        "prot": "esp",
+        "mode": "trans"
+      },
+      {
+        "alg": "hmac-sha-1-96",
+        "ealg": "aes-cbc",
+        "prot": "esp",
+        "mode": "trans"
+      },
+      {
+        "alg": "hmac-sha-1-96",
+        "ealg": "null",
+        "prot": "esp",
+        "mode": "trans"
+      }
+    ],
+    "security_client_format": "",
+    "transport_mode": "udp",
+    "strict_security_server_offer": true,
+    "enable_initial_reject_fallback": true,
+    "omit_route": false,
+    "minimal_initial_headers": false,
+    "force_header_port_5060": false,
+    "omit_initial_security_client_protocol": false,
+    "probe_initial_security_client_on_bad_request": false,
+    "include_connection_keepalive_in_auth": false,
+    "security_client_includes_server_params": false,
+    "fallback_includes_server_params_in_sec_cl": false,
+    "expires": 7200,
+    "pcscf_addr": "",
+    "domain": "",
+    "realm": "",
+    "authorization_identity": "imsi_home_domain",
+    "include_accept_contact": false,
+    "include_p_preferred_id": false,
+    "include_p_visited_network_id": false,
+    "include_p_access_network_info": false,
+    "include_route": false,
+    "include_cellular_network": true,
+    "include_security_client": false,
+    "include_require_sec_agree": true,
+    "contact_user_random": false,
+    "icsi_ref": "",
+    "voice_supported_header": "",
+    "voice_allow_header": "",
+    "voice_accept_contact": "",
+    "voice_p_preferred_service": "",
+    "ike_gateway_prefix_scores": [
+      {
+        "prefix": "2a03:dd00:1f80:",
+        "score": 100
+      },
+      {
+        "prefix": "2a03:dd00:1f81:810:",
+        "score": 80
+      },
+      {
+        "prefix": "2a03:dd00:1f81:10:",
+        "score": 10
+      },
+      {
+        "prefix": "2a03:dd00:1f81:5010:",
+        "score": 10
+      },
+      {
+        "prefix": "2a03:dd00:1f81:",
+        "score": 40
+      }
+    ],
+    "tcp_keepalive_seconds": 0,
+    "options_ping_interval_seconds": 0,
+    "local_port": 0,
+    "register_policy": {
+      "id": "adaptive-default",
+      "temporary_status_codes": [
+        408,
+        480,
+        500,
+        502,
+        503,
+        504
+      ],
+      "forbidden_status_codes": [
+        403
+      ],
+      "initial_reject_fallback_status_codes": [
+        400,
+        403,
+        480,
+        500
+      ],
+      "temporary_retry_seconds": 0
+    }
+  },
+  "e911": {
+    "enabled": false,
+    "provider": "",
+    "websheet": "",
+    "entitlement_endpoint": ""
+  },
+  "device": {
+    "imei": "357435931999624",
+    "ims_tac": 0,
+    "ims_cell_id": 0,
+    "ims_cell_id_mode": "",
+    "ims_register_profile": ""
+  },
+  "blocked": false
+}

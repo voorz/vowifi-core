@@ -1,0 +1,104 @@
+{
+  "id": "ctexcel_uk_23433",
+  "name": "CTExcel UK",
+  "mcc": "234",
+  "mnc": "33",
+  "ike": {
+    "addr": "epdg.epc.mnc033.mcc234.pub.3gppnetwork.org",
+    "proposals": [
+      "aes128-sha256-modp2048",
+      "aes128-sha256-prfsha1-modp2048",
+      "aes128-sha1-modp2048",
+      "aes256-sha256-prfsha1-modp2048",
+      "aes256-sha256-modp2048"
+    ],
+    "esp_proposals": [
+      "aes128-sha256",
+      "aes128-sha1",
+      "aes256-sha512"
+    ],
+    "rf_off_delay": 5
+  },
+  "eap": {},
+  "ims": {
+    "sec_agree_mode": "on",
+    "include_pani": true,
+    "include_pani_authenticated": true,
+    "strict_security_server_offer": true,
+    "use_plain_digest_placeholder": true,
+    "enable_initial_reject_fallback": false,
+    "omit_route": false,
+    "minimal_initial_headers": false,
+    "require_sec_agree": true,
+    "proxy_require_sec_agree": false,
+    "omit_initial_security_client_protocol": false,
+    "probe_initial_security_client_on_bad_request": true,
+    "user_agent": "EE VoWiFi UE/1.0 (Qualcomm IMS)",
+    "supported_header": "path,sec-agree,timer",
+    "fixed_pani": "IEEE-802.11i; i-wlan-node-id=\"a1b2c3d4e5f6\";country=GB",
+    "contact_param_order": [
+      "access_type",
+      "audio",
+      "icsi_ref",
+      "smsip",
+      "sip_instance",
+      "reg_id"
+    ],
+    "allow_header": "REGISTER,INVITE,MESSAGE,SUBSCRIBE",
+    "security_client_mechanisms": [
+      {
+        "alg": "hmac-md5-96",
+        "ealg": "des-ede3-cbc",
+        "prot": "esp",
+        "mode": "trans"
+      },
+      {
+        "alg": "hmac-md5-96",
+        "ealg": "aes-cbc",
+        "prot": "esp",
+        "mode": "trans"
+      },
+      {
+        "alg": "hmac-md5-96",
+        "ealg": "null",
+        "prot": "esp",
+        "mode": "trans"
+      },
+      {
+        "alg": "hmac-sha-1-96",
+        "ealg": "des-ede3-cbc",
+        "prot": "esp",
+        "mode": "trans"
+      },
+      {
+        "alg": "hmac-sha-1-96",
+        "ealg": "aes-cbc",
+        "prot": "esp",
+        "mode": "trans"
+      },
+      {
+        "alg": "hmac-sha-1-96",
+        "ealg": "null",
+        "prot": "esp",
+        "mode": "trans"
+      }
+    ],
+    "transport_mode": "auto",
+    "contact_features": "ims_features",
+    "initial_authorization": "aka_empty_uri_first",
+    "security_client_format": "full_spaced",
+    "include_accept_contact": true,
+    "include_p_preferred_id": true,
+    "include_p_visited_network_id": true,
+    "include_p_access_network_info": true,
+    "include_route": true,
+    "include_cellular_network": true,
+    "include_security_client": true
+  },
+  "e911": {},
+  "device": {
+    "ims_tac": 28673,
+    "ims_cell_id": 12345678
+  },
+  "blocked": false
+}

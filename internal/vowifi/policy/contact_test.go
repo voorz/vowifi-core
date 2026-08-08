@@ -7,7 +7,7 @@ import (
 )
 
 func TestBuildIMSContactHeaderGiffgaffOrder(t *testing.T) {
-	tmpl := GiffgaffTemplate()
+	tmpl := GenericTemplate()
 	got := BuildIMSContactHeader(tmpl, ContactBuildInput{
 		IMSI:               "001010000000001",
 		PublicURI:          "sip:001010000000001@ims.mnc001.mcc001.3gppnetwork.org",

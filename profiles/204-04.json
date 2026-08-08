@@ -1,0 +1,38 @@
+{
+  "id": "vodafone_nl_20404_ios",
+  "name": "Vodafone NL",
+  "mcc": "204",
+  "mnc": "4",
+  "ike": {
+    "addr": "epdg.epc.mnc004.mcc204.pub.3gppnetwork.org",
+    "proposals": [
+      "aes256-sha256-prfsha512-modp2048"
+    ],
+    "esp_proposals": [
+      "aes256-sha256"
+    ],
+    "rf_off_delay": 5
+  },
+  "eap": {},
+  "ims": {
+    "enable_initial_reject_fallback": false,
+    "include_pani_authenticated": true,
+    "strict_security_server_offer": true,
+    "use_plain_digest_placeholder": false,
+    "transport_mode": "tcp",
+    "contact_features": "sms_only",
+    "initial_authorization": "none",
+    "security_client_format": "full_spaced",
+    "supported_header": "path,sec-agree,gruu",
+    "user_agent": "User-Agent: Apple iPhone17,2/26.6 (17,2; iOS 26.6; 23G82) Boot/3.0.0 VoIP/1.0 Carrier/59.0",
+    "include_accept_contact": true,
+    "include_p_preferred_id": true,
+    "include_p_visited_network_id": true,
+    "include_p_access_network_info": true,
+    "include_route": true,
+    "include_security_client": true
+  },
+  "e911": {},
+  "device": {},
+  "blocked": false
+}

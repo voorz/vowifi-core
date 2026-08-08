@@ -1,0 +1,408 @@
+// Package profiles provides carrier profile loading from embedded JSON files.
+//
+// The profiles/ directory contains one JSON file per PLMN (e.g. 234-10.json for
+// giffgaff UK). Each file follows the CarrierProfile schema defined in
+// DESIGN_CARRIER_CONFIG.md. At init time all files are embedded and parsed; lookups
+// are in-memory with zero file I/O at runtime.
+package profiles
+
+import (
+	"embed"
+	"encoding/json"
+	"fmt"
+	"strings"
+	"sync"
+)
+
+//go:embed *.json
+var profileFS embed.FS
+
+// CarrierProfile is the unified carrier configuration matching the JSON schema.
+// All fields are optional (omitempty); zero values mean "use 3GPP standard default".
+type CarrierProfile struct {
+	ID     string `json:"id"`
+	Name   string `json:"name"`
+	MCC    string `json:"mcc"`
+	MNC    string `json:"mnc"`
+	IKE    IKEConfig    `json:"ike"`
+	EAP    EAPConfig    `json:"eap"`
+	IMS    IMSConfig    `json:"ims"`
+	E911   E911Config   `json:"e911"`
+	Device DeviceConfig `json:"device"`
+	Blocked bool        `json:"blocked"`
+}
+
+type IKEConfig struct {
+	Addr                   string   `json:"addr,omitempty"`
+	Port                   int      `json:"port,omitempty"`
+	Proposals              []string `json:"proposals,omitempty"`
+	ESPProposals           []string `json:"esp_proposals,omitempty"`
+	DPDInterval            int      `json:"dpd_interval,omitempty"`
+	NATKeepalive           int      `json:"nat_keepalive,omitempty"`
+	ReauthInterval         int      `json:"reauth_interval,omitempty"`
+	IPStack                string   `json:"ip_stack,omitempty"`
+	APN                    string   `json:"apn,omitempty"`
+	ReplayWindow           int      `json:"replay_window,omitempty"`
+	EnableESN              bool     `json:"enable_esn,omitempty"`
+	DisableEAPMACValidation bool    `json:"disable_eap_mac_validation,omitempty"`
+	RFOffDelay             int      `json:"rf_off_delay,omitempty"` // RFOff 后等待秒数（默认 5s），让 mihomo 路由表重建
+}
+
+type EAPConfig struct {
+	ChallengeMode        string `json:"challenge_mode,omitempty"`
+	AppPreference        string `json:"app_preference,omitempty"`
+	IdentitySource       string `json:"identity_source,omitempty"`
+	DeviceIdentityEnabled *bool `json:"device_identity_enabled,omitempty"`
+	DeviceModel          string `json:"device_model,omitempty"`
+}
+
+type IMSConfig struct {
+	SecAgreeMode                           string                   `json:"sec_agree_mode,omitempty"`
+	RequireSecAgree                        bool                     `json:"require_sec_agree,omitempty"`
+	ProxyRequireSecAgree                   bool                     `json:"proxy_require_sec_agree,omitempty"`
+	UsePlainDigestPlaceholder              bool                     `json:"use_plain_digest_placeholder,omitempty"`
+	InitialAuthorization                   string                   `json:"initial_authorization,omitempty"`
+	IncludePANI                            bool                     `json:"include_pani,omitempty"`
+	IncludePANIAuthenticated               bool                     `json:"include_pani_authenticated,omitempty"`
+	FixedPANI                              string                   `json:"fixed_pani,omitempty"`
+	UserAgent                              string                   `json:"user_agent,omitempty"`
+	SupportedHeader                        string                   `json:"supported_header,omitempty"`
+	AllowHeader                            string                   `json:"allow_header,omitempty"`
+	ContactParamOrder                      []string                 `json:"contact_param_order,omitempty"`
+	ContactFeatures                        string                   `json:"contact_features,omitempty"`
+	SecurityClientMechanisms               []SecurityMechanism      `json:"security_client_mechanisms,omitempty"`
+	SecurityClientFormat                   string                   `json:"security_client_format,omitempty"`
+	TransportMode                          string                   `json:"transport_mode,omitempty"`
+	StrictSecurityServerOffer              bool                     `json:"strict_security_server_offer,omitempty"`
+	EnableInitialRejectFallback            bool                     `json:"enable_initial_reject_fallback,omitempty"`
+	OmitRoute                              bool                     `json:"omit_route,omitempty"`
+	MinimalInitialHeaders                  bool                     `json:"minimal_initial_headers,omitempty"`
+	ForceHeaderPort5060                    bool                     `json:"force_header_port_5060,omitempty"`
+	OmitInitialSecurityClientProtocol      bool                     `json:"omit_initial_security_client_protocol,omitempty"`
+	ProbeInitialSecurityClientOnBadRequest bool                     `json:"probe_initial_security_client_on_bad_request,omitempty"`
+	IncludeConnectionKeepaliveInAuth       bool                     `json:"include_connection_keepalive_in_auth,omitempty"`
+	SecurityClientIncludesServerParams     bool                     `json:"security_client_includes_server_params,omitempty"`
+	FallbackIncludesServerParamsInSecCl    bool                     `json:"fallback_includes_server_params_in_sec_cl,omitempty"`
+	Expires                                int                      `json:"expires,omitempty"`
+	PCSCFAddr                              string                   `json:"pcscf_addr,omitempty"`
+	Domain                                 string                   `json:"domain,omitempty"`
+	Realm                                  string                   `json:"realm,omitempty"`
+	AuthorizationIdentity                  string                   `json:"authorization_identity,omitempty"`
+	IncludeAcceptContact                   bool                     `json:"include_accept_contact,omitempty"`
+	IncludePPreferredID                    bool                     `json:"include_p_preferred_id,omitempty"`
+	IncludePVisitedNetworkID               bool                     `json:"include_p_visited_network_id,omitempty"`
+	IncludePAccessNetworkInfo              bool                     `json:"include_p_access_network_info,omitempty"`
+	IncludeRoute                           bool                     `json:"include_route,omitempty"`
+	IncludeCellularNetwork                 bool                     `json:"include_cellular_network,omitempty"`
+	IncludeSecurityClient                  bool                     `json:"include_security_client,omitempty"`
+	IncludeRequireSecAgree                 bool                     `json:"include_require_sec_agree,omitempty"`
+	ContactUserRandom                      bool                     `json:"contact_user_random,omitempty"`
+	ICSIRef                                string                   `json:"icsi_ref,omitempty"`
+	VoiceSupportedHeader                   string                   `json:"voice_supported_header,omitempty"`
+	VoiceAllowHeader                       string                   `json:"voice_allow_header,omitempty"`
+	VoiceAcceptContact                     string                   `json:"voice_accept_contact,omitempty"`
+	VoicePPreferredService                 string                   `json:"voice_p_preferred_service,omitempty"`
+	IKEGatewayPrefixScores                 []GatewayPrefixScore     `json:"ike_gateway_prefix_scores,omitempty"`
+	TCPKeepaliveSeconds                    int                      `json:"tcp_keepalive_seconds,omitempty"`
+	OptionsPingIntervalSeconds             int                      `json:"options_ping_interval_seconds,omitempty"`
+	LocalPort                              int                      `json:"local_port,omitempty"`
+	RegisterPolicy                         *RegisterPolicy          `json:"register_policy,omitempty"`
+}
+
+type SecurityMechanism struct {
+	Alg  string `json:"alg,omitempty"`
+	EAlg string `json:"ealg,omitempty"`
+	Prot string `json:"prot,omitempty"`
+	Mode string `json:"mode,omitempty"`
+}
+
+type GatewayPrefixScore struct {
+	Prefix string `json:"prefix"`
+	Score  int    `json:"score"`
+}
+
+type RegisterPolicy struct {
+	ID                              string `json:"id,omitempty"`
+	TemporaryStatusCodes            []int  `json:"temporary_status_codes,omitempty"`
+	ForbiddenStatusCodes            []int  `json:"forbidden_status_codes,omitempty"`
+	InitialRejectFallbackStatusCodes []int `json:"initial_reject_fallback_status_codes,omitempty"`
+	TemporaryRetrySeconds           int    `json:"temporary_retry_seconds,omitempty"`
+}
+
+type E911Config struct {
+	Enabled             bool   `json:"enabled,omitempty"`
+	Provider            string `json:"provider,omitempty"`
+	Websheet            string `json:"websheet,omitempty"`
+	EntitlementEndpoint string `json:"entitlement_endpoint,omitempty"`
+}
+
+type DeviceConfig struct {
+	IMEI              string `json:"imei,omitempty"`
+	IMSTAC            int    `json:"ims_tac,omitempty"`
+	IMSCellID         int    `json:"ims_cell_id,omitempty"`
+	IMSCellIDMode     string `json:"ims_cell_id_mode,omitempty"`
+	IMSRegisterProfile string `json:"ims_register_profile,omitempty"`
+}
+
+// plmnAliases maps MNC aliases to their canonical PLMN key.
+// For example, China Mobile uses MNC 0/2/4/7 which all share the same template.
+var plmnAliases = map[string]string{
+	"460-2":  "460-0",  // CMCC alias
+	"460-4":  "460-0",  // CMCC alias
+	"460-7":  "460-0",  // CMCC alias
+	"460-6":  "460-1",  // China Unicom alias
+	"460-9":  "460-1",  // China Unicom alias
+	"460-5":  "460-3",  // China Telecom alias
+}
+
+type profileEntry struct {
+	profile   *CarrierProfile
+	brandSlug string // empty for base/default profile
+}
+
+var (
+	once     sync.Once
+	profiles map[string][]profileEntry // PLMN key → list (base first, then variants)
+	loadErr  error
+
+	userMu        sync.RWMutex
+	userOverrides = map[string]*CarrierProfile{}
+)
+
+// normalizeMNC strips leading zeros so "010" and "10" resolve to the same key.
+func normalizeMNC(mnc string) string {
+	mnc = strings.TrimSpace(mnc)
+	trimmed := strings.TrimLeft(mnc, "0")
+	if trimmed == "" && mnc != "" {
+		return "0"
+	}
+	return trimmed
+}
+
+func plmnKey(mcc, mnc string) string {
+	return strings.TrimSpace(mcc) + "-" + normalizeMNC(mnc)
+}
+
+// load parses all embedded JSON files once at first use.
+func load() {
+	once.Do(func() {
+		profiles = make(map[string][]profileEntry)
+		entries, err := profileFS.ReadDir(".")
+		if err != nil {
+			loadErr = fmt.Errorf("profiles: read embed dir: %w", err)
+			return
+		}
+		for _, entry := range entries {
+			if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".json") {
+				continue
+			}
+			name := entry.Name()
+			if name == "generic.json" {
+				continue // generic is loaded separately
+			}
+			data, err := profileFS.ReadFile(name)
+			if err != nil {
+				loadErr = fmt.Errorf("profiles: read %s: %w", name, err)
+				return
+			}
+			var p CarrierProfile
+			if err := json.Unmarshal(data, &p); err != nil {
+				loadErr = fmt.Errorf("profiles: parse %s: %w", name, err)
+				return
+			}
+			key := plmnKey(p.MCC, p.MNC)
+			brandSlug := extractBrandSlug(name)
+			entry := profileEntry{profile: &p, brandSlug: brandSlug}
+			// Base profiles (no brand slug) go first; variants appended after.
+			if brandSlug == "" {
+				profiles[key] = append([]profileEntry{entry}, profiles[key]...)
+			} else {
+				profiles[key] = append(profiles[key], entry)
+			}
+		}
+	})
+}
+
+// extractBrandSlug parses the brand slug from a filename like "234-33__cmlink.json".
+// Returns empty string for base files like "234-33.json".
+func extractBrandSlug(filename string) string {
+	base := strings.TrimSuffix(filename, ".json")
+	if idx := strings.Index(base, "__"); idx >= 0 {
+		return strings.ToLower(strings.TrimSpace(base[idx+2:]))
+	}
+	return ""
+}
+
+// matchSPN checks whether the SPN (lowercased) contains the brand slug.
+// Empty SPN or empty brand slug never matches.
+func matchSPN(spn, brandSlug string) bool {
+	spn = strings.ToLower(strings.TrimSpace(spn))
+	brandSlug = strings.ToLower(strings.TrimSpace(brandSlug))
+	if spn == "" || brandSlug == "" {
+		return false
+	}
+	return strings.Contains(spn, brandSlug)
+}
+
+// Lookup returns the carrier profile for the given PLMN, or nil if not found.
+// User overrides (registered via SetUserOverride) take priority over embedded
+// JSON profiles. MNC is normalized (leading zeros stripped) and aliases are resolved.
+//
+// When multiple variant profiles exist for a PLMN (e.g. MVNOs sharing a parent
+// network), Lookup returns the base profile (without brand suffix). Use
+// LookupWithSPN to select a variant by SIM SPN.
+func Lookup(mcc, mnc string) (*CarrierProfile, error) {
+	return LookupWithSPN(mcc, mnc, "")
+}
+
+// LookupWithSPN returns the carrier profile for the given PLMN, optionally
+// disambiguated by SIM SPN when multiple variant profiles exist.
+//
+// Priority: user override > SPN-matched variant > base profile > nil.
+func LookupWithSPN(mcc, mnc, spn string) (*CarrierProfile, error) {
+	load()
+	if loadErr != nil {
+		return nil, loadErr
+	}
+	key := plmnKey(mcc, mnc)
+	if alias, ok := plmnAliases[key]; ok {
+		key = alias
+	}
+	// 1. User override (from database, active=true)
+	// Check brand-specific key first (e.g. "234-33__cmlink"), then base key
+	userMu.RLock()
+	brandKey := key
+	if spn != "" {
+		brandSlug := strings.ToLower(strings.TrimSpace(spn))
+		if brandSlug != "" {
+			brandKey = key + "__" + brandSlug
+		}
+	}
+	if p, ok := userOverrides[brandKey]; ok {
+		userMu.RUnlock()
+		return p, nil
+	}
+	if p, ok := userOverrides[key]; ok {
+		userMu.RUnlock()
+		return p, nil
+	}
+	userMu.RUnlock()
+	// 2. Embedded JSON profiles
+	entries := profiles[key]
+	if len(entries) == 0 {
+		return nil, nil
+	}
+	// 3. SPN-matched variant (when multiple profiles exist)
+	if spn != "" && len(entries) > 1 {
+		for _, e := range entries {
+			if e.brandSlug != "" && matchSPN(spn, e.brandSlug) {
+				return e.profile, nil
+			}
+		}
+	}
+	// 4. Base profile (first entry with empty brand slug, or first overall)
+	for _, e := range entries {
+		if e.brandSlug == "" {
+			return e.profile, nil
+		}
+	}
+	return entries[0].profile, nil
+}
+
+// Generic returns the 3GPP standard default profile.
+func Generic() (*CarrierProfile, error) {
+	load()
+	if loadErr != nil {
+		return nil, loadErr
+	}
+	data, err := profileFS.ReadFile("generic.json")
+	if err != nil {
+		return nil, fmt.Errorf("profiles: read generic.json: %w", err)
+	}
+	var p CarrierProfile
+	if err := json.Unmarshal(data, &p); err != nil {
+		return nil, fmt.Errorf("profiles: parse generic.json: %w", err)
+	}
+	return &p, nil
+}
+
+// All returns all loaded carrier profiles (excluding generic).
+// Base profiles are keyed by PLMN (e.g. "234-33"); variant profiles are keyed
+// by "PLMN__brand" (e.g. "234-33__cmlink").
+// User overrides replace the base profile in the result.
+func All() (map[string]*CarrierProfile, error) {
+	load()
+	if loadErr != nil {
+		return nil, loadErr
+	}
+	out := make(map[string]*CarrierProfile)
+	for key, entries := range profiles {
+		for _, e := range entries {
+			entryKey := key
+			if e.brandSlug != "" {
+				entryKey = key + "__" + e.brandSlug
+			}
+			out[entryKey] = e.profile
+		}
+	}
+	userMu.RLock()
+	for k, v := range userOverrides {
+		out[k] = v
+	}
+	userMu.RUnlock()
+	return out, nil
+}
+
+// SetUserOverride registers a user-defined carrier profile that takes priority
+// over the embedded JSON system default for the same PLMN. Pass nil to remove
+// the override for a PLMN.
+func SetUserOverride(mcc, mnc string, p *CarrierProfile) {
+	key := plmnKey(mcc, mnc)
+	if alias, ok := plmnAliases[key]; ok {
+		key = alias
+	}
+	userMu.Lock()
+	defer userMu.Unlock()
+	if p == nil {
+		delete(userOverrides, key)
+		return
+	}
+	userOverrides[key] = p
+}
+
+// SetUserOverrideByKey registers a user-defined carrier profile by full key
+// (e.g. "234-33" or "234-33__cmlink"). This allows per-variant overrides for
+// MVNOs sharing the same PLMN. Pass nil to remove the override for a key.
+func SetUserOverrideByKey(key string, p *CarrierProfile) {
+	key = strings.TrimSpace(key)
+	if key == "" {
+		return
+	}
+	// Resolve alias for the base PLMN part (before __)
+	baseKey := key
+	if idx := strings.Index(key, "__"); idx >= 0 {
+		baseKey = key[:idx]
+	}
+	if alias, ok := plmnAliases[baseKey]; ok {
+		// Preserve brand suffix if present
+		if idx := strings.Index(key, "__"); idx >= 0 {
+			key = alias + key[idx:]
+		} else {
+			key = alias
+		}
+	}
+	userMu.Lock()
+	defer userMu.Unlock()
+	if p == nil {
+		delete(userOverrides, key)
+		return
+	}
+	userOverrides[key] = p
+}
+
+// ClearUserOverrides removes all user-defined carrier profile overrides.
+func ClearUserOverrides() {
+	userMu.Lock()
+	userOverrides = map[string]*CarrierProfile{}
+	userMu.Unlock()
+}

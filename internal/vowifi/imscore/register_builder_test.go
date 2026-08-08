@@ -9,7 +9,7 @@ import (
 )
 
 func TestBuildTemplateSecurityClientSingleMechanism(t *testing.T) {
-	got := buildTemplateSecurityClient(policy.GiffgaffTemplate(), 1, 2, 5064, 5063)
+	got := buildTemplateSecurityClient(policy.GenericTemplate(), 1, 2, 5064, 5063)
 	if strings.Count(got, "ipsec-3gpp") != 1 {
 		t.Fatalf("expected single mechanism, got %q", got)
 	}
@@ -37,7 +37,7 @@ func TestVodafoneUKInitialRegisterIncludesAKAEmptyAuthorization(t *testing.T) {
 		HomeDomain: "ims.mnc015.mcc234.3gppnetwork.org",
 		Realm:      "ims.mnc015.mcc234.3gppnetwork.org",
 		PrivateID:  "subscriber@ims.mnc015.mcc234.3gppnetwork.org",
-		Template:   policy.ResolveIMSRegisterTemplate("234", "15"),
+		Template:   policy.ResolveIMSRegisterTemplate("234", "15", ""),
 	}
 
 	want := `Digest uri="sip:ims.mnc015.mcc234.3gppnetwork.org",username="subscriber@ims.mnc015.mcc234.3gppnetwork.org",algorithm=AKAv1-MD5,response="",realm="ims.mnc015.mcc234.3gppnetwork.org",nonce=""`
@@ -56,7 +56,7 @@ func TestVodafoneUKInitialRegisterOmitsRoute(t *testing.T) {
 		LocalIP:            net.ParseIP("10.0.0.2"),
 		PCSCFAddr:          "10.0.0.3:5060",
 		TransportPCSCFAddr: "10.0.0.3:5060",
-		Template:           policy.ResolveIMSRegisterTemplate("234", "15"),
+		Template:           policy.ResolveIMSRegisterTemplate("234", "15", ""),
 	}
 	state := registerState{spiC: 1, spiS: 2, portC: 5064, portS: 5063, sipInstance: "urn:uuid:test"}
 
@@ -79,7 +79,7 @@ func TestVodafoneUKInitialRegisterIncludesSIPInstanceWithoutGRUUSupported(t *tes
 		LocalIP:            net.ParseIP("10.0.0.2"),
 		PCSCFAddr:          "10.0.0.3:5060",
 		TransportPCSCFAddr: "10.0.0.3:5060",
-		Template:           policy.ResolveIMSRegisterTemplate("234", "15"),
+		Template:           policy.ResolveIMSRegisterTemplate("234", "15", ""),
 	}
 	state := registerState{spiC: 1, spiS: 2, portC: 5064, portS: 5063, sipInstance: "urn:uuid:test"}
 
@@ -109,7 +109,7 @@ func TestVodafoneUKInitialRegisterUsesMinimalHeaderSet(t *testing.T) {
 		LocalIP:            net.ParseIP("10.0.0.2"),
 		PCSCFAddr:          "10.0.0.3:5060",
 		TransportPCSCFAddr: "10.0.0.3:5060",
-		Template:           policy.ResolveIMSRegisterTemplate("234", "15"),
+		Template:           policy.ResolveIMSRegisterTemplate("234", "15", ""),
 		UserAgent:          "Vodafone VOLTE Qualcomm",
 	}
 	state := registerState{spiC: 1, spiS: 2, portC: 5064, portS: 5063}
@@ -173,7 +173,7 @@ func TestVodafoneUKInitialRegisterStartsServerInitiatedSecurityAgreement(t *test
 		LocalIP:            net.ParseIP("10.0.0.2"),
 		PCSCFAddr:          "10.0.0.3:5060",
 		TransportPCSCFAddr: "10.0.0.3:5060",
-		Template:           policy.ResolveIMSRegisterTemplate("234", "15"),
+		Template:           policy.ResolveIMSRegisterTemplate("234", "15", ""),
 	}
 
 	req, err := buildRegisterRequest(cfg, registerState{spiC: 1, spiS: 2, portC: 5064, portS: 5063}, true, initialRegisterVariants(cfg)[0])
@@ -202,7 +202,7 @@ func TestVodafoneUKInitialRegisterIncludesSecurityClientProtocolAndMode(t *testi
 		LocalIP:            net.ParseIP("10.0.0.2"),
 		PCSCFAddr:          "10.0.0.3:5060",
 		TransportPCSCFAddr: "10.0.0.3:5060",
-		Template:           policy.ResolveIMSRegisterTemplate("234", "15"),
+		Template:           policy.ResolveIMSRegisterTemplate("234", "15", ""),
 	}
 
 	req, err := buildRegisterRequest(cfg, registerState{spiC: 10, spiS: 11, portC: 5062, portS: 5063}, true, initialRegisterVariants(cfg)[0])
@@ -242,7 +242,7 @@ func TestVodafoneUKInitialRegisterOmitsPANI(t *testing.T) {
 		LocalIP:            net.ParseIP("10.0.0.2"),
 		PCSCFAddr:          "10.0.0.3:5060",
 		TransportPCSCFAddr: "10.0.0.3:5060",
-		Template:           policy.ResolveIMSRegisterTemplate("234", "15"),
+		Template:           policy.ResolveIMSRegisterTemplate("234", "15", ""),
 	}
 
 	req, err := buildRegisterRequest(cfg, registerState{spiC: 1, spiS: 2, portC: 5064, portS: 5063}, true, initialRegisterVariants(cfg)[0])
@@ -262,7 +262,7 @@ func TestVodafoneUKInitialRegisterProbesSingleSecurityMechanismsInOrder(t *testi
 		LocalIP:            net.ParseIP("10.0.0.2"),
 		PCSCFAddr:          "10.0.0.3:5060",
 		TransportPCSCFAddr: "10.0.0.3:5060",
-		Template:           policy.ResolveIMSRegisterTemplate("234", "15"),
+		Template:           policy.ResolveIMSRegisterTemplate("234", "15", ""),
 	}
 	state := registerState{spiC: 1, spiS: 2, portC: 5064, portS: 5063}
 	want := []struct {

@@ -24,10 +24,17 @@ type RegisterProfile struct {
 	InitialAuthorization     string
 	SecurityClientFormat     string
 	SupportedHeader          string
+	AllowHeader              string
+	IcsiRef                  string
 	IncludePANIAuthenticated bool
 	UserAgent                string
 	ContactUserRandom        bool
 	RegisterExpirySeconds    int
+	// Voice session headers (INVITE/MESSAGE/UPDATE etc.)
+	VoiceSupportedHeader   string
+	VoiceAllowHeader       string
+	VoiceAcceptContact     string
+	VoicePPreferredService string
 	// VariantSet enables multi-variant REGISTER retries (e.g. "simadmin_gb_ee").
 	VariantSet string
 	// AuthorizationIdentity selects the digest username shape for REGISTER.
@@ -52,7 +59,7 @@ func DefaultGBEERegisterProfile() RegisterProfile {
 		SecurityClientFormat:      "full_spaced",
 		SupportedHeader:           "path,sec-agree,gruu",
 		IncludePANIAuthenticated:  true,
-		UserAgent:                 "SimAdmin VoWiFi",
+		UserAgent:                 "User-Agent: Apple iPhone17,2/26.6 (17,2; iOS 26.6; 23G82) Boot/3.0.0 VoIP/1.0 Carrier/59.0",
 	}
 }
 
@@ -116,7 +123,7 @@ func (p RegisterProfile) Normalized() RegisterProfile {
 		out.SupportedHeader = "path,sec-agree,gruu"
 	}
 	if strings.TrimSpace(out.UserAgent) == "" {
-		out.UserAgent = "SimAdmin VoWiFi"
+		out.UserAgent = "User-Agent: Apple iPhone17,2/26.6 (17,2; iOS 26.6; 23G82) Boot/3.0.0 VoIP/1.0 Carrier/59.0"
 	}
 	return out
 }
@@ -216,25 +223,23 @@ func registerProfileForConfig(cfg Config) RegisterProfile {
 	if mcc == "" || mnc == "" {
 		mcc, mnc = mccMncFromIMSDomain(cfg.Realm)
 	}
-	switch simAdminProfileKey(mcc, mnc) {
-	case "234-10", "234-33":
-		return DefaultGBEERegisterProfile()
-	default:
-		return RegisterProfile{
-			ContactFeatures:           "sms_only",
-			IncludeAcceptContact:      true,
-			IncludePPreferredID:       true,
-			IncludePVisitedNetworkID:  true,
-			IncludePAccessNetworkInfo: true,
-			IncludeRoute:              true,
-			IncludeCellularNetwork:    false,
-			IncludeSecurityClient:     true,
-			InitialAuthorization:      "none",
-			SecurityClientFormat:      "full_spaced",
-			SupportedHeader:           "path,sec-agree,gruu",
-			IncludePANIAuthenticated:  true,
-			UserAgent:                 "SimAdmin VoWiFi",
-		}
+	if rp, ok := registerProfileFromJSON(mcc, mnc, cfg.SPN); ok {
+		return rp
+	}
+	return RegisterProfile{
+		ContactFeatures:           "sms_only",
+		IncludeAcceptContact:      true,
+		IncludePPreferredID:       true,
+		IncludePVisitedNetworkID:  true,
+		IncludePAccessNetworkInfo: true,
+		IncludeRoute:              true,
+		IncludeCellularNetwork:    false,
+		IncludeSecurityClient:     true,
+		InitialAuthorization:      "none",
+		SecurityClientFormat:      "full_spaced",
+		SupportedHeader:           "path,sec-agree,gruu",
+		IncludePANIAuthenticated:  true,
+		UserAgent:                 "User-Agent: Apple iPhone17,2/26.6 (17,2; iOS 26.6; 23G82) Boot/3.0.0 VoIP/1.0 Carrier/59.0",
 	}
 }
 
@@ -300,21 +305,6 @@ func newContactUserUUID() string {
 		b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7],
 		b[8], b[9], b[10], b[11], b[12], b[13], b[14], b[15],
 	)
-}
-
-func simAdminProfileKey(mcc, mnc string) string {
-	mcc = strings.TrimSpace(mcc)
-	mnc = strings.TrimSpace(mnc)
-	if len(mnc) > 2 {
-		mnc = strings.TrimLeft(mnc, "0")
-	}
-	if mnc == "" {
-		mnc = "0"
-	}
-	if len(mnc) == 1 {
-		mnc = "0" + mnc
-	}
-	return fmt.Sprintf("%s-%s", mcc, mnc)
 }
 
 func mccMncFromIMSDomain(domain string) (mcc, mnc string) {
@@ -389,8 +379,12 @@ func (c Config) buildContactHeader(profile RegisterProfile, sipInstance, contact
 	case "phone_xiaomi":
 		b.WriteString(`;+g.3gpp.accesstype="wlan1"`)
 		b.WriteString(";audio")
+		ref := strings.TrimSpace(profile.IcsiRef)
+		if ref == "" {
+			ref = imsMmtelICSIRef
+		}
 		b.WriteString(`;+g.3gpp.icsi-ref="`)
-		b.WriteString(imsMmtelICSIRef)
+		b.WriteString(ref)
 		b.WriteString(`"`)
 		if strings.TrimSpace(sipInstance) != "" {
 			b.WriteString(`;+sip.instance="<`)
@@ -404,8 +398,12 @@ func (c Config) buildContactHeader(profile RegisterProfile, sipInstance, contact
 		b.WriteString(`;+g.3gpp.accesstype="IEEE-802.11"`)
 		b.WriteString(";audio")
 		b.WriteString(";+g.3gpp.smsip")
+		ref := strings.TrimSpace(profile.IcsiRef)
+		if ref == "" {
+			ref = imsMmtelICSIRef
+		}
 		b.WriteString(`;+g.3gpp.icsi-ref="`)
-		b.WriteString(imsMmtelICSIRef)
+		b.WriteString(ref)
 		b.WriteString(`"`)
 		if strings.TrimSpace(sipInstance) != "" {
 			b.WriteString(`;+sip.instance="<`)

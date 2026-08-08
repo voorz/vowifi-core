@@ -1,0 +1,37 @@
+{
+  "id": "T-Mobile_240",
+  "name": "T-Mobile US (MNC 240 alias)",
+  "mcc": "310",
+  "mnc": "240",
+  "ike": {
+    "esp_proposals": [
+      "aes128-sha256",
+      "aes128-sha1"
+    ],
+    "apn": "ims",
+    "rf_off_delay": 5
+  },
+  "eap": {},
+  "ims": {
+    "contact_features": "sms_only",
+    "initial_authorization": "none",
+    "security_client_format": "full_spaced",
+    "supported_header": "path,sec-agree,gruu",
+    "user_agent": "User-Agent: Apple iPhone17,2/26.6 (17,2; iOS 26.6; 23G82) Boot/3.0.0 VoIP/1.0 Carrier/59.0",
+    "include_accept_contact": true,
+    "include_p_preferred_id": true,
+    "include_p_visited_network_id": true,
+    "include_p_access_network_info": true,
+    "include_route": true,
+    "include_security_client": true,
+    "include_pani_authenticated": true
+  },
+  "e911": {
+    "enabled": true,
+    "provider": "T-Mobile_entitlement",
+    "websheet": "public_https",
+    "entitlement_endpoint": "https://eas3.msg.t-mobile.com/"
+  },
+  "device": {},
+  "blocked": false
+}

@@ -20,6 +20,7 @@ import (
 	"github.com/voorz/vowifi-core/runtimehost/eventhost"
 	"github.com/voorz/vowifi-core/runtimehost/messaging"
 	"github.com/voorz/vowifi-core/runtimehost/transport"
+	"github.com/voorz/vowifi-core/profiles"
 	"github.com/voorz/vowifi-core/runtimehost/voiceclient"
 	"go.uber.org/zap"
 )
@@ -259,6 +260,7 @@ type Instance struct {
 	imsTransport    string
 	imsMCC          string
 	imsMNC          string
+	imsSPN          string
 	imsCellID       string
 	registerProfile voiceclient.RegisterProfile
 	sipInstanceURN  string
@@ -728,9 +730,10 @@ func Start(ctx context.Context, req StartRequest) (*Instance, error) {
 		imsIMSI:         imsi,
 		imsDomain:       resolveIMSDomain(req.Prepared),
 		imsRealm:        req.Prepared.IMSRealm(),
-		imsTransport:    simAdminIMSTransport(req.Profile.MCC, req.Profile.MNC),
-		imsMCC:          strings.TrimSpace(req.Profile.MCC),
-		imsMNC:          strings.TrimSpace(req.Profile.MNC),
+	imsTransport:    simAdminIMSTransport(req.Profile.MCC, req.Profile.MNC, req.Profile.SPN),
+	imsMCC:          strings.TrimSpace(req.Profile.MCC),
+	imsMNC:          strings.TrimSpace(req.Profile.MNC),
+	imsSPN:          strings.TrimSpace(req.Profile.SPN),
 		imsCellID:       strings.TrimSpace(req.CellID),
 		registerProfile: registerProfile,
 		sipInstanceURN:  strings.TrimSpace(req.SIPInstanceURN),
@@ -882,6 +885,7 @@ func (i *Instance) runStagedPipeline(ctx context.Context, req StartRequest, gene
 		Transport:           i.imsTransport,
 		MCC:                 i.imsMCC,
 		MNC:                 i.imsMNC,
+		SPN:                 i.imsSPN,
 		CellID:              i.imsCellID,
 		AKA:                 i.akaProvider,
 		DeliveryStore:       i.deliveryStore,
@@ -895,7 +899,7 @@ func (i *Instance) runStagedPipeline(ctx context.Context, req StartRequest, gene
 	if i.registerExpiry > 0 {
 		voiceCfg.RegisterExpiry = i.registerExpiry
 	}
-	imsTemplate := resolveIMSRegisterTemplate(i.imsMCC, i.imsMNC)
+	imsTemplate := resolveIMSRegisterTemplate(i.imsMCC, i.imsMNC, i.imsSPN)
 	voiceCfg.RegisterProfile.UserAgent = resolveIMSUserAgent(imsTemplate, voiceCfg.RegisterProfile.UserAgent)
 	presetID := ""
 	if req.Prepared != nil {
@@ -1068,30 +1072,19 @@ func resolveEPDGHost(req StartRequest) (string, string) {
 	if len(mnc) < 3 {
 		mnc = strings.Repeat("0", 3-len(mnc)) + mnc
 	}
-	if host := simAdminEPDGHost(mcc, mnc); host != "" {
+	if host := simAdminEPDGHost(mcc, mnc, req.Profile.SPN); host != "" {
 		return host, port
 	}
 	return fmt.Sprintf("epdg.epc.mnc%s.mcc%s.pub.3gppnetwork.org", mnc, mcc), port
 }
 
-func simAdminEPDGHost(mcc, mnc string) string {
-	key := simAdminProfileKeyForPLMN(mcc, mnc)
-	switch key {
-	case "234-33":
-		return "epdg.epc.mnc033.mcc234.pub.3gppnetwork.org"
-	case "204-04":
-		return "epdg.epc.mnc004.mcc204.pub.3gppnetwork.org"
-	case "310-260":
-		return "epdg.epc.mnc260.mcc310.pub.3gppnetwork.org"
-	case "310-410":
-		return "epdg.epc.att.net"
-	case "262-07":
-		return "epdg.epc.mnc007.mcc262.pub.3gppnetwork.org"
-	case "530-05":
-		return "epdg.epc.mnc005.mcc530.pub.3gppnetwork.spark.co.nz"
-	default:
-		return ""
+func simAdminEPDGHost(mcc, mnc, spn string) string {
+	if p, err := profiles.LookupWithSPN(mcc, mnc, spn); err == nil && p != nil {
+		if addr := strings.TrimSpace(p.IKE.Addr); addr != "" {
+			return addr
+		}
 	}
+	return ""
 }
 
 func resolveIMSDomain(prepared *identity.PreparedSession) string {
@@ -1127,8 +1120,8 @@ func resolveIMSRegisterIdentities(eapIdentity, imsi string, prepared *identity.P
 	return privateID, publicURI
 }
 
-func resolveIMSRegisterTemplate(mcc, mnc string) policy.IMSRegisterTemplate {
-	return policy.ResolveIMSRegisterTemplate(mcc, mnc)
+func resolveIMSRegisterTemplate(mcc, mnc, spn string) policy.IMSRegisterTemplate {
+	return policy.ResolveIMSRegisterTemplate(mcc, mnc, spn)
 }
 
 func resolveIMSUserAgent(template policy.IMSRegisterTemplate, fallback string) string {
@@ -1138,7 +1131,7 @@ func resolveIMSUserAgent(template policy.IMSRegisterTemplate, fallback string) s
 	if fallback = strings.TrimSpace(fallback); fallback != "" {
 		return fallback
 	}
-	return "SimAdmin VoWiFi"
+	return "User-Agent: Apple iPhone17,2/26.6 (17,2; iOS 26.6; 23G82) Boot/3.0.0 VoIP/1.0 Carrier/59.0"
 }
 
 func resolveIMSPublicURI(prepared *identity.PreparedSession, fallbackIMSI string) string {
@@ -1164,20 +1157,6 @@ func resolveIMSPublicURI(prepared *identity.PreparedSession, fallbackIMSI string
 	return "sip:" + imsi
 }
 
-func simAdminProfileKeyForPLMN(mcc, mnc string) string {
-	mcc = strings.TrimSpace(mcc)
-	mnc = strings.TrimSpace(mnc)
-	if len(mnc) > 2 {
-		mnc = strings.TrimLeft(mnc, "0")
-	}
-	if mnc == "" {
-		mnc = "0"
-	}
-	if len(mnc) == 1 {
-		mnc = "0" + mnc
-	}
-	return fmt.Sprintf("%s-%s", mcc, mnc)
-}
 
 func classifyTunnelFailure(err error) string {
 	if err == nil {

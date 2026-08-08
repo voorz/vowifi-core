@@ -9,15 +9,15 @@ import (
 )
 
 func TestResolveIMSRegisterTemplateForVodafoneUK(t *testing.T) {
-	tmpl := resolveIMSRegisterTemplate("234", "015")
+	tmpl := ResolveIMSRegisterTemplate("234", "015", "")
 	if tmpl.ID != "vodafone_uk_23415" {
 		t.Fatalf("template ID = %q, want vodafone_uk_23415", tmpl.ID)
 	}
 }
 
 func TestResolveIMSUserAgentForVodafoneUK(t *testing.T) {
-	tmpl := resolveIMSRegisterTemplate("234", "015")
-	if got := resolveIMSUserAgent(tmpl, "SimAdmin VoWiFi"); got != "Vodafone VOLTE Qualcomm" {
+	tmpl := ResolveIMSRegisterTemplate("234", "015", "")
+	if got := resolveIMSUserAgent(tmpl, "User-Agent: Apple iPhone17,2/26.6 (17,2; iOS 26.6; 23G82) Boot/3.0.0 VoIP/1.0 Carrier/59.0"); got != "Vodafone VOLTE Qualcomm" {
 		t.Fatalf("User-Agent = %q, want Vodafone VOLTE Qualcomm", got)
 	}
 }

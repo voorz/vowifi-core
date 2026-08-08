@@ -91,7 +91,7 @@ func IMSConfigFromVoice(v voiceclient.Config, template policy.IMSRegisterTemplat
 		cfg.LocalAddr = v.LocalIP.String()
 	}
 	if cfg.UserAgent == "" {
-		cfg.UserAgent = "SimAdmin VoWiFi"
+		cfg.UserAgent = "User-Agent: Apple iPhone17,2/26.6 (17,2; iOS 26.6; 23G82) Boot/3.0.0 VoIP/1.0 Carrier/59.0"
 	}
 	if strings.TrimSpace(cfg.CarrierPresetID) == "" {
 		cfg.CarrierPresetID = "3gpp-default"
@@ -132,7 +132,7 @@ func internalConfigFromIMS(ims IMSConfig, in StartSessionInput) Config {
 	Dispatcher:            in.Dispatcher,
 	}
 	if cfg.UserAgent == "" {
-		cfg.UserAgent = "SimAdmin VoWiFi"
+		cfg.UserAgent = "User-Agent: Apple iPhone17,2/26.6 (17,2; iOS 26.6; 23G82) Boot/3.0.0 VoIP/1.0 Carrier/59.0"
 	}
 	if strings.TrimSpace(cfg.Template.ID) == "" {
 		cfg.Template = policy.GenericTemplate()

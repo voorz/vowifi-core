@@ -429,7 +429,11 @@ func buildRegisterRequest(cfg Config, state registerState, initial bool, variant
 	}
 	minimalInitialHeaders := initial && cfg.Template.MinimalInitialHeaders
 	if !minimalInitialHeaders {
-		req.AppendHeader(sip.NewHeader("Allow", "INVITE,ACK,CANCEL,BYE,UPDATE,PRACK,MESSAGE,REFER,NOTIFY,INFO,OPTIONS"))
+		allowVal := strings.TrimSpace(cfg.Template.AllowHeader)
+		if allowVal == "" {
+			allowVal = "INVITE,ACK,CANCEL,BYE,UPDATE,PRACK,MESSAGE,REFER,NOTIFY,INFO,OPTIONS"
+		}
+		req.AppendHeader(sip.NewHeader("Allow", allowVal))
 		req.AppendHeader(sip.NewHeader("P-Preferred-Identity", "<"+cfg.PublicURI+">"))
 		req.AppendHeader(sip.NewHeader("P-Visited-Network-ID", "\""+cfg.HomeDomain+"\""))
 	}
@@ -446,8 +450,12 @@ func buildRegisterRequest(cfg Config, state registerState, initial bool, variant
 		req.AppendHeader(sip.NewHeader("Cellular-Network-Info", buildCellularNetworkInfo(cfg)))
 	}
 	if !minimalInitialHeaders {
+		icsiRef := strings.TrimSpace(cfg.Template.ICSIRef)
+		if icsiRef == "" {
+			icsiRef = "urn%3Aurn-7%3A3gpp-service.ims.icsi.mmtel"
+		}
 		req.AppendHeader(sip.NewHeader("Accept-Contact", "*;+g.3gpp.smsip"))
-		req.AppendHeader(sip.NewHeader("Accept-Contact", "*;+g.3gpp.icsi-ref=\"urn%3Aurn-7%3A3gpp-service.ims.icsi.mmtel\""))
+		req.AppendHeader(sip.NewHeader("Accept-Contact", "*;+g.3gpp.icsi-ref=\""+icsiRef+"\""))
 	}
 	var secClient string
 	if initial {
@@ -470,6 +478,11 @@ func templateIncludesPANI(template policy.IMSRegisterTemplate) bool {
 }
 
 func templatePANIValue(template policy.IMSRegisterTemplate) string {
+	// 如果配置了 fixed_pani，直接使用
+	if v := strings.TrimSpace(template.FixedPANI); v != "" {
+		return v
+	}
+	// 否则生成默认值
 	value := "IEEE-802.11;i-wlan-node-id=000000000000"
 	if template.IncludePANIAuthenticated {
 		value += ";network-provided"
@@ -729,6 +742,7 @@ func buildIMSCoreContactForTransport(cfg Config, state registerState, localPort 
 		Transport:          transport,
 		SIPInstanceURN:     sipInstance,
 		RegisterExpirySecs: cfg.RegisterExpirySeconds,
+		IcsiRef:            cfg.Template.ICSIRef,
 	})
 }
 
