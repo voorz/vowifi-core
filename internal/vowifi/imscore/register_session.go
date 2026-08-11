@@ -503,6 +503,7 @@ func (s *registerSession) runAuthRegisterPhase(ctx context.Context, transport *c
 			if err != nil {
 				return nil, fmt.Errorf("challenge round %d: %w", round+1, err)
 			}
+			s.reportSIPResponse(res.StatusCode, res.Reason, 0, 0, "")
 			lastReq, lastRes = newReq, res
 			continue
 		}
@@ -521,6 +522,7 @@ func (s *registerSession) runAuthRegisterPhase(ctx context.Context, transport *c
 			if err != nil {
 				return nil, fmt.Errorf("challenge round %d: %w", round+1, err)
 			}
+			s.reportSIPResponse(res.StatusCode, res.Reason, 0, 0, "")
 			lastReq, lastRes = newReq, res
 			if lastRes.StatusCode == sip.StatusOK {
 				return finalizeRegisterSuccess(s.cfg, *s.state, lastRes)
@@ -551,6 +553,7 @@ func (s *registerSession) runAuthRegisterPhase(ctx context.Context, transport *c
 			if err != nil {
 				return nil, fmt.Errorf("challenge round %d: %w", round+1, err)
 			}
+			s.reportSIPResponse(res.StatusCode, res.Reason, 0, 0, "")
 			lastReq, lastRes = newReq, res
 			if lastRes.StatusCode == sip.StatusOK {
 				return finalizeRegisterSuccess(s.cfg, *s.state, lastRes)
@@ -576,6 +579,7 @@ func (s *registerSession) runAuthRegisterPhase(ctx context.Context, transport *c
 		if err != nil {
 			return nil, err
 		}
+		s.reportSIPResponse(sip.StatusOK, "OK", 0, 0, "")
 		logger.Info(fmt.Sprintf("[%s] IMS 受保护已认证 REGISTER 已接受", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
 			logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
