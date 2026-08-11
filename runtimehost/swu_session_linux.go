@@ -82,20 +82,21 @@ func (i *Instance) startSWuSession(ctx context.Context, req StartRequest, epdgIP
 	}
 
 	cfg := &externalswu.Config{
-		EpDGAddr:               epdgIP,
-		EpDGPort:               uint16(port),
-		APN:                    "ims",
-		LocalAddr:              localIPStr,
-		SIM:                    externalSIMAdapter{inner: req.SIM},
-		EnableDriver:           true,
-		DataplaneMode:          externalDataplaneMode(req.Dataplane.Mode),
-		MCC:                    strings.TrimSpace(req.Profile.MCC),
-		MNC:                    mnc,
-		IMSI:                   strings.TrimSpace(req.Profile.IMSI),
-		LocalPort:              0,
+		EpDGAddr:                epdgIP,
+		EpDGPort:                uint16(port),
+		APN:                     "ims",
+		LocalAddr:               localIPStr,
+		SIM:                     externalSIMAdapter{inner: req.SIM},
+		EnableDriver:            true,
+		DataplaneMode:           externalDataplaneMode(req.Dataplane.Mode),
+		MCC:                     strings.TrimSpace(req.Profile.MCC),
+		MNC:                     mnc,
+		IMSI:                    strings.TrimSpace(req.Profile.IMSI),
+		LocalPort:               0,
 		DisableEAPMACValidation: true,
-		DeviceID:               req.DeviceID,
-		TraceID:                req.TraceID,
+		DeviceID:                req.DeviceID,
+		TraceID:                 req.TraceID,
+		IKERetryCount:           req.IKERetryCount,
 	}
 	applySimAdminSWuProfile(cfg, req.Profile.MCC, req.Profile.MNC, req.Profile.SPN)
 	if factory := buildSWuTransportFactory(req.Proxy); factory != nil {
@@ -111,7 +112,9 @@ func (i *Instance) startSWuSession(ctx context.Context, req StartRequest, epdgIP
 			logger.String("udp_ports", "500->4500"))
 	}
 
-	const maxSWuRetries = 3
+	// maxSWuRetries=1: retransmissions exhausted → return error immediately,
+	// triggering full VoWiFi teardown + rebuild (equivalent to manual restart).
+	const maxSWuRetries = 1
 	const swuRetryDelay = 5 * time.Second
 	var lastSnap swuSnapshot
 	var lastErr error

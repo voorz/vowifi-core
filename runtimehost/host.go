@@ -16,11 +16,11 @@ import (
 	"github.com/voorz/vowifi-core/internal/vowifi/imscore"
 	"github.com/voorz/vowifi-core/internal/vowifi/policy"
 	"github.com/voorz/vowifi-core/internal/vowifi/runtimecore"
-	"github.com/voorz/vowifi-core/runtimehost/identity"
+	"github.com/voorz/vowifi-core/profiles"
 	"github.com/voorz/vowifi-core/runtimehost/eventhost"
+	"github.com/voorz/vowifi-core/runtimehost/identity"
 	"github.com/voorz/vowifi-core/runtimehost/messaging"
 	"github.com/voorz/vowifi-core/runtimehost/transport"
-	"github.com/voorz/vowifi-core/profiles"
 	"github.com/voorz/vowifi-core/runtimehost/voiceclient"
 	"go.uber.org/zap"
 )
@@ -167,6 +167,11 @@ type StartRequest struct {
 	Dispatch      interface{}
 	BeforeStart   func(context.Context, SessionConfig) error
 	ShouldRun     func() bool
+
+	// IKERetryCount overrides the default IKE retransmission count.
+	// 0 = use default (5). When retransmissions are exhausted, the
+	// VoWiFi session is torn down and rebuilt from scratch.
+	IKERetryCount int
 
 	// OnTunnelDown is called when the SWu tunnel is torn down unexpectedly
 	// (e.g. IKE SA rekey failures exceeding rekeyMaxFail). The runtimehost
@@ -730,10 +735,10 @@ func Start(ctx context.Context, req StartRequest) (*Instance, error) {
 		imsIMSI:         imsi,
 		imsDomain:       resolveIMSDomain(req.Prepared),
 		imsRealm:        req.Prepared.IMSRealm(),
-	imsTransport:    simAdminIMSTransport(req.Profile.MCC, req.Profile.MNC, req.Profile.SPN),
-	imsMCC:          strings.TrimSpace(req.Profile.MCC),
-	imsMNC:          strings.TrimSpace(req.Profile.MNC),
-	imsSPN:          strings.TrimSpace(req.Profile.SPN),
+		imsTransport:    simAdminIMSTransport(req.Profile.MCC, req.Profile.MNC, req.Profile.SPN),
+		imsMCC:          strings.TrimSpace(req.Profile.MCC),
+		imsMNC:          strings.TrimSpace(req.Profile.MNC),
+		imsSPN:          strings.TrimSpace(req.Profile.SPN),
 		imsCellID:       strings.TrimSpace(req.CellID),
 		registerProfile: registerProfile,
 		sipInstanceURN:  strings.TrimSpace(req.SIPInstanceURN),
@@ -831,6 +836,10 @@ func (i *Instance) runStagedPipeline(ctx context.Context, req StartRequest, gene
 	if err != nil {
 		reason := classifyTunnelFailure(err)
 		i.failStageForGeneration(ctx, generation, "tunnel", err.Error(), formatTunnelFailureReason(reason, err))
+		cancel()
+		if req.OnTunnelDown != nil {
+			req.OnTunnelDown(i.deviceID)
+		}
 		return
 	}
 
@@ -1156,7 +1165,6 @@ func resolveIMSPublicURI(prepared *identity.PreparedSession, fallbackIMSI string
 	}
 	return "sip:" + imsi
 }
-
 
 func classifyTunnelFailure(err error) string {
 	if err == nil {
