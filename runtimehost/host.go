@@ -111,9 +111,40 @@ type State struct {
 	UpdatedAt      time.Time
 	IMSI           string
 	PhoneNumber    string
+
+	// —— 实时进度 ——
+	Generation     uint64    // 重建代数（0=首次启动，1+=拆除重建）
+	Stage          string    // 阶段标识（machine-readable）
+	StageLabel     string    // 阶段描述（human-readable）
+	StageStartedAt time.Time // 当前阶段开始时间
+	AttemptIndex   int       // 当前阶段重试计数
+	MaxAttempts    int       // 最大重试（0=无限）
+
+	// —— IMS REGISTER 细节 ——
+	RegisterVariantIndex int    // 当前变体序号
+	RegisterVariantTotal int    // 变体总数
+	RegisterRound        int    // AKA 挑战轮次
+	MaxChallengeRounds   int    // 最大挑战轮次
+	LastSIPStatus        int    // 最后 SIP 状态码
+	LastSIPReason        string // 最后 SIP reason
 }
 
 const PhaseSIMReady = "sim_ready"
+
+// VoWiFi pipeline 阶段标识
+const (
+	StageSimInit        = "sim_init"
+	StageEPDGDns        = "epdg_dns"
+	StageTunnelConnect  = "tunnel_connect"
+	StageTunnelReady    = "tunnel_ready"
+	StageIMSRegister    = "ims_register"
+	StageIMSChallenge   = "ims_challenge"
+	StageIMSProtected   = "ims_protected"
+	StageIMSReady       = "ims_ready"
+	StageSMSReady       = "sms_ready"
+	StageCallReady      = "call_ready"
+	StageFailed         = "failed"
+)
 
 type SessionConfig struct {
 	IMSISecret    []byte
@@ -637,11 +668,30 @@ func (i *Instance) notifyObserversForGeneration(ctx context.Context, generation 
 	return true
 }
 
+// setStageForGeneration updates the current pipeline stage and notifies observers.
+func (i *Instance) setStageForGeneration(ctx context.Context, generation uint64, stage, label string, extra func(*State)) bool {
+	if !i.updateStateForGeneration(generation, func(s *State) {
+		s.Stage = stage
+		s.StageLabel = label
+		s.StageStartedAt = time.Now()
+		s.LastErrorClass = ""
+		s.LastError = ""
+		if extra != nil {
+			extra(s)
+		}
+		s.UpdatedAt = time.Now()
+	}) {
+		return false
+	}
+	return i.notifyObserversForGeneration(ctx, generation)
+}
+
 func (i *Instance) failStageForGeneration(ctx context.Context, generation uint64, class, errMsg, reason string) {
 	if !i.updateStateForGeneration(generation, func(s *State) {
 		s.LastErrorClass = class
 		s.LastError = errMsg
 		s.LastReason = reason
+		s.Stage = StageFailed
 		s.UpdatedAt = time.Now()
 	}) {
 		return
@@ -807,10 +857,10 @@ func (i *Instance) runStagedPipeline(ctx context.Context, req StartRequest, gene
 		return
 	}
 
-	if !i.updateStateForGeneration(generation, func(s *State) {
+	if !i.setStageForGeneration(ctx, generation, StageEPDGDns, "解析 ePDG 域名", func(s *State) {
+		s.Generation = generation
 		s.LastReason = "tunnel_resolving"
-		s.UpdatedAt = time.Now()
-	}) || !i.notifyObserversForGeneration(ctx, generation) {
+	}) {
 		return
 	}
 
@@ -826,10 +876,9 @@ func (i *Instance) runStagedPipeline(ctx context.Context, req StartRequest, gene
 		return
 	}
 	epdgIP := resolvedIPs[0]
-	if !i.updateStateForGeneration(generation, func(s *State) {
+	if !i.setStageForGeneration(ctx, generation, StageTunnelConnect, "建立 SWu 隧道", func(s *State) {
 		s.LastReason = fmt.Sprintf("tunnel_starting ePDG=%s:%s", epdgIP, epdgPort)
-		s.UpdatedAt = time.Now()
-	}) || !i.notifyObserversForGeneration(ctx, generation) {
+	}) {
 		return
 	}
 
@@ -871,11 +920,10 @@ func (i *Instance) runStagedPipeline(ctx context.Context, req StartRequest, gene
 		tunnelReason = fmt.Sprintf("%s pcscf=unavailable", tunnelReason)
 	}
 
-	if !i.updateStateForGeneration(generation, func(s *State) {
+	if !i.setStageForGeneration(ctx, generation, StageTunnelReady, "隧道已建立", func(s *State) {
 		s.TunnelReady = true
 		s.LastReason = tunnelReason
-		s.UpdatedAt = time.Now()
-	}) || !i.notifyObserversForGeneration(ctx, generation) {
+	}) {
 		return
 	}
 
@@ -949,6 +997,22 @@ func (i *Instance) runStagedPipeline(ctx context.Context, req StartRequest, gene
 		MNC:                   i.imsMNC,
 		CellID:                i.imsCellID,
 		RegisterExpirySeconds: int(i.registerExpiry / time.Second),
+		ProgressCallback: func(info imscore.RegisterProgress) {
+			i.updateStateForGeneration(generation, func(s *State) {
+				s.Stage = info.Stage
+				s.StageLabel = info.StageLabel
+				s.RegisterVariantIndex = info.VariantIndex
+				s.RegisterVariantTotal = info.VariantTotal
+				s.RegisterRound = info.ChallengeRound
+				if info.SIPStatus != 0 {
+					s.LastSIPStatus = info.SIPStatus
+					s.LastSIPReason = info.SIPReason
+				}
+				s.LastReason = info.StageLabel
+				s.UpdatedAt = time.Now()
+			})
+			i.notifyObserversForGeneration(ctx, generation)
+		},
 	})
 	if err != nil {
 		i.failStageForGeneration(ctx, generation, "ims", fmt.Sprintf("IMS dial failed: %v", err), formatStageFailureReason("ims_dial_failed", err))
@@ -982,10 +1046,9 @@ func (i *Instance) runStagedPipeline(ctx context.Context, req StartRequest, gene
 		swulogger.Uint64("generation", generation))
 
 	// Step 1: IMS ready (REGISTER + ipsec established)
-	if !i.updateStateForGeneration(generation, func(s *State) {
+	if !i.setStageForGeneration(ctx, generation, StageIMSReady, "IMS 就绪", func(s *State) {
 		s.IMSReady = true
 		s.LastReason = fmt.Sprintf("ims_ready pcscf=%s", winningPCSCF)
-		s.UpdatedAt = time.Now()
 	}) {
 		swulogger.Warn("pipeline: updateStateForGeneration (ims_ready) returned false",
 			swulogger.String("trace_id", i.traceID),
@@ -993,7 +1056,6 @@ func (i *Instance) runStagedPipeline(ctx context.Context, req StartRequest, gene
 			swulogger.Uint64("generation", generation))
 		return
 	}
-	i.notifyObserversForGeneration(ctx, generation)
 
 	// Notify caller that IMS is ready for voice agent setup.
 	if req.OnIMSReady != nil {
@@ -1029,10 +1091,9 @@ func (i *Instance) runStagedPipeline(ctx context.Context, req StartRequest, gene
 	}
 
 	// Step 2: Call ready (voice gateway registered + inbound handlers wired)
-	if !i.updateStateForGeneration(generation, func(s *State) {
+	if !i.setStageForGeneration(ctx, generation, StageCallReady, "语音就绪", func(s *State) {
 		s.CallReady = true
 		s.LastReason = "call_ready"
-		s.UpdatedAt = time.Now()
 	}) {
 		swulogger.Warn("pipeline: updateStateForGeneration (call_ready) returned false",
 			swulogger.String("trace_id", i.traceID),
@@ -1040,13 +1101,11 @@ func (i *Instance) runStagedPipeline(ctx context.Context, req StartRequest, gene
 			swulogger.Uint64("generation", generation))
 		return
 	}
-	i.notifyObserversForGeneration(ctx, generation)
 
 	// Step 3: SMS ready (attachMessaging succeeded inside svc.Start)
-	if !i.updateStateForGeneration(generation, func(s *State) {
+	if !i.setStageForGeneration(ctx, generation, StageSMSReady, "SMS 就绪", func(s *State) {
 		s.SMSReady = true
 		s.LastReason = "sms_ready"
-		s.UpdatedAt = time.Now()
 	}) {
 		swulogger.Warn("pipeline: updateStateForGeneration (sms_ready) returned false",
 			swulogger.String("trace_id", i.traceID),
@@ -1058,7 +1117,6 @@ func (i *Instance) runStagedPipeline(ctx context.Context, req StartRequest, gene
 		swulogger.String("trace_id", i.traceID),
 		swulogger.String("device_id", i.deviceID),
 		swulogger.Uint64("generation", generation))
-	i.notifyObserversForGeneration(ctx, generation)
 
 	// Keep the pipeline alive until Stop is called or the parent context
 	// is cancelled. Without this, the pipeline returns immediately after

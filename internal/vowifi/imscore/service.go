@@ -42,6 +42,8 @@ type Service struct {
 
 	msgSvc    *messaging.Service
 	sipServer *sipgo.Server
+
+	progressCb func(RegisterProgress)
 }
 
 // Dial is a compatibility wrapper around StartSessionIMSCore for legacy callers.

@@ -59,6 +59,21 @@ type StartSessionInput struct {
 	MNC                   string
 	CellID                string
 	RegisterExpirySeconds int
+	// ProgressCallback is invoked at key IMS REGISTER state-machine transitions
+	// to report granular progress to the caller (e.g. runtimehost.Instance).
+	ProgressCallback func(info RegisterProgress)
+}
+
+// RegisterProgress carries real-time IMS registration progress info.
+type RegisterProgress struct {
+	Stage          string // "ims_register", "ims_challenge", "ims_protected", "ims_ready", "ims_failed"
+	StageLabel     string // human-readable description
+	VariantIndex   int    // current variant index (0-based)
+	VariantTotal   int    // total variants
+	VariantName    string // current variant name
+	ChallengeRound int    // AKA challenge round (1-based)
+	SIPStatus      int    // last SIP status code received
+	SIPReason      string // last SIP reason phrase
 }
 
 // IMSConfigFromVoice builds the author-facing IMSConfig from runtimehost inputs.

@@ -48,6 +48,8 @@ type registerSession struct {
 	callID    string
 	cseq      uint32
 	localPort int
+
+	progressCb func(RegisterProgress)
 }
 
 func newRegisterSession(cfg Config, swu voiceclient.SWUTCPDialer, network IMSNetwork, transportMode string, attemptIndex int) *registerSession {
@@ -208,6 +210,30 @@ func (s *registerSession) logFSM(event, reason string, variantIndex, variantTota
 		logger.String("ealg", ealg),
 		logger.Int("security_client_mechanisms", mechanismCount),
 	)
+
+	if s.progressCb != nil {
+		s.progressCb(RegisterProgress{
+			Stage:        "ims_register",
+			StageLabel:   event,
+			VariantIndex: variantIndex - 1,
+			VariantTotal: variantTotal,
+			VariantName:  variant.name,
+		})
+	}
+}
+
+func (s *registerSession) reportSIPResponse(statusCode int, reason string, variantIdx, variantTotal int, variantName string) {
+	if s.progressCb != nil {
+		s.progressCb(RegisterProgress{
+			Stage:          "ims_register",
+			StageLabel:     fmt.Sprintf("SIP %d %s", statusCode, reason),
+			VariantIndex:   variantIdx,
+			VariantTotal:   variantTotal,
+			VariantName:    variantName,
+			SIPStatus:      statusCode,
+			SIPReason:      reason,
+		})
+	}
 }
 
 func (s *registerSession) runInitialRegisterFlow(ctx context.Context) (*registerResult, error) {
@@ -254,6 +280,7 @@ func (s *registerSession) runInitialRegisterFlow(ctx context.Context) (*register
 			logger.Bool("include_cellular", variant.includeCellular),
 			logger.Int("status", res.StatusCode),
 			logger.String("reason", res.Reason))
+		s.reportSIPResponse(res.StatusCode, res.Reason, i, len(variants), variant.name)
 		logger.Info(fmt.Sprintf("[%s] IMS REGISTER 响应画像", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
 			logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
@@ -432,6 +459,13 @@ func (s *registerSession) runAuthRegisterPhase(ctx context.Context, transport *c
 			logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.Int("challenge_round", round+1),
 			logger.String("nonce_fingerprint", nonceFingerprint))
+		if s.progressCb != nil {
+			s.progressCb(RegisterProgress{
+				Stage:          "ims_challenge",
+				StageLabel:     fmt.Sprintf("AKA 挑战第%d轮", round+1),
+				ChallengeRound: round + 1,
+			})
+		}
 		previousNonceFingerprint = nonceFingerprint
 
 		akaResult, authHeader, syncFailure, err := computeAKAAuth(s.cfg, chal, lastReq)

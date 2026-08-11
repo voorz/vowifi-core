@@ -43,6 +43,7 @@ func (s *Service) registerRawWithCandidate(ctx context.Context, candidate regist
 	}
 
 	session := newRegisterSession(attemptCfg, s.swu, s.network, transportMode, attemptIndex)
+	session.progressCb = s.progressCb
 	attemptCtx, cancel := context.WithTimeout(ctx, registerCandidateTimeout)
 	defer cancel()
 

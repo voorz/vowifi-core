@@ -67,9 +67,10 @@ func SetupService(imsCfg IMSConfig, network IMSNetwork, in StartSessionInput) (*
 	logIMSConfigResolved(imsCfg, internal, len(candidates))
 
 	return &Service{
-		imsCfg:  imsCfg,
-		cfg:     internal,
-		network: network,
+		imsCfg:    imsCfg,
+		cfg:       internal,
+		network:   network,
+		progressCb: in.ProgressCallback,
 	}, nil
 }
 
