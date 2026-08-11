@@ -646,6 +646,13 @@ func (i *Instance) failStageForGeneration(ctx context.Context, generation uint64
 	}) {
 		return
 	}
+	swulogger.Info("⚠️VoWiFi 阶段失败",
+		swulogger.String("device_id", i.deviceID),
+		swulogger.String("trace_id", i.traceID),
+		swulogger.Uint64("generation", generation),
+		swulogger.String("error_class", class),
+		swulogger.String("error_msg", errMsg),
+		swulogger.String("reason", reason))
 	i.notifyObserversForGeneration(ctx, generation)
 }
 

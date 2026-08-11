@@ -55,8 +55,8 @@ func newRegisterSession(cfg Config, swu voiceclient.SWUTCPDialer, network IMSNet
 	state := &registerState{
 		spiC:          spiC,
 		spiS:          spiS,
-		portC:         5062,
-		portS:         5063,
+		portC:         randomEphemeralSIPPort(),
+		portS:         randomEphemeralSIPPort(),
 		transportMode: canonicalRegisterTransport(transportMode),
 		sipInstance:   resolveStableSIPInstance(cfg),
 	}

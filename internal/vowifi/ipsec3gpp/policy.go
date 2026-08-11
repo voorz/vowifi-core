@@ -1,8 +1,10 @@
 package ipsec3gpp
 
 import (
+	"crypto/rand"
 	"errors"
 	"fmt"
+	"math/big"
 	"net"
 )
 
@@ -57,7 +59,7 @@ type PolicyInput struct {
 	IK       []byte
 	AuthAlg  string
 	EncAlg   string
-	// UE protected ports from Security-Client (defaults 5062/5063 if zero when remote is set).
+	// UE protected ports from Security-Client (random ephemeral if zero when remote is set).
 	UEPortC int
 	UEPortS int
 	// UE SPIs from Security-Client; if zero, SPI direction uses Mech only (legacy).
@@ -169,10 +171,10 @@ func fillPortsFromInput(in PolicyInput) portPair {
 	localC, localS := in.UEPortC, in.UEPortS
 	remoteC, remoteS := in.Mech.PortC, in.Mech.PortS
 	if localC == 0 {
-		localC = 5062
+		localC = randomEphemeralPort()
 	}
 	if localS == 0 {
-		localS = 5063
+		localS = randomEphemeralPort()
 	}
 	if remoteC == 0 {
 		remoteC = 5060
@@ -218,6 +220,17 @@ func coalesce(values ...string) string {
 		}
 	}
 	return ""
+}
+
+// randomEphemeralPort returns a random port in the ephemeral range
+// (49152-65535) to avoid conflicts with previous instances' TIME_WAIT
+// sockets in the userspace netstack.
+func randomEphemeralPort() int {
+	n, err := rand.Int(rand.Reader, big.NewInt(16384))
+	if err != nil {
+		return 49152
+	}
+	return 49152 + int(n.Int64())
 }
 
 func ipEqual(a, b []byte) bool {

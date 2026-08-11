@@ -240,10 +240,10 @@ func installIPSecFromChallenge(cfg Config, state *registerState, res *sip.Respon
 	}
 	uePortC, uePortS := state.portC, state.portS
 	if uePortC == 0 {
-		uePortC = 5062
+		uePortC = randomEphemeralSIPPort()
 	}
 	if uePortS == 0 {
-		uePortS = 5063
+		uePortS = randomEphemeralSIPPort()
 	}
 	pol, err := ipsec3gpp.NewPolicy(ipsec3gpp.PolicyInput{
 		LocalIP:  cfg.LocalIP,

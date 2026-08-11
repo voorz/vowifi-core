@@ -254,8 +254,8 @@ func newSecurityClientState() securityClientState {
 	return securityClientState{
 		spiC:  randomNonZeroUint32(),
 		spiS:  randomNonZeroUint32(),
-		portC: 5064,
-		portS: 5063,
+		portC: randomEphemeralPort(),
+		portS: randomEphemeralPort(),
 	}
 }
 
@@ -499,6 +499,17 @@ func authorizationUsername(cfg Config, profile RegisterProfile) string {
 
 func quoteSipParam(value string) string {
 	return strings.NewReplacer(`\`, `\\`, `"`, `\"`).Replace(value)
+}
+
+// randomEphemeralPort returns a random port in the ephemeral range
+// (49152-65535) to avoid conflicts with previous instances' TIME_WAIT
+// sockets in the userspace netstack.
+func randomEphemeralPort() uint16 {
+	n, err := rand.Int(rand.Reader, big.NewInt(16384))
+	if err != nil {
+		return 49152
+	}
+	return uint16(49152 + n.Int64())
 }
 
 func randomNonZeroUint32() uint32 {
