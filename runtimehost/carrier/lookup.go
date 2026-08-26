@@ -14,7 +14,6 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"strings"
 	"sync"
 )
@@ -116,14 +115,8 @@ func LookupWithIdentity(mcc, mnc, gid1, gid2, spn string) (*CarrierProfile, erro
 	entry, _ := mapCache[plmnKey]
 	candidateFiles := entry.Profiles
 
-	slog.Info("🔍 [carrier] LookupWithIdentity 开始查找",
-		"plmn", plmnKey,
-		"gid1", gid1, "gid2", gid2, "spn", spn,
-		"candidates", candidateFiles)
-
 	// 0. User override (highest priority — user-defined config from DB)
 	if p, err := LookupWithSPN(mcc, mnc, spn); err == nil && p != nil {
-		slog.Info("✅ [carrier] 匹配到用户覆盖配置", "plmn", plmnKey, "step", "0_user_override", "profile_id", p.ID)
 		return p, nil
 	}
 
@@ -131,7 +124,6 @@ func LookupWithIdentity(mcc, mnc, gid1, gid2, spn string) (*CarrierProfile, erro
 	if gid1 != "" || gid2 != "" {
 		if matched := lookupByGIDMap(gid1, gid2, entry); matched != "" {
 			if p := loadProfile(matched); p != nil {
-				slog.Info("✅ [carrier] 匹配到 GID 直接映射", "plmn", plmnKey, "step", "1_gid_map", "profile_file", matched, "profile_id", p.ID)
 				return p, nil
 			}
 		}
@@ -143,7 +135,6 @@ func LookupWithIdentity(mcc, mnc, gid1, gid2, spn string) (*CarrierProfile, erro
 	if gid1 != "" || gid2 != "" {
 		if matched := matchByGIDPrefix(ciEntry, gid1, gid2, candidateFiles); matched != "" {
 			if p := loadProfile(matched); p != nil {
-				slog.Info("✅ [carrier] 匹配到 GID 前缀匹配", "plmn", plmnKey, "step", "2_gid_prefix", "profile_file", matched, "profile_id", p.ID)
 				return p, nil
 			}
 		}
@@ -152,7 +143,6 @@ func LookupWithIdentity(mcc, mnc, gid1, gid2, spn string) (*CarrierProfile, erro
 	// 3. GID miss → primary operator brand match
 	if matched := matchPrimaryOperator(ciEntry, candidateFiles); matched != "" {
 		if p := loadProfile(matched); p != nil {
-			slog.Info("✅ [carrier] 匹配到主运营商品牌", "plmn", plmnKey, "step", "3_primary_operator", "profile_file", matched, "profile_id", p.ID)
 			return p, nil
 		}
 	}
@@ -160,14 +150,12 @@ func LookupWithIdentity(mcc, mnc, gid1, gid2, spn string) (*CarrierProfile, erro
 	// 4. Candidate files first match (when DB is empty but map has entries)
 	if len(candidateFiles) > 0 {
 		if p := loadProfile(candidateFiles[0]); p != nil {
-			slog.Info("✅ [carrier] 匹配到候选文件第一个", "plmn", plmnKey, "step", "4_candidate_first", "profile_file", candidateFiles[0], "profile_id", p.ID)
 			return p, nil
 		}
 	}
 
 	// 5. Final fallback: generic default
 	p, _ := Generic()
-	slog.Warn("⚠️ [carrier] 所有匹配失败，使用 generic 默认配置", "plmn", plmnKey, "step", "5_generic_fallback", "profile_id", p.ID)
 	return p, nil
 }
 
