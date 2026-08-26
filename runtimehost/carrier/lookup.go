@@ -1,12 +1,12 @@
 // Package carrier provides GID-based carrier profile lookup.
 //
 // Matching strategy (priority high → low):
-//  1. PLMN lookup → candidate profile files from plmn_profile_map.json
-//  2. GID1/GID2 direct map lookup → exact filename (no name fuzzy matching)
+//  0. User override (DB-registered config, highest priority)
+//  1. GID1/GID2 direct map lookup → exact filename (no name fuzzy matching)
+//  2. GID prefix match → carrier_index subs (DB)
 //  3. GID miss → primary operator brand → profile file
 //  4. Candidate files first match (primary operator for this PLMN)
-//  5. Legacy embed profiles (PLMN key lookup via profiles.LookupWithSPN)
-//  6. generic.json
+//  5. generic default
 
 package carrier
 
@@ -14,16 +14,15 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"strings"
 	"sync"
-
-	"github.com/voorz/vowifi-core/profiles"
 )
 
 //go:embed profiles/*.json
 var profileFS embed.FS
 
-//go:embed plmn_profile_map.json
+//go:embed embed/plmn_profile_map.json
 var plmnProfileMapRaw []byte
 
 // CarrierIndexProvider supplies carrier index data from an external source
@@ -70,7 +69,7 @@ var (
 	mapCache map[string]plmnProfileEntry
 	mapErr   error
 
-	profileCache sync.Map{} // filename → *profiles.CarrierProfile
+	profileCache sync.Map // filename → *CarrierProfile
 
 	carrierIndexProvider CarrierIndexProvider
 	providerMu           sync.RWMutex
@@ -97,30 +96,42 @@ func loadMap() {
 // LookupWithIdentity finds the carrier profile for the given PLMN + GID identity.
 //
 // Matching strategy (priority high → low):
-//  1. PLMN → candidate profile files (plmn_profile_map.json)
-//  2. GID1/GID2 direct map lookup → exact filename (no fuzzy name matching)
+//  0. User override (DB-registered, highest priority)
+//  1. GID1/GID2 direct map lookup → exact filename (no fuzzy name matching)
+//  2. GID prefix match → carrier_index subs (DB)
 //  3. GID miss → primary operator brand → profile (from carrier_index DB)
 //  4. Candidate files first match (primary operator for this PLMN)
-//  5. Legacy embed profiles (profiles.LookupWithSPN)
-//  6. generic.json
+//  5. generic default
 //
 // PLMN is always available from the SIM. GID1/GID2 may be empty for some USIMs.
 // When GID matching fails, we fall back to the PLMN's primary operator profile
 // (e.g. Vodafone UK for PLMN 234-15), not generic.
-func LookupWithIdentity(mcc, mnc, gid1, gid2, spn string) (*profiles.CarrierProfile, error) {
+func LookupWithIdentity(mcc, mnc, gid1, gid2, spn string) (*CarrierProfile, error) {
 	loadMap()
 	if mapErr != nil {
 		return nil, mapErr
 	}
 
 	plmnKey := plmnKey(mcc, mnc)
-	entry, ok := mapCache[plmnKey]
+	entry, _ := mapCache[plmnKey]
 	candidateFiles := entry.Profiles
+
+	slog.Info("🔍 [carrier] LookupWithIdentity 开始查找",
+		"plmn", plmnKey,
+		"gid1", gid1, "gid2", gid2, "spn", spn,
+		"candidates", candidateFiles)
+
+	// 0. User override (highest priority — user-defined config from DB)
+	if p, err := LookupWithSPN(mcc, mnc, spn); err == nil && p != nil {
+		slog.Info("✅ [carrier] 匹配到用户覆盖配置", "plmn", plmnKey, "step", "0_user_override", "profile_id", p.ID)
+		return p, nil
+	}
 
 	// 1. GID direct map lookup (exact match, no fuzzy name matching)
 	if gid1 != "" || gid2 != "" {
 		if matched := lookupByGIDMap(gid1, gid2, entry); matched != "" {
 			if p := loadProfile(matched); p != nil {
+				slog.Info("✅ [carrier] 匹配到 GID 直接映射", "plmn", plmnKey, "step", "1_gid_map", "profile_file", matched, "profile_id", p.ID)
 				return p, nil
 			}
 		}
@@ -132,6 +143,7 @@ func LookupWithIdentity(mcc, mnc, gid1, gid2, spn string) (*profiles.CarrierProf
 	if gid1 != "" || gid2 != "" {
 		if matched := matchByGIDPrefix(ciEntry, gid1, gid2, candidateFiles); matched != "" {
 			if p := loadProfile(matched); p != nil {
+				slog.Info("✅ [carrier] 匹配到 GID 前缀匹配", "plmn", plmnKey, "step", "2_gid_prefix", "profile_file", matched, "profile_id", p.ID)
 				return p, nil
 			}
 		}
@@ -140,6 +152,7 @@ func LookupWithIdentity(mcc, mnc, gid1, gid2, spn string) (*profiles.CarrierProf
 	// 3. GID miss → primary operator brand match
 	if matched := matchPrimaryOperator(ciEntry, candidateFiles); matched != "" {
 		if p := loadProfile(matched); p != nil {
+			slog.Info("✅ [carrier] 匹配到主运营商品牌", "plmn", plmnKey, "step", "3_primary_operator", "profile_file", matched, "profile_id", p.ID)
 			return p, nil
 		}
 	}
@@ -147,17 +160,15 @@ func LookupWithIdentity(mcc, mnc, gid1, gid2, spn string) (*profiles.CarrierProf
 	// 4. Candidate files first match (when DB is empty but map has entries)
 	if len(candidateFiles) > 0 {
 		if p := loadProfile(candidateFiles[0]); p != nil {
+			slog.Info("✅ [carrier] 匹配到候选文件第一个", "plmn", plmnKey, "step", "4_candidate_first", "profile_file", candidateFiles[0], "profile_id", p.ID)
 			return p, nil
 		}
 	}
 
-	// 5. Legacy embed profiles
-	if p, err := profiles.LookupWithSPN(mcc, mnc, spn); err == nil && p != nil {
-		return p, nil
-	}
-
-	// 6. Final fallback: generic
-	return profiles.Generic()
+	// 5. Final fallback: generic default
+	p, _ := Generic()
+	slog.Warn("⚠️ [carrier] 所有匹配失败，使用 generic 默认配置", "plmn", plmnKey, "step", "5_generic_fallback", "profile_id", p.ID)
+	return p, nil
 }
 
 // lookupByGIDMap does a direct lookup in plmn_profile_map's gid1_map/gid2_map.
@@ -261,6 +272,8 @@ func matchPrimaryOperator(entry *carrierIndexEntry, candidateFiles []string) str
 // Either side can be a prefix of the other (SIM GID may be longer or shorter
 // than the index entry depending on padding).
 func gidPrefixMatch(simGID, mapGID string) bool {
+	simGID = strings.ToLower(simGID)
+	mapGID = strings.ToLower(mapGID)
 	if simGID == "" || mapGID == "" {
 		return false
 	}
@@ -319,9 +332,9 @@ func findProfileByBrand(brand string, names []string, candidates []string) strin
 
 // loadProfile loads a carrier profile JSON from embedded filesystem.
 // Results are cached in a sync.Map.
-func loadProfile(filename string) *profiles.CarrierProfile {
+func loadProfile(filename string) *CarrierProfile {
 	if cached, ok := profileCache.Load(filename); ok {
-		if p, ok := cached.(*profiles.CarrierProfile); ok {
+		if p, ok := cached.(*CarrierProfile); ok {
 			return p
 		}
 	}
@@ -331,7 +344,7 @@ func loadProfile(filename string) *profiles.CarrierProfile {
 		return nil
 	}
 
-	var p profiles.CarrierProfile
+	var p CarrierProfile
 	if json.Unmarshal(data, &p) != nil {
 		return nil
 	}

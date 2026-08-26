@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	externalswu "github.com/voorz/swu-go/pkg/swu"
-	"github.com/voorz/vowifi-core/profiles"
+	"github.com/voorz/vowifi-core/runtimehost/carrier"
 )
 
 func applySimAdminSWuProfile(cfg *externalswu.Config, mcc, mnc, spn string) {
@@ -14,7 +14,7 @@ func applySimAdminSWuProfile(cfg *externalswu.Config, mcc, mnc, spn string) {
 		return
 	}
 	// Load carrier-specific IKE/ESP/EAP settings from embedded JSON profiles.
-	if p, err := profiles.LookupWithSPN(mcc, mnc, spn); err == nil && p != nil {
+	if p, err := carrier.LookupWithSPN(mcc, mnc, spn); err == nil && p != nil {
 		if len(p.IKE.Proposals) > 0 {
 			cfg.IKEProposals = append([]string(nil), p.IKE.Proposals...)
 		}
@@ -67,7 +67,7 @@ func applySimAdminSWuProfile(cfg *externalswu.Config, mcc, mnc, spn string) {
 }
 
 func simAdminIMSTransport(mcc, mnc, spn string) string {
-	if p, err := profiles.LookupWithSPN(mcc, mnc, spn); err == nil && p != nil {
+	if p, err := carrier.LookupWithSPN(mcc, mnc, spn); err == nil && p != nil {
 		if tm := strings.TrimSpace(p.IMS.TransportMode); tm != "" {
 			return strings.ToLower(tm)
 		}

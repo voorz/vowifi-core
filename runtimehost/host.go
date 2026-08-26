@@ -16,7 +16,7 @@ import (
 	"github.com/voorz/vowifi-core/internal/vowifi/imscore"
 	"github.com/voorz/vowifi-core/internal/vowifi/policy"
 	"github.com/voorz/vowifi-core/internal/vowifi/runtimecore"
-	"github.com/voorz/vowifi-core/profiles"
+	"github.com/voorz/vowifi-core/runtimehost/carrier"
 	"github.com/voorz/vowifi-core/runtimehost/eventhost"
 	"github.com/voorz/vowifi-core/runtimehost/identity"
 	"github.com/voorz/vowifi-core/runtimehost/messaging"
@@ -1153,7 +1153,7 @@ func resolveEPDGHost(req StartRequest) (string, string) {
 }
 
 func simAdminEPDGHost(mcc, mnc, spn string) string {
-	if p, err := profiles.LookupWithSPN(mcc, mnc, spn); err == nil && p != nil {
+	if p, err := carrier.LookupWithSPN(mcc, mnc, spn); err == nil && p != nil {
 		if addr := strings.TrimSpace(p.IKE.Addr); addr != "" {
 			return addr
 		}

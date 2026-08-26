@@ -3,7 +3,7 @@ package policy
 import (
 	"strings"
 
-	"github.com/voorz/vowifi-core/profiles"
+	"github.com/voorz/vowifi-core/runtimehost/carrier"
 )
 
 // ResolveIMSRegisterTemplateFromProfile attempts to load an IMS register template
@@ -13,14 +13,14 @@ import (
 // This is the JSON-first path; callers fall back to the hardcoded switch-case
 // in ResolveIMSRegisterTemplate when this returns false.
 func ResolveIMSRegisterTemplateFromProfile(mcc, mnc, spn string) (IMSRegisterTemplate, bool) {
-	p, err := profiles.LookupWithSPN(mcc, mnc, spn)
+	p, err := carrier.LookupWithSPN(mcc, mnc, spn)
 	if err != nil || p == nil {
 		return IMSRegisterTemplate{}, false
 	}
 	return carrierProfileToTemplate(p), true
 }
 
-func carrierProfileToTemplate(p *profiles.CarrierProfile) IMSRegisterTemplate {
+func carrierProfileToTemplate(p *carrier.CarrierProfile) IMSRegisterTemplate {
 	t := IMSRegisterTemplate{
 		ID:                                     p.ID,
 		UsePlainDigestPlaceholder:              p.IMS.UsePlainDigestPlaceholder,

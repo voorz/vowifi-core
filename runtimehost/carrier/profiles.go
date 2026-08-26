@@ -1,21 +1,24 @@
-// Package profiles provides carrier profile loading from embedded JSON files.
+// Package carrier: carrier profile types and user override management.
 //
-// The profiles/ directory contains one JSON file per PLMN (e.g. 234-10.json for
-// giffgaff UK). Each file follows the CarrierProfile schema defined in
-// DESIGN_CARRIER_CONFIG.md. At init time all files are embedded and parsed; lookups
-// are in-memory with zero file I/O at runtime.
-package profiles
+// This file provides the CarrierProfile type definition and user override
+// functions (SetUserOverrideByKey, etc.). The legacy 26 PLMN-keyed JSON
+// files are kept in profiles-bak/ as backup only and are NOT embedded.
+//
+// Profile lookup is handled by lookup.go via GID-based matching against
+// the 683 embedded carrier profiles. User overrides registered here take
+// priority over embedded profiles.
+package carrier
 
 import (
-	"embed"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
 )
 
-//go:embed *.json
-var profileFS embed.FS
+//go:embed embed/generic.json
+var genericProfileRaw []byte
 
 // CarrierProfile is the unified carrier configuration matching the JSON schema.
 // All fields are optional (omitempty); zero values mean "use 3GPP standard default".
@@ -155,122 +158,31 @@ var plmnAliases = map[string]string{
 	"460-5":  "460-3",  // China Telecom alias
 }
 
-type profileEntry struct {
-	profile   *CarrierProfile
-	brandSlug string // empty for base/default profile
-}
-
 var (
-	once     sync.Once
-	profiles map[string][]profileEntry // PLMN key → list (base first, then variants)
-	loadErr  error
-
 	userMu        sync.RWMutex
 	userOverrides = map[string]*CarrierProfile{}
 )
 
-// normalizeMNC strips leading zeros so "010" and "10" resolve to the same key.
-func normalizeMNC(mnc string) string {
-	mnc = strings.TrimSpace(mnc)
-	trimmed := strings.TrimLeft(mnc, "0")
-	if trimmed == "" && mnc != "" {
-		return "0"
-	}
-	return trimmed
-}
-
-func plmnKey(mcc, mnc string) string {
-	return strings.TrimSpace(mcc) + "-" + normalizeMNC(mnc)
-}
-
-// load parses all embedded JSON files once at first use.
-func load() {
-	once.Do(func() {
-		profiles = make(map[string][]profileEntry)
-		entries, err := profileFS.ReadDir(".")
-		if err != nil {
-			loadErr = fmt.Errorf("profiles: read embed dir: %w", err)
-			return
-		}
-		for _, entry := range entries {
-			if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".json") {
-				continue
-			}
-			name := entry.Name()
-			if name == "generic.json" {
-				continue // generic is loaded separately
-			}
-			data, err := profileFS.ReadFile(name)
-			if err != nil {
-				loadErr = fmt.Errorf("profiles: read %s: %w", name, err)
-				return
-			}
-			var p CarrierProfile
-			if err := json.Unmarshal(data, &p); err != nil {
-				loadErr = fmt.Errorf("profiles: parse %s: %w", name, err)
-				return
-			}
-			key := plmnKey(p.MCC, p.MNC)
-			brandSlug := extractBrandSlug(name)
-			entry := profileEntry{profile: &p, brandSlug: brandSlug}
-			// Base profiles (no brand slug) go first; variants appended after.
-			if brandSlug == "" {
-				profiles[key] = append([]profileEntry{entry}, profiles[key]...)
-			} else {
-				profiles[key] = append(profiles[key], entry)
-			}
-		}
-	})
-}
-
-// extractBrandSlug parses the brand slug from a filename like "234-33__cmlink.json".
-// Returns empty string for base files like "234-33.json".
-func extractBrandSlug(filename string) string {
-	base := strings.TrimSuffix(filename, ".json")
-	if idx := strings.Index(base, "__"); idx >= 0 {
-		return strings.ToLower(strings.TrimSpace(base[idx+2:]))
-	}
-	return ""
-}
-
-// matchSPN checks whether the SPN (lowercased) contains the brand slug.
-// Empty SPN or empty brand slug never matches.
-func matchSPN(spn, brandSlug string) bool {
-	spn = strings.ToLower(strings.TrimSpace(spn))
-	brandSlug = strings.ToLower(strings.TrimSpace(brandSlug))
-	if spn == "" || brandSlug == "" {
-		return false
-	}
-	return strings.Contains(spn, brandSlug)
-}
-
 // Lookup returns the carrier profile for the given PLMN, or nil if not found.
-// User overrides (registered via SetUserOverride) take priority over embedded
-// JSON profiles. MNC is normalized (leading zeros stripped) and aliases are resolved.
-//
-// When multiple variant profiles exist for a PLMN (e.g. MVNOs sharing a parent
-// network), Lookup returns the base profile (without brand suffix). Use
-// LookupWithSPN to select a variant by SIM SPN.
+// User overrides (registered via SetUserOverride) take priority.
+// MNC is normalized (leading zeros stripped) and aliases are resolved.
 func Lookup(mcc, mnc string) (*CarrierProfile, error) {
 	return LookupWithSPN(mcc, mnc, "")
 }
 
-// LookupWithSPN returns the carrier profile for the given PLMN, optionally
-// disambiguated by SIM SPN when multiple variant profiles exist.
+// LookupWithSPN returns the user-defined carrier profile for the given PLMN
+// if one has been registered via SetUserOverride or SetUserOverrideByKey.
+// Returns nil if no user override exists (caller should use LookupWithIdentity
+// or Generic for embedded profile lookup).
 //
-// Priority: user override > SPN-matched variant > base profile > nil.
+// Priority: user override > nil.
 func LookupWithSPN(mcc, mnc, spn string) (*CarrierProfile, error) {
-	load()
-	if loadErr != nil {
-		return nil, loadErr
-	}
 	key := plmnKey(mcc, mnc)
 	if alias, ok := plmnAliases[key]; ok {
 		key = alias
 	}
-	// 1. User override (from database, active=true)
-	// Check brand-specific key first (e.g. "234-33__cmlink"), then base key
 	userMu.RLock()
+	defer userMu.RUnlock()
 	brandKey := key
 	if spn != "" {
 		brandSlug := strings.ToLower(strings.TrimSpace(spn))
@@ -279,77 +191,46 @@ func LookupWithSPN(mcc, mnc, spn string) (*CarrierProfile, error) {
 		}
 	}
 	if p, ok := userOverrides[brandKey]; ok {
-		userMu.RUnlock()
 		return p, nil
 	}
 	if p, ok := userOverrides[key]; ok {
-		userMu.RUnlock()
 		return p, nil
 	}
-	userMu.RUnlock()
-	// 2. Embedded JSON profiles
-	entries := profiles[key]
-	if len(entries) == 0 {
-		return nil, nil
-	}
-	// 3. SPN-matched variant (when multiple profiles exist)
-	if spn != "" && len(entries) > 1 {
-		for _, e := range entries {
-			if e.brandSlug != "" && matchSPN(spn, e.brandSlug) {
-				return e.profile, nil
-			}
-		}
-	}
-	// 4. Base profile (first entry with empty brand slug, or first overall)
-	for _, e := range entries {
-		if e.brandSlug == "" {
-			return e.profile, nil
-		}
-	}
-	return entries[0].profile, nil
+	return nil, nil
 }
 
-// Generic returns the 3GPP standard default profile.
+// Generic returns the 3GPP standard default profile from embedded generic.json.
+// This is used as the final fallback when no carrier-specific profile matches.
+var (
+	genericOnce  sync.Once
+	genericProf  *CarrierProfile
+	genericErr   error
+)
+
 func Generic() (*CarrierProfile, error) {
-	load()
-	if loadErr != nil {
-		return nil, loadErr
+	genericOnce.Do(func() {
+		if err := json.Unmarshal(genericProfileRaw, &genericProf); err != nil {
+			genericErr = fmt.Errorf("carrier: parse generic.json: %w", err)
+			return
+		}
+	})
+	if genericErr != nil {
+		return nil, genericErr
 	}
-	data, err := profileFS.ReadFile("generic.json")
-	if err != nil {
-		return nil, fmt.Errorf("profiles: read generic.json: %w", err)
+	if genericProf == nil {
+		return &CarrierProfile{ID: "3gpp-default"}, nil
 	}
-	var p CarrierProfile
-	if err := json.Unmarshal(data, &p); err != nil {
-		return nil, fmt.Errorf("profiles: parse generic.json: %w", err)
-	}
-	return &p, nil
+	return genericProf, nil
 }
 
-// All returns all loaded carrier profiles (excluding generic).
-// Base profiles are keyed by PLMN (e.g. "234-33"); variant profiles are keyed
-// by "PLMN__brand" (e.g. "234-33__cmlink").
-// User overrides replace the base profile in the result.
+// All returns all user-registered carrier profile overrides.
 func All() (map[string]*CarrierProfile, error) {
-	load()
-	if loadErr != nil {
-		return nil, loadErr
-	}
-	out := make(map[string]*CarrierProfile)
-	for key, entries := range profiles {
-		for _, e := range entries {
-			entryKey := key
-			if e.brandSlug != "" {
-				entryKey = key + "__" + e.brandSlug
-			}
-			out[entryKey] = e.profile
-		}
-	}
 	userMu.RLock()
+	defer userMu.RUnlock()
+	out := make(map[string]*CarrierProfile, len(userOverrides))
 	for k, v := range userOverrides {
 		out[k] = v
 	}
-	userMu.RUnlock()
 	return out, nil
 }
 

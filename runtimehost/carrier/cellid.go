@@ -1,10 +1,22 @@
 package carrier
 
 import (
+	"fmt"
 	"strings"
-
-	"github.com/voorz/vowifi-core/runtimehost/voiceclient"
 )
+
+// formatUTRANCellIDSuffix returns the hex suffix (TAC + ECI) used after the home
+// PLMN in utran-cell-id-3gpp. When both inputs are zero an empty string is
+// returned so callers can fall back to the SimAdmin-style placeholder.
+//
+// This is a local copy of voiceclient.FormatUTRANCellIDSuffix to avoid an
+// import cycle (carrier → voiceclient → carrier).
+func formatUTRANCellIDSuffix(tac, eci uint32) string {
+	if tac == 0 && eci == 0 {
+		return ""
+	}
+	return fmt.Sprintf("%04X%07X", tac&0xFFFF, eci&0x0FFFFFFF)
+}
 
 // DefaultUTRANCellIDSuffix returns the configured utran-cell-id-3gpp suffix
 // (TAC+ECI hex, without PLMN) for a PLMN when live QMI readings are unavailable.
@@ -17,7 +29,7 @@ func DefaultUTRANCellIDSuffix(mcc, mnc, spn string) string {
 }
 
 func presetUTRANCellIDSuffix(p Preset) string {
-	if suffix := voiceclient.FormatUTRANCellIDSuffix(p.IMSTAC, p.IMSCellID); suffix != "" {
+	if suffix := formatUTRANCellIDSuffix(p.IMSTAC, p.IMSCellID); suffix != "" {
 		return suffix
 	}
 	return ""

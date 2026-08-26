@@ -14,8 +14,6 @@ import (
 	"os"
 	"strings"
 	"sync"
-
-	"github.com/voorz/vowifi-core/profiles"
 )
 
 // Preset is a single PLMN override entry in the external carrier_overrides file.
@@ -88,20 +86,6 @@ var (
 // under that country.
 var blockedMCCs = map[string]bool{}
 
-// normalizeMNC strips leading zeros so a 2-digit and 3-digit MNC for the same
-// network ("10" vs "010") resolve to the same preset key.
-func normalizeMNC(mnc string) string {
-	mnc = strings.TrimSpace(mnc)
-	trimmed := strings.TrimLeft(mnc, "0")
-	if trimmed == "" && mnc != "" {
-		return "0"
-	}
-	return trimmed
-}
-
-func plmnKey(mcc, mnc string) string {
-	return strings.TrimSpace(mcc) + "-" + normalizeMNC(mnc)
-}
 
 // LoadCarrierOverrides loads a JSON array of Preset from path, replacing any
 // previously loaded overrides. An empty path or a nonexistent file is not an
@@ -163,15 +147,15 @@ func lookup(mcc, mnc string) (Preset, bool) {
 // first, falling back to lookup() (loaded external overrides).
 // This is the JSON-first path used by all L1 carrier functions.
 func lookupWithJSON(mcc, mnc, spn string) (Preset, bool) {
-	if p, err := profiles.LookupWithSPN(mcc, mnc, spn); err == nil && p != nil {
+	if p, err := LookupWithSPN(mcc, mnc, spn); err == nil && p != nil {
 		return carrierProfileToPreset(p), true
 	}
 	return lookup(mcc, mnc)
 }
 
-// carrierProfileToPreset maps a profiles.CarrierProfile to a carrier.Preset
+// carrierProfileToPreset maps a CarrierProfile to a carrier.Preset
 // so that L1 functions can consume JSON profile fields uniformly.
-func carrierProfileToPreset(p *profiles.CarrierProfile) Preset {
+func carrierProfileToPreset(p *CarrierProfile) Preset {
 	return Preset{
 		ID:                     p.ID,
 		MCC:                    p.MCC,
@@ -204,7 +188,7 @@ func allEntries() map[string]Preset {
 	}
 	mu.RUnlock()
 	// JSON profiles (including user overrides) take priority
-	if all, err := profiles.All(); err == nil {
+	if all, err := All(); err == nil {
 		for k, p := range all {
 			merged[k] = carrierProfileToPreset(p)
 		}
