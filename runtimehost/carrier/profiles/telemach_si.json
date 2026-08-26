@@ -1,0 +1,11 @@
+{
+  "id": "telemach_si",
+  "name": "telemach_si",
+  "mcc": "293",
+  "mnc": "70",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "device": {},
+  "blocked": false
+}

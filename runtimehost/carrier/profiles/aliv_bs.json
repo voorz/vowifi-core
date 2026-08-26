@@ -1,0 +1,20 @@
+{
+  "id": "aliv_bs",
+  "name": "aliv_bs",
+  "mcc": "208",
+  "mnc": "09",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv4",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features"
+  },
+  "e911": {
+    "enabled": true,
+    "entitlement_endpoint": "https://aliv.entitlements.io3.com"
+  },
+  "device": {},
+  "blocked": false
+}

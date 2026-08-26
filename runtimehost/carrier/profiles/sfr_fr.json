@@ -1,0 +1,36 @@
+{
+  "id": "sfr_fr",
+  "name": "sfr_fr",
+  "mcc": "208",
+  "mnc": "10",
+  "ike": {
+    "addr": "epdg.epc.mnc010.mcc208.pub.3gppnetwork.org",
+    "apn": "ims",
+    "dpd_interval": 600,
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes128-sha256"
+    ],
+    "ip_stack": "ipv6",
+    "nat_keepalive": 20,
+    "proposals": [
+      "aes128-sha256-prfsha256-modp2048"
+    ],
+    "reauth_interval": 80000,
+    "replay_window": 12,
+    "rf_off_delay": 5
+  },
+  "eap": {
+    "identity_source": "isim"
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://apple-entitlement.sd-sfr.fr"
+  },
+  "device": {},
+  "blocked": false
+}

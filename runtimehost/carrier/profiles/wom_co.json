@@ -1,0 +1,18 @@
+{
+  "id": "wom_co",
+  "name": "wom_co",
+  "mcc": "302",
+  "mnc": "220",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv4v6",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "device": {},
+  "blocked": false
+}

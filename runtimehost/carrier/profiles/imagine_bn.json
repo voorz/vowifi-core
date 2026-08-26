@@ -1,0 +1,13 @@
+{
+  "id": "imagine_bn",
+  "name": "imagine_bn",
+  "mcc": "528",
+  "mnc": "01",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv4",
+    "rf_off_delay": 5
+  },
+  "device": {},
+  "blocked": false
+}

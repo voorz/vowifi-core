@@ -1,0 +1,18 @@
+{
+  "id": "vodafone_is",
+  "name": "vodafone_is",
+  "mcc": "274",
+  "mnc": "02",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_cellular_network": true
+  },
+  "e911": {
+    "entitlement_endpoint": "https://entitlements.api-prod.c.is"
+  },
+  "device": {},
+  "blocked": false
+}

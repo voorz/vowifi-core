@@ -1,0 +1,15 @@
+{
+  "id": "yoigo_masmovil_es",
+  "name": "yoigo_masmovil_es",
+  "mcc": "214",
+  "mnc": "04",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "device": {},
+  "blocked": false
+}

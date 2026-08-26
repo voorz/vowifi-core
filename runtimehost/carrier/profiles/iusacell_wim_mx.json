@@ -1,0 +1,21 @@
+{
+  "id": "iusacell_wim_mx",
+  "name": "iusacell_wim_mx",
+  "mcc": "334",
+  "mnc": "050",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv4v6",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://aes.ims.attmex.mx/entitlement/"
+  },
+  "device": {},
+  "blocked": false
+}

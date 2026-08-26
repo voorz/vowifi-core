@@ -1,0 +1,36 @@
+{
+  "id": "etisalat_ae",
+  "name": "etisalat_ae",
+  "mcc": "424",
+  "mnc": "02",
+  "ike": {
+    "addr": "epdg.epc.mnc002.mcc424.etisalat.ae",
+    "apn": "ims",
+    "dpd_interval": 600,
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes256-sha256"
+    ],
+    "ip_stack": "ipv4v6",
+    "proposals": [
+      "aes256-sha256-prfsha256-modp2048"
+    ],
+    "reauth_interval": 80000,
+    "replay_window": 12,
+    "rf_off_delay": 5
+  },
+  "eap": {
+    "identity_source": "isim"
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_cellular_network": true,
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://MTS1-SES.etisalat.ae"
+  },
+  "device": {},
+  "blocked": false
+}

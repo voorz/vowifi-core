@@ -1,0 +1,17 @@
+{
+  "id": "movistar_ar",
+  "name": "movistar_ar",
+  "mcc": "214",
+  "mnc": "07",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv6",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "device": {},
+  "blocked": false
+}

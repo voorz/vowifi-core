@@ -1,0 +1,16 @@
+{
+  "id": "bhartiairtel_lk",
+  "name": "bhartiairtel_lk",
+  "mcc": "413",
+  "mnc": "05",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv4",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features"
+  },
+  "device": {},
+  "blocked": false
+}

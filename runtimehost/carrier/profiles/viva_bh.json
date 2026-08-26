@@ -1,0 +1,29 @@
+{
+  "id": "viva_bh",
+  "name": "viva_bh",
+  "mcc": "420",
+  "mnc": "01",
+  "ike": {
+    "addr": "epdg.epc.mnc004.mcc426.pub.stc.com.bh",
+    "apn": "ims",
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes128-sha256"
+    ],
+    "ip_stack": "ipv4",
+    "nat_keepalive": 20,
+    "reauth_interval": 86400,
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_cellular_network": true,
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://appes.stc.com.bh/apple"
+  },
+  "device": {},
+  "blocked": false
+}

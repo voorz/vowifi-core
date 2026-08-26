@@ -1,0 +1,35 @@
+{
+  "id": "smart_ph",
+  "name": "smart_ph",
+  "mcc": "515",
+  "mnc": "03",
+  "ike": {
+    "apn": "ims",
+    "dpd_interval": 600,
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes128-sha1"
+    ],
+    "ip_stack": "ipv4v6",
+    "nat_keepalive": 20,
+    "proposals": [
+      "aes128-sha1-prfsha1-modp1024"
+    ],
+    "reauth_interval": 86400,
+    "replay_window": 12,
+    "rf_off_delay": 5
+  },
+  "eap": {
+    "identity_source": "isim"
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "domain": "ims.mnc003.mcc515.3gppnetwork.org",
+    "include_cellular_network": true
+  },
+  "e911": {
+    "entitlement_endpoint": "https://esim-pldt-es-prd.ipaas.amdocs.com/pldt/prd/executeAppleActions"
+  },
+  "device": {},
+  "blocked": false
+}

@@ -1,0 +1,25 @@
+{
+  "id": "hutchison_id_uk",
+  "name": "hutchison_id_uk",
+  "mcc": "234",
+  "mnc": "20",
+  "ike": {
+    "apn": "ims",
+    "dpd_interval": 600,
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes128-sha256"
+    ],
+    "ip_stack": "ipv4v6",
+    "reauth_interval": 80000,
+    "replay_window": 12,
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "device": {},
+  "blocked": false
+}

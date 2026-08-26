@@ -1,0 +1,21 @@
+{
+  "id": "vibo_tw",
+  "name": "vibo_tw",
+  "mcc": "466",
+  "mnc": "89",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv4",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "domain": "ims.mnc089.mcc466.3gppnetwork.org",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "enabled": true
+  },
+  "device": {},
+  "blocked": false
+}

@@ -36,6 +36,8 @@ type Profile struct {
 	IMEI string
 	SMSC string
 	SPN  string // SIM EF_SPN, used for MVNO disambiguation when multiple profiles share a PLMN
+	GID1 string // SIM EF_GID1, used for precise carrier matching (hex string)
+	GID2 string // SIM EF_GID2, used for precise carrier matching (hex string)
 }
 
 const (
@@ -154,6 +156,8 @@ func NormalizeProfile(p Profile) Profile {
 		IMEI: strings.TrimSpace(p.IMEI),
 		SMSC: strings.TrimSpace(p.SMSC),
 		SPN:  strings.TrimSpace(p.SPN),
+		GID1: strings.TrimSpace(p.GID1),
+		GID2: strings.TrimSpace(p.GID2),
 	}
 }
 

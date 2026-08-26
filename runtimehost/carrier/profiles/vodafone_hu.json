@@ -1,0 +1,34 @@
+{
+  "id": "vodafone_hu",
+  "name": "vodafone_hu",
+  "mcc": "216",
+  "mnc": "70",
+  "ike": {
+    "apn": "ims",
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes128-sha256"
+    ],
+    "ip_stack": "ipv4v6",
+    "nat_keepalive": 20,
+    "proposals": [
+      "aes256-sha256-prfsha256-modp2048",
+      "aes256-sha256-prfsha256-modp15",
+      "aes256-sha512-prfsha512-modp2048",
+      "aes256-sha512-prfsha512-modp15"
+    ],
+    "reauth_interval": 86400,
+    "rf_off_delay": 5
+  },
+  "eap": {
+    "identity_source": "isim"
+  },
+  "ims": {
+    "contact_features": "ims_features"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://ios.entitlement.one.hu"
+  },
+  "device": {},
+  "blocked": false
+}

@@ -1,0 +1,14 @@
+{
+  "id": "vivacom_bg",
+  "name": "vivacom_bg",
+  "mcc": "284",
+  "mnc": "03",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features"
+  },
+  "device": {},
+  "blocked": false
+}

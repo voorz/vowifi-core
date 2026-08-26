@@ -1,0 +1,18 @@
+{
+  "id": "docomo_gu",
+  "name": "docomo_gu",
+  "mcc": "310",
+  "mnc": "370",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv4",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "device": {},
+  "blocked": false
+}

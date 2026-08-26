@@ -1,0 +1,21 @@
+{
+  "id": "rakuten_jp",
+  "name": "rakuten_jp",
+  "mcc": "208",
+  "mnc": "01",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv4v6",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "enabled": true,
+    "entitlement_endpoint": "https://entitlement.devicem.rm-n.jp/entitlement/"
+  },
+  "device": {},
+  "blocked": false
+}

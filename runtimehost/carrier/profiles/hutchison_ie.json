@@ -1,0 +1,28 @@
+{
+  "id": "hutchison_ie",
+  "name": "hutchison_ie",
+  "mcc": "272",
+  "mnc": "05",
+  "ike": {
+    "addr": "epdg.three.ie",
+    "apn": "ims",
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes128-sha256"
+    ],
+    "ip_stack": "ipv4v6",
+    "nat_keepalive": 20,
+    "reauth_interval": 86400,
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://ses.three.ie"
+  },
+  "device": {},
+  "blocked": false
+}

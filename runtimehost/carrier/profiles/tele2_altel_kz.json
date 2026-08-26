@@ -1,0 +1,16 @@
+{
+  "id": "tele2_altel_kz",
+  "name": "tele2_altel_kz",
+  "mcc": "401",
+  "mnc": "77",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "device": {},
+  "blocked": false
+}

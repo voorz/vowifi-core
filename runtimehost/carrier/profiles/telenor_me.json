@@ -1,0 +1,16 @@
+{
+  "id": "telenor_me",
+  "name": "telenor_me",
+  "mcc": "297",
+  "mnc": "01",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "device": {},
+  "blocked": false
+}

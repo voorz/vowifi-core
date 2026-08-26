@@ -1,0 +1,19 @@
+{
+  "id": "mobilkom_bg",
+  "name": "mobilkom_bg",
+  "mcc": "284",
+  "mnc": "01",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://esim-es-open-prod-aonebg.esimcloud.net/aonebg/prod/executeAppleActions"
+  },
+  "device": {},
+  "blocked": false
+}

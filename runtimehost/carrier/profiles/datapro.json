@@ -1,0 +1,11 @@
+{
+  "id": "datapro",
+  "name": "datapro",
+  "mcc": "525",
+  "mnc": "01",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "device": {},
+  "blocked": false
+}

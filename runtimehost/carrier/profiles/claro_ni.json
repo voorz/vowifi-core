@@ -1,0 +1,18 @@
+{
+  "id": "claro_ni",
+  "name": "claro_ni",
+  "mcc": "710",
+  "mnc": "21",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv4",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "device": {},
+  "blocked": false
+}

@@ -1,0 +1,11 @@
+{
+  "id": "xl_id",
+  "name": "xl_id",
+  "mcc": "510",
+  "mnc": "11",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "device": {},
+  "blocked": false
+}

@@ -1,0 +1,11 @@
+{
+  "id": "charter_nr_us",
+  "name": "charter_nr_us",
+  "mcc": "314",
+  "mnc": "020",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "device": {},
+  "blocked": false
+}

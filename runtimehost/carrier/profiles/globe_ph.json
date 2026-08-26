@@ -1,0 +1,30 @@
+{
+  "id": "globe_ph",
+  "name": "globe_ph",
+  "mcc": "515",
+  "mnc": "02",
+  "ike": {
+    "addr": "weconnect.globe.com.ph",
+    "apn": "ims",
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes256-sha256"
+    ],
+    "ip_stack": "ipv4v6",
+    "nat_keepalive": 20,
+    "reauth_interval": 86400,
+    "replay_window": 12,
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "enabled": true,
+    "entitlement_endpoint": "https://esim-es-open-prod-globe.esimcloud.net/globe/prod/executeAppleActions"
+  },
+  "device": {},
+  "blocked": false
+}

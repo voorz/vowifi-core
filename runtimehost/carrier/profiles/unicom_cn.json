@@ -1,0 +1,21 @@
+{
+  "id": "unicom_cn",
+  "name": "unicom_cn",
+  "mcc": "460",
+  "mnc": "01",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv6",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://es.10010.com"
+  },
+  "device": {},
+  "blocked": false
+}

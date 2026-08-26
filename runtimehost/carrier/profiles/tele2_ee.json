@@ -1,0 +1,21 @@
+{
+  "id": "tele2_ee",
+  "name": "tele2_ee",
+  "mcc": "248",
+  "mnc": "03",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv6",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://entitlementee.t2lb.tele2.com/entitlement/"
+  },
+  "device": {},
+  "blocked": false
+}

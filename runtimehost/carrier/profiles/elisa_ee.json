@@ -1,0 +1,27 @@
+{
+  "id": "elisa_ee",
+  "name": "elisa_ee",
+  "mcc": "248",
+  "mnc": "02",
+  "ike": {
+    "apn": "ims",
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes256-sha256"
+    ],
+    "ip_stack": "ipv4v6",
+    "reauth_interval": 86400,
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_cellular_network": true,
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://entitlement1.ses.elisa.ee:8443"
+  },
+  "device": {},
+  "blocked": false
+}

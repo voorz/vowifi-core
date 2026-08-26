@@ -1,0 +1,11 @@
+{
+  "id": "atn_bm",
+  "name": "atn_bm",
+  "mcc": "204",
+  "mnc": "043",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "device": {},
+  "blocked": false
+}

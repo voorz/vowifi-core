@@ -1,0 +1,26 @@
+{
+  "id": "wind_very_it",
+  "name": "wind_very_it",
+  "mcc": "222",
+  "mnc": "88",
+  "ike": {
+    "addr": "epdg.epc.mnc088.mcc222.pub.3gppnetwork.org",
+    "apn": "ims",
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes256-sha512"
+    ],
+    "ip_stack": "ipv4v6",
+    "nat_keepalive": 20,
+    "reauth_interval": 86400,
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_cellular_network": true,
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "device": {},
+  "blocked": false
+}

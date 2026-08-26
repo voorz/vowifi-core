@@ -1,0 +1,34 @@
+{
+  "id": "vodafone_za",
+  "name": "vodafone_za",
+  "mcc": "655",
+  "mnc": "01",
+  "ike": {
+    "apn": "ims",
+    "dpd_interval": 600,
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes256-sha512"
+    ],
+    "proposals": [
+      "aes256-sha512-prfsha512-modp2048"
+    ],
+    "reauth_interval": 80000,
+    "replay_window": 12,
+    "rf_off_delay": 5
+  },
+  "eap": {
+    "identity_source": "isim"
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_cellular_network": true,
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://es-za.vodafone.com:4441/ium-OEMInterface/servlet/IUMServlet"
+  },
+  "device": {},
+  "blocked": false
+}

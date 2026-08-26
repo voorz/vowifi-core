@@ -1,0 +1,21 @@
+{
+  "id": "movistar_cl",
+  "name": "movistar_cl",
+  "mcc": "214",
+  "mnc": "07",
+  "ike": {
+    "apn": "ims",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "enabled": true,
+    "entitlement_endpoint": "https://Entitlement.Movistar.cl/entitlement/"
+  },
+  "device": {},
+  "blocked": false
+}

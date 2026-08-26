@@ -1,0 +1,21 @@
+{
+  "id": "kddi_jcom_lte_only_jp",
+  "name": "kddi_jcom_lte_only_jp",
+  "mcc": "440",
+  "mnc": "51",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv6",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "enabled": true,
+    "entitlement_endpoint": "https://station01.ezweb.ne.jp/ENT/servlet/EntServlet3"
+  },
+  "device": {},
+  "blocked": false
+}

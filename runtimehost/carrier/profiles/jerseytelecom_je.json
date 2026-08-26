@@ -1,0 +1,11 @@
+{
+  "id": "jerseytelecom_je",
+  "name": "jerseytelecom_je",
+  "mcc": "234",
+  "mnc": "50",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "device": {},
+  "blocked": false
+}

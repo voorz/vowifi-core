@@ -1,0 +1,13 @@
+{
+  "id": "progresif_bn",
+  "name": "progresif_bn",
+  "mcc": "528",
+  "mnc": "02",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv4",
+    "rf_off_delay": 5
+  },
+  "device": {},
+  "blocked": false
+}

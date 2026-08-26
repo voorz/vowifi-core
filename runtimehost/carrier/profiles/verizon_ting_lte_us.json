@@ -1,0 +1,11 @@
+{
+  "id": "verizon_ting_lte_us",
+  "name": "verizon_ting_lte_us",
+  "mcc": "204",
+  "mnc": "04",
+  "e911": {
+    "entitlement_endpoint": "https://spc.myvzw.com/ium-RoadrunnerInterface/servlet/IUMServlet"
+  },
+  "device": {},
+  "blocked": false
+}

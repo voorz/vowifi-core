@@ -1,0 +1,14 @@
+{
+  "id": "telecomegypt_eg",
+  "name": "telecomegypt_eg",
+  "mcc": "208",
+  "mnc": "09",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "include_cellular_network": true
+  },
+  "device": {},
+  "blocked": false
+}

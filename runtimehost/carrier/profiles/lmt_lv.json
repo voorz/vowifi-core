@@ -1,0 +1,25 @@
+{
+  "id": "lmt_lv",
+  "name": "lmt_lv",
+  "mcc": "247",
+  "mnc": "01",
+  "ike": {
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes256-sha256"
+    ],
+    "reauth_interval": 86400,
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_cellular_network": true,
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://es.mnc001.mcc247.pub.3gppnetwork.org:8443/entitlement"
+  },
+  "device": {},
+  "blocked": false
+}

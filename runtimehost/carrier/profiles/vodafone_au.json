@@ -1,0 +1,28 @@
+{
+  "id": "vodafone_au",
+  "name": "vodafone_au",
+  "mcc": "505",
+  "mnc": "03",
+  "ike": {
+    "apn": "ims",
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes256-sha512"
+    ],
+    "ip_stack": "ipv4v6",
+    "reauth_interval": 80000,
+    "replay_window": 12,
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_cellular_network": true,
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://ents.mnc003.mcc505.pub.3gppnetwork.org:8443"
+  },
+  "device": {},
+  "blocked": false
+}

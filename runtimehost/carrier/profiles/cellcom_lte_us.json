@@ -1,0 +1,8 @@
+{
+  "id": "cellcom_lte_us",
+  "name": "cellcom_lte_us",
+  "mcc": "311",
+  "mnc": "480",
+  "device": {},
+  "blocked": false
+}

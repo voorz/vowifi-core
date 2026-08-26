@@ -1,0 +1,30 @@
+{
+  "id": "claro_pa",
+  "name": "claro_pa",
+  "mcc": "334",
+  "mnc": "02",
+  "ike": {
+    "addr": "epdg.ims.mnc003.mcc714.pub.3gppnetwork.org",
+    "apn": "ims",
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes128-sha1"
+    ],
+    "ip_stack": "ipv4",
+    "proposals": [
+      "aes128-sha1-prfsha1-modp1024"
+    ],
+    "reauth_interval": 86400,
+    "rf_off_delay": 5
+  },
+  "eap": {
+    "identity_source": "isim"
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "device": {},
+  "blocked": false
+}

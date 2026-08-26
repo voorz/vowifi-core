@@ -1,0 +1,17 @@
+{
+  "id": "coppervalley_lte_us",
+  "name": "coppervalley_lte_us",
+  "mcc": "311",
+  "mnc": "480",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv6",
+    "rf_off_delay": 5
+  },
+  "e911": {
+    "enabled": true,
+    "entitlement_endpoint": "https://spc.myvzw.com/ium-RoadrunnerInterface/servlet/IUMServlet"
+  },
+  "device": {},
+  "blocked": false
+}

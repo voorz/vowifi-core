@@ -1,0 +1,16 @@
+{
+  "id": "mobicom_mn",
+  "name": "mobicom_mn",
+  "mcc": "428",
+  "mnc": "99",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv4v6",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features"
+  },
+  "device": {},
+  "blocked": false
+}

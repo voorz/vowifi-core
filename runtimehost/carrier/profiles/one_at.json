@@ -1,0 +1,36 @@
+{
+  "id": "one_at",
+  "name": "one_at",
+  "mcc": "232",
+  "mnc": "05",
+  "ike": {
+    "apn": "ims",
+    "dpd_interval": 600,
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes256-sha512"
+    ],
+    "ip_stack": "ipv4v6",
+    "proposals": [
+      "aes256-sha512-prfsha512-modp2048"
+    ],
+    "reauth_interval": 80000,
+    "replay_window": 12,
+    "rf_off_delay": 5
+  },
+  "eap": {
+    "identity_source": "isim"
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_cellular_network": true,
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "enabled": true,
+    "entitlement_endpoint": "https://esim-3at-es-prd.ipaas.amdocs.com/3at/prd/executeAppleActions"
+  },
+  "device": {},
+  "blocked": false
+}

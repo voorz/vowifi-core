@@ -1,0 +1,21 @@
+{
+  "id": "dna_fi",
+  "name": "dna_fi",
+  "mcc": "244",
+  "mnc": "03",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv6",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://ents.mnc012.mcc244.pub.3gppnetwork.org"
+  },
+  "device": {},
+  "blocked": false
+}

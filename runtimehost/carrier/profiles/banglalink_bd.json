@@ -1,0 +1,11 @@
+{
+  "id": "banglalink_bd",
+  "name": "banglalink_bd",
+  "mcc": "470",
+  "mnc": "03",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "device": {},
+  "blocked": false
+}

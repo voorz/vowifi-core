@@ -1,0 +1,11 @@
+{
+  "id": "airgsm",
+  "name": "airgsm",
+  "mcc": "204",
+  "mnc": "08",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "device": {},
+  "blocked": false
+}

@@ -1,0 +1,22 @@
+{
+  "id": "bell_lucky_ca",
+  "name": "bell_lucky_ca",
+  "mcc": "302",
+  "mnc": "610",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv6",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "domain": "ims.bell.ca",
+    "include_cellular_network": true,
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://egw.wireless.bell.ca/ium-OEMInterface/servlet/IUMServlet/"
+  },
+  "device": {},
+  "blocked": false
+}

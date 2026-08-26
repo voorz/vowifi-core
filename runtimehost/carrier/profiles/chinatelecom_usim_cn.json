@@ -1,0 +1,22 @@
+{
+  "id": "chinatelecom_usim_cn",
+  "name": "chinatelecom_usim_cn",
+  "mcc": "204",
+  "mnc": "04",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv4v6",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "domain": "ims.mnc011.mcc460.3gppnetwork.org",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "enabled": true,
+    "entitlement_endpoint": "https://applecsb.crm.189.cn:8101/CRM-CSB/HttpAppleService"
+  },
+  "device": {},
+  "blocked": false
+}

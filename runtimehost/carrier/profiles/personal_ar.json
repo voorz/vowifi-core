@@ -1,0 +1,33 @@
+{
+  "id": "personal_ar",
+  "name": "personal_ar",
+  "mcc": "722",
+  "mnc": "34",
+  "ike": {
+    "addr": "epdg.epc.mnc034.mcc722.pub.3gppnetwork.org",
+    "apn": "ims",
+    "dpd_interval": 600,
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes128-sha256"
+    ],
+    "ip_stack": "ipv4v6",
+    "proposals": [
+      "aes128-sha256-prfsha256-modp2048"
+    ],
+    "reauth_interval": 86400,
+    "replay_window": 12,
+    "rf_off_delay": 5
+  },
+  "eap": {
+    "identity_source": "isim"
+  },
+  "ims": {
+    "domain": "ims.mnc034.mcc722.3gppnetwork.org",
+    "include_cellular_network": true,
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "device": {},
+  "blocked": false
+}

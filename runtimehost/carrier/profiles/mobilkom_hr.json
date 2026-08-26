@@ -1,0 +1,19 @@
+{
+  "id": "mobilkom_hr",
+  "name": "mobilkom_hr",
+  "mcc": "219",
+  "mnc": "10",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://esim-es-open-prod-aonehr.esimcloud.net/aonehr/prod/executeAppleActions"
+  },
+  "device": {},
+  "blocked": false
+}

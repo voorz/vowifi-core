@@ -1,0 +1,11 @@
+{
+  "id": "sprint_isim_lte_us",
+  "name": "sprint_isim_lte_us",
+  "mcc": "310",
+  "mnc": "120",
+  "e911": {
+    "entitlement_endpoint": "https://deg.spcsdns.net/ium-OEMInterface/servlet/IUMServlet"
+  },
+  "device": {},
+  "blocked": false
+}

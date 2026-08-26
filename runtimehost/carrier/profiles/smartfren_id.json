@@ -1,0 +1,23 @@
+{
+  "id": "smartfren_id",
+  "name": "smartfren_id",
+  "mcc": "510",
+  "mnc": "09",
+  "ike": {
+    "apn": "ims",
+    "dpd_interval": 600,
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes256-sha512"
+    ],
+    "ip_stack": "ipv4",
+    "reauth_interval": 80000,
+    "replay_window": 12,
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "include_cellular_network": true
+  },
+  "device": {},
+  "blocked": false
+}

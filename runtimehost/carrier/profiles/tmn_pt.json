@@ -1,0 +1,22 @@
+{
+  "id": "tmn_pt",
+  "name": "tmn_pt",
+  "mcc": "268",
+  "mnc": "06",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv4v6",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_cellular_network": true,
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://aes.mnc006.mcc268.pub.3gppnetwork.org:443"
+  },
+  "device": {},
+  "blocked": false
+}

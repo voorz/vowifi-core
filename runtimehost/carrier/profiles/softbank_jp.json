@@ -1,0 +1,21 @@
+{
+  "id": "softbank_jp",
+  "name": "softbank_jp",
+  "mcc": "440",
+  "mnc": "20",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv6",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "enabled": true,
+    "entitlement_endpoint": "https://efr.softbank.jp/terminal/validate.do"
+  },
+  "device": {},
+  "blocked": false
+}

@@ -1,0 +1,15 @@
+{
+  "id": "iliad_it",
+  "name": "iliad_it",
+  "mcc": "208",
+  "mnc": "15",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "device": {},
+  "blocked": false
+}

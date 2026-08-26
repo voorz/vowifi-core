@@ -1,0 +1,22 @@
+{
+  "id": "omantel_om",
+  "name": "omantel_om",
+  "mcc": "422",
+  "mnc": "02",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv4",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_cellular_network": true,
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://impactes.omantel.om/entitlement/"
+  },
+  "device": {},
+  "blocked": false
+}

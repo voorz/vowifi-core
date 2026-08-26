@@ -1,0 +1,15 @@
+{
+  "id": "telekomslovenije_gi",
+  "name": "telekomslovenije_gi",
+  "mcc": "266",
+  "mnc": "01",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "device": {},
+  "blocked": false
+}

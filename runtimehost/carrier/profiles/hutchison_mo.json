@@ -1,0 +1,30 @@
+{
+  "id": "hutchison_mo",
+  "name": "hutchison_mo",
+  "mcc": "455",
+  "mnc": "03",
+  "ike": {
+    "addr": "wlan.three.com.mo",
+    "apn": "ims",
+    "dpd_interval": 600,
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes128-sha1"
+    ],
+    "proposals": [
+      "aes128-sha1-prfsha1-modp1024"
+    ],
+    "reauth_interval": 80000,
+    "replay_window": 12,
+    "rf_off_delay": 5
+  },
+  "eap": {
+    "identity_source": "isim"
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_cellular_network": true
+  },
+  "device": {},
+  "blocked": false
+}

@@ -1,0 +1,21 @@
+{
+  "id": "skt_kr",
+  "name": "skt_kr",
+  "mcc": "450",
+  "mnc": "05",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv4v6",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "enabled": true,
+    "entitlement_endpoint": "https://entitlements-prod.sktdns.com"
+  },
+  "device": {},
+  "blocked": false
+}

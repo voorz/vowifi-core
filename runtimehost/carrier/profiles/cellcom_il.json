@@ -1,0 +1,36 @@
+{
+  "id": "cellcom_il",
+  "name": "cellcom_il",
+  "mcc": "425",
+  "mnc": "02",
+  "ike": {
+    "apn": "ims",
+    "dpd_interval": 600,
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes128-sha256"
+    ],
+    "ip_stack": "ipv6",
+    "nat_keepalive": 20,
+    "proposals": [
+      "aes128-sha256-prfsha256-modp2048"
+    ],
+    "reauth_interval": 86400,
+    "replay_window": 12,
+    "rf_off_delay": 5
+  },
+  "eap": {
+    "identity_source": "isim"
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_cellular_network": true,
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://esim-es-open-prod-cellcom.esimcloud.net/cellcom/prod/executeAppleActions"
+  },
+  "device": {},
+  "blocked": false
+}

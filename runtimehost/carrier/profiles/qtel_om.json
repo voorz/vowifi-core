@@ -1,0 +1,11 @@
+{
+  "id": "qtel_om",
+  "name": "qtel_om",
+  "mcc": "422",
+  "mnc": "03",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "device": {},
+  "blocked": false
+}

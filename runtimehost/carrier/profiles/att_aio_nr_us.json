@@ -1,0 +1,35 @@
+{
+  "id": "att_aio_nr_us",
+  "name": "att_aio_nr_us",
+  "mcc": "310",
+  "mnc": "150",
+  "ike": {
+    "addr": "epdg.epc.att.net",
+    "apn": "ims",
+    "dpd_interval": 600,
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes128-sha256"
+    ],
+    "ip_stack": "ipv4v6",
+    "proposals": [
+      "aes128-sha256-prfsha256-modp2048"
+    ],
+    "reauth_interval": 80000,
+    "replay_window": 12,
+    "rf_off_delay": 5
+  },
+  "eap": {
+    "identity_source": "isim"
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://sentitlement2.mobile.att.net"
+  },
+  "device": {},
+  "blocked": false
+}

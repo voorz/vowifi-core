@@ -1,0 +1,14 @@
+{
+  "id": "mts_ua",
+  "name": "mts_ua",
+  "mcc": "255",
+  "mnc": "01",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "include_cellular_network": true
+  },
+  "device": {},
+  "blocked": false
+}

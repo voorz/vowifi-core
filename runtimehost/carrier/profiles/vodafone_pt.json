@@ -1,0 +1,20 @@
+{
+  "id": "vodafone_pt",
+  "name": "vodafone_pt",
+  "mcc": "268",
+  "mnc": "01",
+  "ike": {
+    "apn": "ims",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://es-pt.vodafone.com:4451/ium-OEMInterface/servlet/IUMServlet"
+  },
+  "device": {},
+  "blocked": false
+}

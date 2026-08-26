@@ -1,0 +1,19 @@
+{
+  "id": "tim_br",
+  "name": "tim_br",
+  "mcc": "724",
+  "mnc": "02",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv6",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://apple.entitlement.tim.com.br"
+  },
+  "device": {},
+  "blocked": false
+}

@@ -1,0 +1,21 @@
+{
+  "id": "chinatelecom_hk",
+  "name": "chinatelecom_hk",
+  "mcc": "454",
+  "mnc": "00",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv4v6",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "domain": "ims.mnc031.mcc454.3gppnetwork.org",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "enabled": true
+  },
+  "device": {},
+  "blocked": false
+}

@@ -1,0 +1,11 @@
+{
+  "id": "cellcard_kh",
+  "name": "cellcard_kh",
+  "mcc": "456",
+  "mnc": "01",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "device": {},
+  "blocked": false
+}

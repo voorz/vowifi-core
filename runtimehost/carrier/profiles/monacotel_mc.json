@@ -1,0 +1,25 @@
+{
+  "id": "monacotel_mc",
+  "name": "monacotel_mc",
+  "mcc": "208",
+  "mnc": "01",
+  "ike": {
+    "addr": "epdg.monaco-telecom.mc",
+    "apn": "ims",
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes256-sha512"
+    ],
+    "ip_stack": "ipv4",
+    "nat_keepalive": 20,
+    "reauth_interval": 86400,
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "include_cellular_network": true,
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "device": {},
+  "blocked": false
+}

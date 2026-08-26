@@ -1,0 +1,36 @@
+{
+  "id": "unitedwireless_lte_us",
+  "name": "unitedwireless_lte_us",
+  "mcc": "311",
+  "mnc": "650",
+  "ike": {
+    "apn": "ims",
+    "dpd_interval": 600,
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes256-sha256"
+    ],
+    "ip_stack": "ipv4v6",
+    "proposals": [
+      "aes256-sha256-prfsha256-modp2048"
+    ],
+    "reauth_interval": 80000,
+    "replay_window": 12,
+    "rf_off_delay": 5
+  },
+  "eap": {
+    "identity_source": "isim"
+  },
+  "ims": {
+    "domain": "ims.mnc650.mcc311.3gppnetwork.org",
+    "include_cellular_network": true,
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "enabled": true,
+    "entitlement_endpoint": "https://deg.app.unitedwireless.com:8181/ium-OEMInterface/servlet/IUMServlet"
+  },
+  "device": {},
+  "blocked": false
+}

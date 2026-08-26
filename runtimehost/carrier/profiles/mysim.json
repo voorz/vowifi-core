@@ -1,0 +1,11 @@
+{
+  "id": "mysim",
+  "name": "mysim",
+  "mcc": "208",
+  "mnc": "37",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "device": {},
+  "blocked": false
+}

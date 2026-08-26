@@ -1,0 +1,11 @@
+{
+  "id": "dish_ting_us",
+  "name": "dish_ting_us",
+  "mcc": "310",
+  "mnc": "240",
+  "e911": {
+    "entitlement_endpoint": "https://eas3.msg.t-mobile.com"
+  },
+  "device": {},
+  "blocked": false
+}

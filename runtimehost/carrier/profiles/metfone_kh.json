@@ -1,0 +1,15 @@
+{
+  "id": "metfone_kh",
+  "name": "metfone_kh",
+  "mcc": "452",
+  "mnc": "04",
+  "ike": {
+    "apn": "ims",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features"
+  },
+  "device": {},
+  "blocked": false
+}

@@ -1,0 +1,32 @@
+{
+  "id": "nextel_cl",
+  "name": "nextel_cl",
+  "mcc": "730",
+  "mnc": "09",
+  "ike": {
+    "addr": "epdg.epc.mnc009.mcc730.pub.3gppnetwork.org",
+    "apn": "ims",
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes256-sha256"
+    ],
+    "ip_stack": "ipv4",
+    "nat_keepalive": 20,
+    "proposals": [
+      "aes256-sha256-prfsha256-modp2048"
+    ],
+    "reauth_interval": 86400,
+    "rf_off_delay": 5
+  },
+  "eap": {
+    "identity_source": "isim"
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_cellular_network": true,
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "device": {},
+  "blocked": false
+}

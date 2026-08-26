@@ -1,0 +1,15 @@
+{
+  "id": "8ta_za",
+  "name": "8ta_za",
+  "mcc": "655",
+  "mnc": "02",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "device": {},
+  "blocked": false
+}

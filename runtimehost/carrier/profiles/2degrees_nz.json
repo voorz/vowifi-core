@@ -1,0 +1,35 @@
+{
+  "id": "2degrees_nz",
+  "name": "2degrees_nz",
+  "mcc": "530",
+  "mnc": "24",
+  "ike": {
+    "addr": "epdg.ims.2degrees.net.nz",
+    "apn": "ims",
+    "dpd_interval": 300,
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes256-sha512"
+    ],
+    "ip_stack": "ipv4",
+    "proposals": [
+      "aes256-sha512-prfsha512-modp1024"
+    ],
+    "reauth_interval": 80000,
+    "replay_window": 12,
+    "rf_off_delay": 5
+  },
+  "eap": {
+    "identity_source": "isim"
+  },
+  "ims": {
+    "include_cellular_network": true,
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://ios.es.2degreesmobile.co.nz"
+  },
+  "device": {},
+  "blocked": false
+}

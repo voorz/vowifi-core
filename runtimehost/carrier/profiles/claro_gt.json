@@ -1,0 +1,30 @@
+{
+  "id": "claro_gt",
+  "name": "claro_gt",
+  "mcc": "704",
+  "mnc": "01",
+  "ike": {
+    "addr": "epdg.ims.mnc001.mcc704.pub.3gppnetwork.org",
+    "apn": "ims",
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes256-sha256"
+    ],
+    "ip_stack": "ipv4v6",
+    "proposals": [
+      "aes256-sha256-prfsha256-modp2048"
+    ],
+    "reauth_interval": 86400,
+    "rf_off_delay": 5
+  },
+  "eap": {
+    "identity_source": "isim"
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "device": {},
+  "blocked": false
+}

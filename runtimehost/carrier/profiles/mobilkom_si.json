@@ -1,0 +1,19 @@
+{
+  "id": "mobilkom_si",
+  "name": "mobilkom_si",
+  "mcc": "293",
+  "mnc": "40",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://esim-es-open-prod-aonesi.esimcloud.net/aonesi/prod/executeAppleActions"
+  },
+  "device": {},
+  "blocked": false
+}

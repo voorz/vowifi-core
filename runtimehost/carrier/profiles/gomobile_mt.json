@@ -1,0 +1,11 @@
+{
+  "id": "gomobile_mt",
+  "name": "gomobile_mt",
+  "mcc": "278",
+  "mnc": "21",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "device": {},
+  "blocked": false
+}

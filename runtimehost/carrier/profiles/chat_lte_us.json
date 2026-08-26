@@ -1,0 +1,11 @@
+{
+  "id": "chat_lte_us",
+  "name": "chat_lte_us",
+  "mcc": "311",
+  "mnc": "480",
+  "e911": {
+    "entitlement_endpoint": "https://spc.myvzw.com/ium-RoadrunnerInterface/servlet/IUMServlet"
+  },
+  "device": {},
+  "blocked": false
+}

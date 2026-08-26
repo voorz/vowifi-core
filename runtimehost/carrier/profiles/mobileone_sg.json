@@ -1,0 +1,36 @@
+{
+  "id": "mobileone_sg",
+  "name": "mobileone_sg",
+  "mcc": "525",
+  "mnc": "03",
+  "ike": {
+    "addr": "epdg.mobileone.net.sg",
+    "apn": "ims",
+    "dpd_interval": 600,
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes128-sha256"
+    ],
+    "ip_stack": "ipv4v6",
+    "proposals": [
+      "aes128-sha256-prfsha256-modp2048"
+    ],
+    "reauth_interval": 8640,
+    "replay_window": 12,
+    "rf_off_delay": 5
+  },
+  "eap": {
+    "identity_source": "isim"
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "enabled": true,
+    "entitlement_endpoint": "https://mdm.m1.com.sg/ES/apple"
+  },
+  "device": {},
+  "blocked": false
+}

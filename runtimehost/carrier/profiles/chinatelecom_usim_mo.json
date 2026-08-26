@@ -1,0 +1,21 @@
+{
+  "id": "chinatelecom_usim_mo",
+  "name": "chinatelecom_usim_mo",
+  "mcc": "204",
+  "mnc": "04",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv6",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "domain": "ims.mnc007.mcc455.3gppnetwork.org",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "enabled": true
+  },
+  "device": {},
+  "blocked": false
+}

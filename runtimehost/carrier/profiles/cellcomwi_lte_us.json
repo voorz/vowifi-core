@@ -1,0 +1,29 @@
+{
+  "id": "cellcomwi_lte_us",
+  "name": "cellcomwi_lte_us",
+  "mcc": "311",
+  "mnc": "840",
+  "ike": {
+    "apn": "ims",
+    "dpd_interval": 600,
+    "ip_stack": "ipv4v6",
+    "proposals": [
+      "aes256-sha512-prfsha512-modp15"
+    ],
+    "reauth_interval": 86400,
+    "rf_off_delay": 5
+  },
+  "eap": {
+    "identity_source": "isim"
+  },
+  "ims": {
+    "domain": "ims.cellcom.com",
+    "include_cellular_network": true
+  },
+  "e911": {
+    "enabled": true,
+    "entitlement_endpoint": "https://deg.ims.cellcom.com/ium-OEMInterface/servlet/IUMServlet"
+  },
+  "device": {},
+  "blocked": false
+}

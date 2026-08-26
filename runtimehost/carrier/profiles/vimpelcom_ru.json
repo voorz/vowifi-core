@@ -1,0 +1,16 @@
+{
+  "id": "vimpelcom_ru",
+  "name": "vimpelcom_ru",
+  "mcc": "250",
+  "mnc": "99",
+  "ike": {
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes128-sha1"
+    ],
+    "reauth_interval": 80000,
+    "rf_off_delay": 5
+  },
+  "device": {},
+  "blocked": false
+}

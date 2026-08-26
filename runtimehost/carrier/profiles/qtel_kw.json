@@ -1,0 +1,27 @@
+{
+  "id": "qtel_kw",
+  "name": "qtel_kw",
+  "mcc": "419",
+  "mnc": "03",
+  "ike": {
+    "apn": "ims",
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes256-sha512"
+    ],
+    "ip_stack": "ipv4",
+    "reauth_interval": 80000,
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_cellular_network": true,
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://es-prod.ooredoo.com.kw/rest/deviceInterface/v1/service"
+  },
+  "device": {},
+  "blocked": false
+}

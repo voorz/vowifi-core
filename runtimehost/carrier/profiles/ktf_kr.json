@@ -1,0 +1,21 @@
+{
+  "id": "ktf_kr",
+  "name": "ktf_kr",
+  "mcc": "450",
+  "mnc": "02",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv4v6",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "enabled": true,
+    "entitlement_endpoint": "https://api.econovation.co.kr/adcb/rest/getEapAKA"
+  },
+  "device": {},
+  "blocked": false
+}

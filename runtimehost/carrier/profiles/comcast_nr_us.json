@@ -1,0 +1,11 @@
+{
+  "id": "comcast_nr_us",
+  "name": "comcast_nr_us",
+  "mcc": "310",
+  "mnc": "014",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "device": {},
+  "blocked": false
+}

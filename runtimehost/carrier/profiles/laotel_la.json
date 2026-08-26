@@ -1,0 +1,16 @@
+{
+  "id": "laotel_la",
+  "name": "laotel_la",
+  "mcc": "457",
+  "mnc": "01",
+  "ike": {
+    "apn": "ims",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "device": {},
+  "blocked": false
+}

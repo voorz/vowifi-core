@@ -1,0 +1,21 @@
+{
+  "id": "telia_az",
+  "name": "telia_az",
+  "mcc": "400",
+  "mnc": "01",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv4v6",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://es.azercell.com"
+  },
+  "device": {},
+  "blocked": false
+}

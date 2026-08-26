@@ -1,0 +1,11 @@
+{
+  "id": "bne",
+  "name": "bne",
+  "mcc": "260",
+  "mnc": "06",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "device": {},
+  "blocked": false
+}

@@ -1,0 +1,19 @@
+{
+  "id": "tigo_co",
+  "name": "tigo_co",
+  "mcc": "732",
+  "mnc": "103",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv4v6",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features"
+  },
+  "e911": {
+    "enabled": true
+  },
+  "device": {},
+  "blocked": false
+}

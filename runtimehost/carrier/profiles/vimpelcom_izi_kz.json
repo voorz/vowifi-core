@@ -1,0 +1,16 @@
+{
+  "id": "vimpelcom_izi_kz",
+  "name": "vimpelcom_izi_kz",
+  "mcc": "401",
+  "mnc": "01",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "device": {},
+  "blocked": false
+}

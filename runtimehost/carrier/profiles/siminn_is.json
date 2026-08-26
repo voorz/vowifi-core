@@ -1,0 +1,19 @@
+{
+  "id": "siminn_is",
+  "name": "siminn_is",
+  "mcc": "274",
+  "mnc": "01",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://aes.siminn.is"
+  },
+  "device": {},
+  "blocked": false
+}

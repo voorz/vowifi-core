@@ -1,0 +1,18 @@
+{
+  "id": "yoigo_es",
+  "name": "yoigo_es",
+  "mcc": "214",
+  "mnc": "04",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://masmovil.entitlements.io3.com"
+  },
+  "device": {},
+  "blocked": false
+}

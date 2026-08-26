@@ -1,0 +1,14 @@
+{
+  "id": "telia_md",
+  "name": "telia_md",
+  "mcc": "259",
+  "mnc": "02",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features"
+  },
+  "device": {},
+  "blocked": false
+}

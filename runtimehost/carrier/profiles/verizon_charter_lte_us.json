@@ -1,0 +1,30 @@
+{
+  "id": "verizon_charter_lte_us",
+  "name": "verizon_charter_lte_us",
+  "mcc": "204",
+  "mnc": "04",
+  "ike": {
+    "addr": "wo.vzwwo.com",
+    "apn": "ims",
+    "dpd_interval": 600,
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes256-sha256"
+    ],
+    "ip_stack": "ipv6",
+    "proposals": [
+      "aes256-sha256-prfsha256-modp2048"
+    ],
+    "reauth_interval": 80000,
+    "rf_off_delay": 5
+  },
+  "eap": {
+    "identity_source": "isim"
+  },
+  "e911": {
+    "enabled": true,
+    "entitlement_endpoint": "https://spc.myvzw.com/ium-RoadrunnerInterface/servlet/IUMServlet"
+  },
+  "device": {},
+  "blocked": false
+}

@@ -1,0 +1,11 @@
+{
+  "id": "atn_viya_vi",
+  "name": "atn_viya_vi",
+  "mcc": "311",
+  "mnc": "040",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "device": {},
+  "blocked": false
+}

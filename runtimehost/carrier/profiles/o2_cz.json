@@ -1,0 +1,28 @@
+{
+  "id": "o2_cz",
+  "name": "o2_cz",
+  "mcc": "230",
+  "mnc": "02",
+  "ike": {
+    "apn": "ims",
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes128-sha256"
+    ],
+    "ip_stack": "ipv6",
+    "nat_keepalive": 20,
+    "reauth_interval": 864000,
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_cellular_network": true,
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://esim-o2cz-es-prd.ipaas.amdocs.com/o2cz/prd/executeAppleActions/"
+  },
+  "device": {},
+  "blocked": false
+}

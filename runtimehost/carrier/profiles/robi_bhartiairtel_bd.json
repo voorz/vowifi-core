@@ -1,0 +1,12 @@
+{
+  "id": "robi_bhartiairtel_bd",
+  "name": "robi_bhartiairtel_bd",
+  "mcc": "470",
+  "mnc": "07",
+  "ike": {
+    "apn": "ims",
+    "rf_off_delay": 5
+  },
+  "device": {},
+  "blocked": false
+}

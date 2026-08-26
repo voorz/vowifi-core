@@ -1,0 +1,18 @@
+{
+  "id": "sky_ie",
+  "name": "sky_ie",
+  "mcc": "240",
+  "mnc": "07",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://esim-es-open-prod-skyroi.esimcloud.net/skyroi/prod/executeAppleActions/"
+  },
+  "device": {},
+  "blocked": false
+}

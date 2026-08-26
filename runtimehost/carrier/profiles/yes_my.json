@@ -1,0 +1,18 @@
+{
+  "id": "yes_my",
+  "name": "yes_my",
+  "mcc": "502",
+  "mnc": "152",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv6",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "domain": "ims.mnc152.mcc502.3gppnetwork.org",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "device": {},
+  "blocked": false
+}

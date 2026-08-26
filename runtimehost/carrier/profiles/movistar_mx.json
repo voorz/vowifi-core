@@ -1,0 +1,21 @@
+{
+  "id": "movistar_mx",
+  "name": "movistar_mx",
+  "mcc": "334",
+  "mnc": "03",
+  "ike": {
+    "apn": "ims",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "domain": "ims.mnc030.mcc334.3gppnetwork.org",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://entitlements-prod.movistar.com.mx/tf-mexico/apple"
+  },
+  "device": {},
+  "blocked": false
+}

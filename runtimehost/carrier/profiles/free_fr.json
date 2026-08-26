@@ -1,0 +1,27 @@
+{
+  "id": "free_fr",
+  "name": "free_fr",
+  "mcc": "208",
+  "mnc": "15",
+  "ike": {
+    "apn": "ims",
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes256-sha256"
+    ],
+    "ip_stack": "ipv6",
+    "nat_keepalive": 20,
+    "reauth_interval": 86400,
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "include_cellular_network": true,
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://entitlement-apl.free-mobile.fr"
+  },
+  "device": {},
+  "blocked": false
+}

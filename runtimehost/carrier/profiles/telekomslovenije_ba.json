@@ -1,0 +1,14 @@
+{
+  "id": "telekomslovenije_ba",
+  "name": "telekomslovenije_ba",
+  "mcc": "218",
+  "mnc": "90",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features"
+  },
+  "device": {},
+  "blocked": false
+}

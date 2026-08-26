@@ -1,0 +1,17 @@
+{
+  "id": "mobinil_eg",
+  "name": "mobinil_eg",
+  "mcc": "602",
+  "mnc": "01",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_cellular_network": true,
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "device": {},
+  "blocked": false
+}

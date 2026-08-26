@@ -1,0 +1,21 @@
+{
+  "id": "omnitel_lt",
+  "name": "omnitel_lt",
+  "mcc": "246",
+  "mnc": "01",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv4v6",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://es.mnc001.mcc246.pub.3gppnetwork.org:8443"
+  },
+  "device": {},
+  "blocked": false
+}

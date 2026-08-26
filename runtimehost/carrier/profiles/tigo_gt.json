@@ -1,0 +1,18 @@
+{
+  "id": "tigo_gt",
+  "name": "tigo_gt",
+  "mcc": "704",
+  "mnc": "02",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv4v6",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "device": {},
+  "blocked": false
+}

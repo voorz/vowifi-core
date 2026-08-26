@@ -1,0 +1,17 @@
+{
+  "id": "kyivstar_ua",
+  "name": "kyivstar_ua",
+  "mcc": "255",
+  "mnc": "03",
+  "ike": {
+    "apn": "ims",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "include_cellular_network": true,
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "device": {},
+  "blocked": false
+}

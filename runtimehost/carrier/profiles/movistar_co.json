@@ -1,0 +1,20 @@
+{
+  "id": "movistar_co",
+  "name": "movistar_co",
+  "mcc": "214",
+  "mnc": "07",
+  "ike": {
+    "apn": "ims",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://entitlement.movistar.co/tf-colombia/apple"
+  },
+  "device": {},
+  "blocked": false
+}

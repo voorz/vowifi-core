@@ -1,0 +1,14 @@
+{
+  "id": "sfr_caraibe_mq",
+  "name": "sfr_caraibe_mq",
+  "mcc": "208",
+  "mnc": "09",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "e911": {
+    "entitlement_endpoint": "https://apple.mnc002.mcc340.pub.3gppnetwork.org"
+  },
+  "device": {},
+  "blocked": false
+}

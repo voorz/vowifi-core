@@ -1,0 +1,11 @@
+{
+  "id": "telus_pcmobile_ca",
+  "name": "telus_pcmobile_ca",
+  "mcc": "302",
+  "mnc": "220",
+  "e911": {
+    "entitlement_endpoint": "https://ent.telus.com/acmegw"
+  },
+  "device": {},
+  "blocked": false
+}

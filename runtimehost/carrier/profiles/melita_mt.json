@@ -1,0 +1,16 @@
+{
+  "id": "melita_mt",
+  "name": "melita_mt",
+  "mcc": "278",
+  "mnc": "77",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv4v6",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features"
+  },
+  "device": {},
+  "blocked": false
+}

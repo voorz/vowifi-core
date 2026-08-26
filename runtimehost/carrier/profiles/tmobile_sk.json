@@ -1,0 +1,22 @@
+{
+  "id": "tmobile_sk",
+  "name": "tmobile_sk",
+  "mcc": "231",
+  "mnc": "02",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv6",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_cellular_network": true,
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://entitlement-sk.telekom.net"
+  },
+  "device": {},
+  "blocked": false
+}

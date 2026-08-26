@@ -1,0 +1,11 @@
+{
+  "id": "tmobile_boost_us",
+  "name": "tmobile_boost_us",
+  "mcc": "310",
+  "mnc": "240",
+  "e911": {
+    "entitlement_endpoint": "https://eas3.msg.t-mobile.com"
+  },
+  "device": {},
+  "blocked": false
+}

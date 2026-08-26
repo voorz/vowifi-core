@@ -1,0 +1,28 @@
+{
+  "id": "vodafone_lowi_es",
+  "name": "vodafone_lowi_es",
+  "mcc": "214",
+  "mnc": "06",
+  "ike": {
+    "addr": "epdg.epc.mnc001.mcc214.pub.3gppnetwork.org",
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes256-sha256"
+    ],
+    "nat_keepalive": 20,
+    "proposals": [
+      "aes256-sha256-prfsha256-modp1024"
+    ],
+    "reauth_interval": 86400,
+    "rf_off_delay": 5
+  },
+  "eap": {
+    "identity_source": "isim"
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_cellular_network": true
+  },
+  "device": {},
+  "blocked": false
+}

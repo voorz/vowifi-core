@@ -1,0 +1,12 @@
+{
+  "id": "robi_bd",
+  "name": "robi_bd",
+  "mcc": "470",
+  "mnc": "02",
+  "ike": {
+    "apn": "ims",
+    "rf_off_delay": 5
+  },
+  "device": {},
+  "blocked": false
+}

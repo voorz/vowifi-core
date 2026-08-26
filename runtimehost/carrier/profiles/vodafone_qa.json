@@ -1,0 +1,20 @@
+{
+  "id": "vodafone_qa",
+  "name": "vodafone_qa",
+  "mcc": "204",
+  "mnc": "04",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv4",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://entitlement.vodafone.com.qa/ium-OEMInterface/servlet/IUMServlet"
+  },
+  "device": {},
+  "blocked": false
+}

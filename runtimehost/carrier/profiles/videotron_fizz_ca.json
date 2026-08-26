@@ -1,0 +1,17 @@
+{
+  "id": "videotron_fizz_ca",
+  "name": "videotron_fizz_ca",
+  "mcc": "302",
+  "mnc": "500",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv6",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "device": {},
+  "blocked": false
+}

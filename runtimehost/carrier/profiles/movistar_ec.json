@@ -1,0 +1,17 @@
+{
+  "id": "movistar_ec",
+  "name": "movistar_ec",
+  "mcc": "214",
+  "mnc": "02",
+  "ike": {
+    "apn": "ims",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "device": {},
+  "blocked": false
+}

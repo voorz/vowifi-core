@@ -1,0 +1,20 @@
+{
+  "id": "crosswireless_bravado_lte_us",
+  "name": "crosswireless_bravado_lte_us",
+  "mcc": "313",
+  "mnc": "010",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv4v6",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "enabled": true
+  },
+  "device": {},
+  "blocked": false
+}

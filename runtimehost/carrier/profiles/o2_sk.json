@@ -1,0 +1,28 @@
+{
+  "id": "o2_sk",
+  "name": "o2_sk",
+  "mcc": "231",
+  "mnc": "06",
+  "ike": {
+    "apn": "ims",
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes256-sha384"
+    ],
+    "ip_stack": "ipv6",
+    "nat_keepalive": 20,
+    "reauth_interval": 86400,
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_cellular_network": true,
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://esim-es-open-prod-o2sk.esimcloud.net/o2sk/prod/executeAppleActions/"
+  },
+  "device": {},
+  "blocked": false
+}

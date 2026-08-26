@@ -1,0 +1,19 @@
+{
+  "id": "bite_lv",
+  "name": "bite_lv",
+  "mcc": "247",
+  "mnc": "05",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://aes.mnc005.mcc247.pub.3gppnetwork.org/applelv"
+  },
+  "device": {},
+  "blocked": false
+}

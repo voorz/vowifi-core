@@ -1,0 +1,21 @@
+{
+  "id": "du_virgin_ae",
+  "name": "du_virgin_ae",
+  "mcc": "424",
+  "mnc": "03",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv4",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://esim-prov.virginmobile.ae"
+  },
+  "device": {},
+  "blocked": false
+}

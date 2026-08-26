@@ -1,0 +1,30 @@
+{
+  "id": "entelpcs_cl",
+  "name": "entelpcs_cl",
+  "mcc": "730",
+  "mnc": "01",
+  "ike": {
+    "apn": "ims",
+    "dpd_interval": 600,
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes256-sha256"
+    ],
+    "ip_stack": "ipv6",
+    "reauth_interval": 86400,
+    "replay_window": 12,
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "domain": "ims.mnc001.mcc730.3gppnetwork.org",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "enabled": true,
+    "entitlement_endpoint": "https://aes.mnc001.mcc730.pub.3gppnetwork.org:3444/entitlement/"
+  },
+  "device": {},
+  "blocked": false
+}

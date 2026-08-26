@@ -1,0 +1,25 @@
+{
+  "id": "fastweb_it",
+  "name": "fastweb_it",
+  "mcc": "222",
+  "mnc": "08",
+  "ike": {
+    "addr": "epdg.fastweb.it",
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes256-sha512"
+    ],
+    "nat_keepalive": 20,
+    "reauth_interval": 86400,
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "domain": "ims.mnc008.mcc222.3gppnetwork.org",
+    "include_cellular_network": true,
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "device": {},
+  "blocked": false
+}

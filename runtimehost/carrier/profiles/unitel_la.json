@@ -1,0 +1,11 @@
+{
+  "id": "unitel_la",
+  "name": "unitel_la",
+  "mcc": "452",
+  "mnc": "04",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "device": {},
+  "blocked": false
+}

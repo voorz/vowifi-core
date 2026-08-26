@@ -1,0 +1,11 @@
+{
+  "id": "mts_ru",
+  "name": "mts_ru",
+  "mcc": "250",
+  "mnc": "01",
+  "e911": {
+    "entitlement_endpoint": "https://aes.mts.ru/ium-OEMInterface/servlet/IUMServlet"
+  },
+  "device": {},
+  "blocked": false
+}

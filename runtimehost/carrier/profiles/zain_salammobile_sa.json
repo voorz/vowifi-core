@@ -1,0 +1,17 @@
+{
+  "id": "zain_salammobile_sa",
+  "name": "zain_salammobile_sa",
+  "mcc": "420",
+  "mnc": "09",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_cellular_network": true,
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "device": {},
+  "blocked": false
+}

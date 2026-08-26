@@ -1,0 +1,35 @@
+{
+  "id": "tmobile_ting_us",
+  "name": "tmobile_ting_us",
+  "mcc": "310",
+  "mnc": "240",
+  "ike": {
+    "addr": "ss.epdg.epc.mnc260.mcc310.pub.3gppnetwork.org",
+    "apn": "ims",
+    "dpd_interval": 600,
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes256-sha256"
+    ],
+    "ip_stack": "ipv4v6",
+    "proposals": [
+      "aes256-sha256-prfsha256-modp2048"
+    ],
+    "reauth_interval": 80000,
+    "replay_window": 12,
+    "rf_off_delay": 5
+  },
+  "eap": {
+    "identity_source": "isim"
+  },
+  "ims": {
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "enabled": true,
+    "entitlement_endpoint": "https://eas3.msg.t-mobile.com"
+  },
+  "device": {},
+  "blocked": false
+}

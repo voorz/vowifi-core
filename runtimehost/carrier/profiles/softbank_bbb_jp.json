@@ -1,0 +1,17 @@
+{
+  "id": "softbank_bbb_jp",
+  "name": "softbank_bbb_jp",
+  "mcc": "440",
+  "mnc": "15",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv4v6",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "device": {},
+  "blocked": false
+}

@@ -1,0 +1,26 @@
+{
+  "id": "cyta_cy",
+  "name": "cyta_cy",
+  "mcc": "280",
+  "mnc": "01",
+  "ike": {
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes256-sha256"
+    ],
+    "nat_keepalive": 20,
+    "reauth_interval": 86400,
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_cellular_network": true,
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://esim-es-open-prod-cyta.esimcloud.net/cyta/prod/executeAppleActions"
+  },
+  "device": {},
+  "blocked": false
+}

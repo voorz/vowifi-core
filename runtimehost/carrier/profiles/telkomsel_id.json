@@ -1,0 +1,11 @@
+{
+  "id": "telkomsel_id",
+  "name": "telkomsel_id",
+  "mcc": "510",
+  "mnc": "10",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "device": {},
+  "blocked": false
+}

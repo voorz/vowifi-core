@@ -1,0 +1,21 @@
+{
+  "id": "lgu_kr",
+  "name": "lgu_kr",
+  "mcc": "450",
+  "mnc": "06",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv4v6",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "enabled": true,
+    "entitlement_endpoint": "https://entitlement.uplus.co.kr"
+  },
+  "device": {},
+  "blocked": false
+}

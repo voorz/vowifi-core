@@ -1,0 +1,22 @@
+{
+  "id": "rogers_chatr_ca",
+  "name": "rogers_chatr_ca",
+  "mcc": "302",
+  "mnc": "320",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv6",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_cellular_network": true,
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://dmsa.egslb.net.rogers.com:8181/ium-OEMInterface/servlet/IUMServlet"
+  },
+  "device": {},
+  "blocked": false
+}

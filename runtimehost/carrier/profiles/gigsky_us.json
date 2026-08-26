@@ -1,0 +1,11 @@
+{
+  "id": "gigsky_us",
+  "name": "gigsky_us",
+  "mcc": "204",
+  "mnc": "04",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "device": {},
+  "blocked": false
+}

@@ -1,0 +1,16 @@
+{
+  "id": "orange_jo",
+  "name": "orange_jo",
+  "mcc": "416",
+  "mnc": "77",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "device": {},
+  "blocked": false
+}

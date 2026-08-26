@@ -1,0 +1,21 @@
+{
+  "id": "telenor_mm",
+  "name": "telenor_mm",
+  "mcc": "414",
+  "mnc": "06",
+  "ike": {
+    "apn": "ims",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "domain": "ims.mnc006.mcc414.3gppnetwork.org",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://es.atom.com.mm/entitlement"
+  },
+  "device": {},
+  "blocked": false
+}

@@ -1,0 +1,26 @@
+{
+  "id": "uscellular_lte_us",
+  "name": "uscellular_lte_us",
+  "mcc": "204",
+  "mnc": "04",
+  "ike": {
+    "apn": "ims",
+    "dpd_interval": 600,
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes256-sha512"
+    ],
+    "ip_stack": "ipv4v6",
+    "reauth_interval": 80000,
+    "replay_window": 12,
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "include_cellular_network": true
+  },
+  "e911": {
+    "entitlement_endpoint": "https://mdm.uscc.net/entitlement/"
+  },
+  "device": {},
+  "blocked": false
+}

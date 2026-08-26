@@ -1,0 +1,14 @@
+{
+  "id": "faroesetelecom_fo",
+  "name": "faroesetelecom_fo",
+  "mcc": "288",
+  "mnc": "01",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "e911": {
+    "entitlement_endpoint": "https://ses.ims.mnc001.mcc288.pub.3gppnetwork.org"
+  },
+  "device": {},
+  "blocked": false
+}

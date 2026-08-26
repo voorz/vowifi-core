@@ -1,0 +1,35 @@
+{
+  "id": "celcom_my",
+  "name": "celcom_my",
+  "mcc": "502",
+  "mnc": "19",
+  "ike": {
+    "apn": "ims",
+    "dpd_interval": 600,
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes256-sha512"
+    ],
+    "ip_stack": "ipv4v6",
+    "nat_keepalive": 20,
+    "proposals": [
+      "aes256-sha512-prfsha512-modp2048"
+    ],
+    "reauth_interval": 86400,
+    "replay_window": 12,
+    "rf_off_delay": 5
+  },
+  "eap": {
+    "identity_source": "isim"
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://es.celcom.com.my/"
+  },
+  "device": {},
+  "blocked": false
+}

@@ -1,0 +1,34 @@
+{
+  "id": "smartone_hkbn_hk",
+  "name": "smartone_hkbn_hk",
+  "mcc": "454",
+  "mnc": "06",
+  "ike": {
+    "apn": "ims",
+    "dpd_interval": 600,
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes256-sha256"
+    ],
+    "proposals": [
+      "aes256-sha256-prfsha256-modp2048"
+    ],
+    "reauth_interval": 80000,
+    "replay_window": 12,
+    "rf_off_delay": 5
+  },
+  "eap": {
+    "identity_source": "isim"
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_cellular_network": true,
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://cmc.ses.smcn3a.net/entitlement/"
+  },
+  "device": {},
+  "blocked": false
+}

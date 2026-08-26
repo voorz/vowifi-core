@@ -1,0 +1,34 @@
+{
+  "id": "vodafone_gr",
+  "name": "vodafone_gr",
+  "mcc": "202",
+  "mnc": "05",
+  "ike": {
+    "apn": "ims",
+    "dpd_interval": 600,
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes256-sha256"
+    ],
+    "proposals": [
+      "aes256-sha256-prfsha256-modp1024"
+    ],
+    "reauth_interval": 3600,
+    "replay_window": 12,
+    "rf_off_delay": 5
+  },
+  "eap": {
+    "identity_source": "isim"
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_cellular_network": true,
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://gr-prod.entitlement.vodafone.com:4448/ium-OEMInterface/servlet/IUMServlet"
+  },
+  "device": {},
+  "blocked": false
+}

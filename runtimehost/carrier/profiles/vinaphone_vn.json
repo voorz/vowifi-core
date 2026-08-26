@@ -1,0 +1,38 @@
+{
+  "id": "vinaphone_vn",
+  "name": "vinaphone_vn",
+  "mcc": "452",
+  "mnc": "02",
+  "ike": {
+    "apn": "ims",
+    "dpd_interval": 600,
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes256-sha512"
+    ],
+    "ip_stack": "ipv4v6",
+    "nat_keepalive": 20,
+    "proposals": [
+      "aes256-sha512-prfsha512-modp2048"
+    ],
+    "reauth_interval": 43200,
+    "replay_window": 12,
+    "rf_off_delay": 5
+  },
+  "eap": {
+    "identity_source": "isim"
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "domain": "ims.mnc002.mcc452.3gppnetwork.org",
+    "include_cellular_network": true,
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "enabled": true,
+    "entitlement_endpoint": "https://aes.mnc002.mcc452.pub.3gppnetwork.org"
+  },
+  "device": {},
+  "blocked": false
+}

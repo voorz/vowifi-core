@@ -1,0 +1,21 @@
+{
+  "id": "docomo_jp",
+  "name": "docomo_jp",
+  "mcc": "440",
+  "mnc": "10",
+  "ike": {
+    "apn": "ims",
+    "ip_stack": "ipv6",
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "enabled": true,
+    "entitlement_endpoint": "https://adm.docomo.ne.jp"
+  },
+  "device": {},
+  "blocked": false
+}

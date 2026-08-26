@@ -1,0 +1,29 @@
+{
+  "id": "optimus_pt",
+  "name": "optimus_pt",
+  "mcc": "260",
+  "mnc": "06",
+  "ike": {
+    "addr": "epdg.epc.mnc003.mcc268.pub.3gppnetwork.org",
+    "apn": "ims",
+    "enable_esn": true,
+    "esp_proposals": [
+      "aes128-sha256"
+    ],
+    "ip_stack": "ipv4v6",
+    "nat_keepalive": 20,
+    "reauth_interval": 86400,
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_cellular_network": true,
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://ses.ims.nos.pt"
+  },
+  "device": {},
+  "blocked": false
+}

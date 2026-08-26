@@ -1,0 +1,19 @@
+{
+  "id": "bite_lt",
+  "name": "bite_lt",
+  "mcc": "246",
+  "mnc": "02",
+  "ike": {
+    "rf_off_delay": 5
+  },
+  "ims": {
+    "contact_features": "ims_features",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on"
+  },
+  "e911": {
+    "entitlement_endpoint": "https://aes.mnc002.mcc246.pub.3gppnetwork.org/apple"
+  },
+  "device": {},
+  "blocked": false
+}
