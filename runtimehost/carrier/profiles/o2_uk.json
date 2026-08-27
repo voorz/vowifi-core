@@ -12,12 +12,8 @@
     ],
     "rf_off_delay": 5
   },
-  "eap": {
-    "identity_source": "isim"
-  },
+  "eap": {},
   "ims": {
-    "contact_features": "ims_features",
-    "include_require_sec_agree": true,
     "sec_agree_mode": "auto",
     "include_pani_authenticated": true,
     "strict_security_server_offer": true,
@@ -68,6 +64,7 @@
       }
     ],
     "transport_mode": "auto",
+    "contact_features": "ims_features",
     "initial_authorization": "aka_empty_uri_first",
     "security_client_format": "full_spaced",
     "supported_header": "path,sec-agree,gruu",
@@ -80,9 +77,7 @@
     "include_cellular_network": true,
     "include_security_client": true
   },
-  "e911": {
-    "entitlement_endpoint": "https://ses.o2.co.uk:443"
-  },
+  "e911": {},
   "device": {
     "ims_tac": 28673,
     "ims_cell_id": 12345678

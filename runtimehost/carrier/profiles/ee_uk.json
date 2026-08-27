@@ -6,9 +6,7 @@
   "ike": {
     "rf_off_delay": 5
   },
-  "eap": {
-    "identity_source": "isim"
-  },
+  "eap": {},
   "ims": {
     "sec_agree_mode": "on",
     "include_pani": false,
@@ -72,7 +70,6 @@
         "mode": "trans"
       }
     ],
-    "transport_mode": "auto",
     "contact_features": "sms_only",
     "initial_authorization": "none",
     "security_client_format": "full_spaced",
@@ -81,15 +78,9 @@
     "include_p_visited_network_id": true,
     "include_p_access_network_info": true,
     "include_route": true,
-    "include_cellular_network": true,
     "include_security_client": true
   },
-  "e911": {
-    "entitlement_endpoint": "https://se.sim.ct.ee.co.uk:8443"
-  },
-  "device": {
-    "ims_tac": 28673,
-    "ims_cell_id": 12345678
-  },
+  "e911": {},
+  "device": {},
   "blocked": false
 }

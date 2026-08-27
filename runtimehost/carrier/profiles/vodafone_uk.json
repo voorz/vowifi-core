@@ -6,12 +6,8 @@
   "ike": {
     "rf_off_delay": 5
   },
-  "eap": {
-    "identity_source": "isim"
-  },
+  "eap": {},
   "ims": {
-    "contact_features": "sms_only",
-    "include_require_sec_agree": true,
     "sec_agree_mode": "on",
     "use_plain_digest_placeholder": true,
     "include_pani": false,
@@ -72,6 +68,7 @@
         "mode": "trans"
       }
     ],
+    "contact_features": "sms_only",
     "initial_authorization": "none",
     "security_client_format": "full_spaced",
     "include_accept_contact": true,
@@ -81,9 +78,7 @@
     "include_route": true,
     "include_security_client": true
   },
-  "e911": {
-    "entitlement_endpoint": "https://entsrv-uk.vodafone.com:4443/ium-OEMInterface/servlet/IUMServlet"
-  },
+  "e911": {},
   "device": {},
   "blocked": false
 }
