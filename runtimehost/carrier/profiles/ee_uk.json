@@ -1,28 +1,30 @@
 {
-  "id": "ctexcel_uk_23433",
-  "name": "CTExcel UK",
+  "id": "ee_uk",
+  "name": "ee_uk",
   "mcc": "234",
   "mnc": "33",
   "ike": {
-    "addr": "epdg.epc.mnc033.mcc234.pub.3gppnetwork.org",
-    "proposals": [
-      "aes128-sha256-modp2048",
-      "aes128-sha256-prfsha1-modp2048",
-      "aes128-sha1-modp2048",
-      "aes256-sha256-prfsha1-modp2048",
-      "aes256-sha256-modp2048"
-    ],
+    "apn": "ims",
+    "dpd_interval": 600,
+    "enable_esn": true,
     "esp_proposals": [
-      "aes128-sha256",
-      "aes128-sha1",
-      "aes256-sha512"
+      "aes128-sha256"
     ],
+    "ip_stack": "ipv6",
+    "nat_keepalive": 20,
+    "proposals": [
+      "aes128-sha256-prfsha256-modp2048"
+    ],
+    "reauth_interval": 80000,
+    "replay_window": 12,
     "rf_off_delay": 5
   },
-  "eap": {},
+  "eap": {
+    "identity_source": "isim"
+  },
   "ims": {
     "sec_agree_mode": "on",
-    "include_pani": true,
+    "include_pani": false,
     "include_pani_authenticated": true,
     "strict_security_server_offer": true,
     "use_plain_digest_placeholder": true,
@@ -84,8 +86,8 @@
       }
     ],
     "transport_mode": "auto",
-    "contact_features": "ims_features",
-    "initial_authorization": "aka_empty_uri_first",
+    "contact_features": "sms_only",
+    "initial_authorization": "none",
     "security_client_format": "full_spaced",
     "include_accept_contact": true,
     "include_p_preferred_id": true,
@@ -95,7 +97,9 @@
     "include_cellular_network": true,
     "include_security_client": true
   },
-  "e911": {},
+  "e911": {
+    "entitlement_endpoint": "https://se.sim.ct.ee.co.uk:8443"
+  },
   "device": {
     "ims_tac": 28673,
     "ims_cell_id": 12345678

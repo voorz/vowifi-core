@@ -1,32 +1,35 @@
 {
-  "id": "csl_hk",
-  "name": "csl_hk",
-  "mcc": "454",
-  "mnc": "00",
+  "id": "tmobile_de",
+  "name": "tmobile_de",
+  "mcc": "262",
+  "mnc": "01",
   "ike": {
     "apn": "ims",
     "dpd_interval": 600,
     "enable_esn": true,
     "esp_proposals": [
-      "aes256-sha256",
-      "aes128-sha256"
+      "aes256-sha256"
     ],
-    "ip_stack": "ipv4",
+    "ip_stack": "ipv6",
     "proposals": [
-      "aes256-sha256-modp2048"
+      "aes256-sha256-prfsha256-modp1024"
     ],
-    "reauth_interval": 80000,
+    "reauth_interval": 64800,
     "replay_window": 12,
     "rf_off_delay": 5
   },
   "eap": {
     "identity_source": "isim",
-    "challenge_mode": "omit"
+    "device_model": "iphone15,4"
   },
   "ims": {
     "contact_features": "sms_only",
     "include_cellular_network": true,
-    "sec_agree_mode": "auto",
+    "include_require_sec_agree": true,
+    "sec_agree_mode": "on",
+    "include_pani_authenticated": true,
+    "strict_security_server_offer": true,
+    "enable_initial_reject_fallback": true,
     "initial_authorization": "none",
     "security_client_format": "full_spaced",
     "supported_header": "path,sec-agree,gruu",
@@ -36,11 +39,11 @@
     "include_p_visited_network_id": true,
     "include_p_access_network_info": true,
     "include_route": true,
-    "include_security_client": true,
-    "include_pani_authenticated": true
+    "include_security_client": true
   },
   "e911": {
-    "entitlement_endpoint": "https://sdeweb.hkcsl.com/acme/api/"
+    "enabled": true,
+    "entitlement_endpoint": "https://entitlement.telekom.de"
   },
   "device": {},
   "blocked": false

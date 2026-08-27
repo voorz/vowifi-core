@@ -1,0 +1,4 @@
+# Backup directories (original carrier profiles preserved before iOS YAML migration)
+runtimehost/carrier/profiles-bak/
+runtimehost/carrier/profiles/bak/
+

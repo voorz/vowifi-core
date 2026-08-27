@@ -11,12 +11,71 @@
   "ims": {
     "domain": "ims.mnc011.mcc460.3gppnetwork.org",
     "include_require_sec_agree": true,
-    "sec_agree_mode": "on"
+    "sec_agree_mode": "auto",
+    "strict_security_server_offer": true,
+    "contact_param_order": [
+      "access_type",
+      "audio",
+      "smsip",
+      "icsi_ref",
+      "sip_instance"
+    ],
+    "security_client_mechanisms": [
+      {
+        "alg": "hmac-md5-96",
+        "ealg": "des-ede3-cbc",
+        "prot": "esp",
+        "mode": "trans"
+      },
+      {
+        "alg": "hmac-md5-96",
+        "ealg": "aes-cbc",
+        "prot": "esp",
+        "mode": "trans"
+      },
+      {
+        "alg": "hmac-md5-96",
+        "ealg": "null",
+        "prot": "esp",
+        "mode": "trans"
+      },
+      {
+        "alg": "hmac-sha-1-96",
+        "ealg": "des-ede3-cbc",
+        "prot": "esp",
+        "mode": "trans"
+      },
+      {
+        "alg": "hmac-sha-1-96",
+        "ealg": "aes-cbc",
+        "prot": "esp",
+        "mode": "trans"
+      },
+      {
+        "alg": "hmac-sha-1-96",
+        "ealg": "null",
+        "prot": "esp",
+        "mode": "trans"
+      }
+    ],
+    "contact_features": "sms_only",
+    "initial_authorization": "none",
+    "security_client_format": "full_spaced",
+    "supported_header": "path,sec-agree,gruu",
+    "user_agent": "User-Agent: Apple iPhone17,2/26.6 (17,2; iOS 26.6; 23G82) Boot/3.0.0 VoIP/1.0 Carrier/59.0",
+    "include_accept_contact": true,
+    "include_p_preferred_id": true,
+    "include_p_visited_network_id": true,
+    "include_p_access_network_info": true,
+    "include_route": true,
+    "include_security_client": true,
+    "include_pani_authenticated": true
   },
   "e911": {
     "enabled": true,
     "entitlement_endpoint": "https://applecsb.crm.189.cn:8101/CRM-CSB/HttpAppleService"
   },
   "device": {},
-  "blocked": false
+  "blocked": false,
+  "eap": {}
 }

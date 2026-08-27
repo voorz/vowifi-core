@@ -1,9 +1,10 @@
 {
-  "id": "csl_hk",
-  "name": "csl_hk",
+  "id": "3_hk",
+  "name": "3_hk",
   "mcc": "454",
-  "mnc": "00",
+  "mnc": "03",
   "ike": {
+    "addr": "wlan.three.com.hk",
     "apn": "ims",
     "dpd_interval": 600,
     "enable_esn": true,
@@ -21,7 +22,7 @@
   },
   "eap": {
     "identity_source": "isim",
-    "challenge_mode": "omit"
+    "challenge_mode": "checkcode"
   },
   "ims": {
     "contact_features": "sms_only",
@@ -40,7 +41,7 @@
     "include_pani_authenticated": true
   },
   "e911": {
-    "entitlement_endpoint": "https://sdeweb.hkcsl.com/acme/api/"
+    "entitlement_endpoint": "https://device.three.com.hk:8181/ium-OEMInterface/servlet/IUMServlet"
   },
   "device": {},
   "blocked": false

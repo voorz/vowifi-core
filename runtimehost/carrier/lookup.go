@@ -1,28 +1,23 @@
-// Package carrier provides GID-based carrier profile lookup.
+// Package carrier provides GID/SPN-based carrier profile lookup.
 //
 // Matching strategy (priority high → low):
 //  0. User override (DB-registered config, highest priority)
-//  1. GID1/GID2 direct map lookup → exact filename (no name fuzzy matching)
-//  2. GID prefix match → carrier_index subs (DB)
-//  3. GID miss → primary operator brand → profile file
-//  4. Candidate files first match (primary operator for this PLMN)
-//  5. generic default
+//  1. GID1/GID2 match → carrier_index subs → brandToFilename → profile
+//  2. SPN match → carrier_index subs[].names → brandToFilename → profile
+//  3. Primary operator brand → brandToFilename → profile
+//  4. generic default (3GPP standard)
 
 package carrier
 
 import (
 	"embed"
 	"encoding/json"
-	"fmt"
 	"strings"
 	"sync"
 )
 
 //go:embed profiles/*.json
 var profileFS embed.FS
-
-//go:embed embed/plmn_profile_map.json
-var plmnProfileMapRaw []byte
 
 // CarrierIndexProvider supplies carrier index data from an external source
 // (e.g. vohive-next's DB carrier_index table). vowifi-core cannot import
@@ -33,11 +28,12 @@ type CarrierIndexProvider interface {
 	GetCarrierIndexRawJSON(plmnKey string) string
 }
 
-// plmnProfileEntry is the enhanced map entry for each PLMN key.
-type plmnProfileEntry struct {
-	Profiles []string            `json:"profiles"` // candidate profile filenames
-	GID1Map  map[string]string   `json:"gid1_map"` // GID1 hex → filename
-	GID2Map  map[string]string   `json:"gid2_map"` // GID2 hex → filename
+// carrierIndexCountry holds the country info from all.json.
+type carrierIndexCountry struct {
+	Name   string `json:"name"`
+	ISO    string `json:"iso"`
+	Code   string `json:"code"`
+	Region string `json:"region"`
 }
 
 // carrierIndexSub represents a sub-brand entry in the carrier index.
@@ -58,16 +54,13 @@ type carrierIndexOperator struct {
 
 // carrierIndexEntry represents the top-level structure stored in raw_json.
 type carrierIndexEntry struct {
-	MCC       string               `json:"mcc"`
-	MNC       string               `json:"mnc"`
+	MCC       string                 `json:"mcc"`
+	MNC       string                 `json:"mnc"`
+	Country   carrierIndexCountry    `json:"country"`
 	Operators []carrierIndexOperator `json:"operators"`
 }
 
 var (
-	mapOnce  sync.Once
-	mapCache map[string]plmnProfileEntry
-	mapErr   error
-
 	profileCache sync.Map // filename → *CarrierProfile
 
 	carrierIndexProvider CarrierIndexProvider
@@ -82,114 +75,81 @@ func SetCarrierIndexProvider(p CarrierIndexProvider) {
 	providerMu.Unlock()
 }
 
-// loadMap parses plmn_profile_map.json once at first use.
-func loadMap() {
-	mapOnce.Do(func() {
-		if err := json.Unmarshal(plmnProfileMapRaw, &mapCache); err != nil {
-			mapErr = fmt.Errorf("carrier: parse plmn_profile_map: %w", err)
-			return
-		}
-	})
-}
-
 // LookupWithIdentity finds the carrier profile for the given PLMN + GID identity.
 //
 // Matching strategy (priority high → low):
 //  0. User override (DB-registered, highest priority)
-//  1. GID1/GID2 direct map lookup → exact filename (no fuzzy name matching)
-//  2. GID prefix match → carrier_index subs (DB)
-//  3. GID miss → primary operator brand → profile (from carrier_index DB)
-//  4. Candidate files first match (primary operator for this PLMN)
-//  5. generic default
+//  1. GID1/GID2 match → carrier_index subs → brandToFilename → profile
+//  2. SPN match → carrier_index subs[].names → brandToFilename → profile
+//  3. Primary operator brand → brandToFilename → profile
+//  4. generic default (3GPP standard)
 //
 // PLMN is always available from the SIM. GID1/GID2 may be empty for some USIMs.
 // When GID matching fails, we fall back to the PLMN's primary operator profile
 // (e.g. Vodafone UK for PLMN 234-15), not generic.
 func LookupWithIdentity(mcc, mnc, gid1, gid2, spn string) (*CarrierProfile, error) {
-	loadMap()
-	if mapErr != nil {
-		return nil, mapErr
-	}
-
 	plmnKey := plmnKey(mcc, mnc)
-	entry, _ := mapCache[plmnKey]
-	candidateFiles := entry.Profiles
 
 	// 0. User override (highest priority — user-defined config from DB)
 	if p, err := LookupWithSPN(mcc, mnc, spn); err == nil && p != nil {
 		return p, nil
 	}
 
-	// 1. GID direct map lookup (exact match, no fuzzy name matching)
-	if gid1 != "" || gid2 != "" {
-		if matched := lookupByGIDMap(gid1, gid2, entry); matched != "" {
-			if p := loadProfile(matched); p != nil {
-				return p, nil
-			}
-		}
-	}
-
-	// 2. GID prefix match against carrier_index subs (fallback for GIDs
-	//    not in plmn_profile_map but in DB carrier_index)
+	// Load carrier index entry from DB
 	ciEntry := loadCarrierIndexEntry(plmnKey)
+	if ciEntry == nil {
+		// No carrier index data — fall back to generic
+		p, _ := Generic()
+		return p, nil
+	}
+
+	iso := ciEntry.Country.ISO
+
+	// 1. GID1/GID2 match against subs
 	if gid1 != "" || gid2 != "" {
-		if matched := matchByGIDPrefix(ciEntry, gid1, gid2, candidateFiles); matched != "" {
-			if p := loadProfile(matched); p != nil {
+		if filename := matchByGID(ciEntry, gid1, gid2, iso); filename != "" {
+			if p := loadProfile(filename); p != nil {
 				return p, nil
 			}
 		}
 	}
 
-	// 3. GID miss → primary operator brand match
-	if matched := matchPrimaryOperator(ciEntry, candidateFiles); matched != "" {
-		if p := loadProfile(matched); p != nil {
-			return p, nil
+	// 2. SPN match against subs[].names
+	if spn != "" {
+		if filename := matchBySPN(ciEntry, spn, iso); filename != "" {
+			if p := loadProfile(filename); p != nil {
+				return p, nil
+			}
 		}
 	}
 
-	// 4. Candidate files first match (when DB is empty but map has entries)
-	if len(candidateFiles) > 0 {
-		if p := loadProfile(candidateFiles[0]); p != nil {
-			return p, nil
+	// 3. Primary operator brand → filename
+	if len(ciEntry.Operators) > 0 {
+		primaryBrand := ciEntry.Operators[0].Brand
+		if filename := brandToFilename(primaryBrand, iso); filename != "" {
+			if p := loadProfile(filename); p != nil {
+				return p, nil
+			}
+		}
+
+		// Try all operators as fallback
+		for _, op := range ciEntry.Operators {
+			if filename := brandToFilename(op.Brand, iso); filename != "" {
+				if p := loadProfile(filename); p != nil {
+					return p, nil
+				}
+			}
 		}
 	}
 
-	// 5. Final fallback: generic default
+	// 4. Final fallback: generic default
 	p, _ := Generic()
 	return p, nil
 }
 
-// lookupByGIDMap does a direct lookup in plmn_profile_map's gid1_map/gid2_map.
-// GID values are hex strings, compared case-insensitively with prefix matching
-// (bidirectional: SIM GID may be longer/shorter than map entry due to padding).
-func lookupByGIDMap(gid1, gid2 string, entry plmnProfileEntry) string {
-	gid1 = strings.ToLower(strings.TrimSpace(gid1))
-	gid2 = strings.ToLower(strings.TrimSpace(gid2))
-
-	// Check GID1 map
-	if gid1 != "" {
-		for mapGID, filename := range entry.GID1Map {
-			if gidPrefixMatch(gid1, mapGID) {
-				return filename
-			}
-		}
-	}
-
-	// Check GID2 map
-	if gid2 != "" {
-		for mapGID, filename := range entry.GID2Map {
-			if gidPrefixMatch(gid2, mapGID) {
-				return filename
-			}
-		}
-	}
-
-	return ""
-}
-
-// matchByGIDPrefix matches GID1/GID2 against carrier index subs.
-// This is a fallback for GIDs not in plmn_profile_map but in DB.
-func matchByGIDPrefix(entry *carrierIndexEntry, gid1, gid2 string, candidateFiles []string) string {
+// matchByGID matches GID1/GID2 against carrier index subs.
+// When a sub's GID matches, generates the profile filename from sub.Brand + iso.
+func matchByGID(entry *carrierIndexEntry, gid1, gid2, iso string) string {
 	if entry == nil {
 		return ""
 	}
@@ -203,8 +163,40 @@ func matchByGIDPrefix(entry *carrierIndexEntry, gid1, gid2 string, candidateFile
 			subGID2 := strings.ToLower(sub.GID2)
 
 			if gidPrefixMatch(gid1, subGID1) || gidPrefixMatch(gid2, subGID2) {
-				if matched := findProfileByBrand(sub.Brand, sub.Names, candidateFiles); matched != "" {
-					return matched
+				if filename := brandToFilename(sub.Brand, iso); filename != "" {
+					return filename
+				}
+			}
+		}
+	}
+	return ""
+}
+
+// matchBySPN matches the SIM's SPN against carrier index subs[].names.
+// When a name matches, generates the profile filename from sub.Brand + iso.
+func matchBySPN(entry *carrierIndexEntry, spn, iso string) string {
+	if entry == nil {
+		return ""
+	}
+
+	spn = strings.ToLower(strings.TrimSpace(spn))
+	if spn == "" {
+		return ""
+	}
+
+	for _, op := range entry.Operators {
+		for _, sub := range op.Subs {
+			for _, name := range sub.Names {
+				if strings.EqualFold(spn, name) {
+					if filename := brandToFilename(sub.Brand, iso); filename != "" {
+						return filename
+					}
+				}
+			}
+			// Also check sub.Brand directly against SPN
+			if sub.Brand != "" && strings.EqualFold(spn, sub.Brand) {
+				if filename := brandToFilename(sub.Brand, iso); filename != "" {
+					return filename
 				}
 			}
 		}
@@ -234,28 +226,6 @@ func loadCarrierIndexEntry(plmnKey string) *carrierIndexEntry {
 	return &entry
 }
 
-// matchPrimaryOperator matches the primary operator's brand to a profile file.
-// The first operator in the carrier index is the PLMN's primary operator.
-func matchPrimaryOperator(entry *carrierIndexEntry, candidateFiles []string) string {
-	if entry == nil || len(entry.Operators) == 0 {
-		return ""
-	}
-
-	// First operator = primary operator for this PLMN
-	primaryBrand := entry.Operators[0].Brand
-	if matched := findProfileByBrand(primaryBrand, nil, candidateFiles); matched != "" {
-		return matched
-	}
-
-	// Try all operators as fallback
-	for _, op := range entry.Operators {
-		if matched := findProfileByBrand(op.Brand, nil, candidateFiles); matched != "" {
-			return matched
-		}
-	}
-	return ""
-}
-
 // gidPrefixMatch checks if two GID hex strings match via bidirectional prefix.
 // Either side can be a prefix of the other (SIM GID may be longer or shorter
 // than the index entry depending on padding).
@@ -268,54 +238,100 @@ func gidPrefixMatch(simGID, mapGID string) bool {
 	return strings.HasPrefix(simGID, mapGID) || strings.HasPrefix(mapGID, simGID)
 }
 
-// findProfileByBrand tries to find a carrier-profile JSON file matching
-// the given brand name from the candidate files list.
-// Used as a last resort fallback (GID direct map is primary).
+// isoAliases maps standard ISO codes to the suffix used in profile filenames.
+// For example, GB (United Kingdom) is stored as ISO "GB" but profile files
+// use "uk" as the suffix (e.g. vodafone_uk.json, ee_uk.json).
+var isoAliases = map[string]string{
+	"gb": "uk",
+}
+
+// brandToFilename generates the expected profile filename from a brand name
+// and ISO country code.
 //
-// Matching (case-insensitive, dashes treated as underscores):
-//  1. Exact match (brand normalized: lowercase, spaces/dashes→underscores)
-//  2. Brand is a substring of filename
-//  3. Any name in names[] matches
-func findProfileByBrand(brand string, names []string, candidates []string) string {
-	if len(candidates) == 0 {
+// Strategy (all case-insensitive):
+//  1. Direct: brand_lower + _ + iso_lower (with ISO alias if applicable)
+//  2. Strip country suffix from brand: "Vodafone UK" → "vodafone" + _ + "uk"
+//  3. Try original brand without any country suffix (for MVNOs without country)
+//
+// Returns empty string if no matching file exists in profiles/.
+func brandToFilename(brand, iso string) string {
+	brand = strings.TrimSpace(brand)
+	if brand == "" {
 		return ""
 	}
 
-	// Try brand first, then names
-	searchTerms := []string{brand}
-	searchTerms = append(searchTerms, names...)
+	isoLower := strings.ToLower(iso)
+	// Apply ISO alias (e.g. gb → uk)
+	if alias, ok := isoAliases[isoLower]; ok {
+		isoLower = alias
+	}
 
-	for _, term := range searchTerms {
-		term = strings.ToLower(strings.TrimSpace(term))
-		if term == "" {
-			continue
-		}
-		norm := strings.NewReplacer(" ", "_", "-", "_").Replace(term)
+	// Strategy 1: direct brand + _ + iso
+	candidate := normalizeBrand(brand) + "_" + isoLower
+	if profileExists(candidate) {
+		return candidate
+	}
 
-		// 1. Exact match
-		for _, c := range candidates {
-			if strings.ToLower(c) == norm {
-				return c
-			}
-		}
-
-		// 2. Term is substring of candidate
-		for _, c := range candidates {
-			if strings.Contains(strings.ToLower(c), norm) {
-				return c
-			}
-		}
-
-		// 3. Candidate is substring of term (min 3 chars)
-		for _, c := range candidates {
-			cl := strings.ToLower(c)
-			if len(cl) >= 3 && strings.Contains(norm, cl) {
-				return c
-			}
+	// Strategy 2: strip country suffix from brand, then add iso
+	stripped := stripCountrySuffix(brand)
+	if stripped != "" && stripped != brand {
+		candidate2 := normalizeBrand(stripped) + "_" + isoLower
+		if profileExists(candidate2) {
+			return candidate2
 		}
 	}
 
+	// Strategy 3: brand only, no country suffix (for MVNOs like "Airalo")
+	candidate3 := normalizeBrand(brand)
+	if profileExists(candidate3) {
+		return candidate3
+	}
+
 	return ""
+}
+
+// stripCountrySuffix removes a trailing country name/code from a brand string.
+// e.g. "Vodafone UK" → "Vodafone", "Orange Belgium" → "Orange".
+func stripCountrySuffix(brand string) string {
+	lower := strings.ToLower(brand)
+	suffixes := []string{
+		" uk", " us", " fr", " de", " it", " es",
+		" nl", " be", " gr", " au", " jp", " ca",
+		" ireland", " germany", " france", " italy",
+		" spain", " netherlands", " belgium", " greece",
+		" australia", " japan", " canada",
+	}
+	for _, suffix := range suffixes {
+		if strings.HasSuffix(lower, suffix) {
+			return strings.TrimSpace(brand[:len(brand)-len(suffix)])
+		}
+	}
+	return ""
+}
+
+// normalizeBrand converts a brand name to a normalized filename component.
+// e.g. "Vodafone UK" → "vodafone_uk", "O2" → "o2", "T-Mobile" → "t_mobile".
+func normalizeBrand(brand string) string {
+	name := strings.ToLower(brand)
+	name = strings.ReplaceAll(name, " ", "_")
+	name = strings.ReplaceAll(name, "-", "_")
+	// Remove any non-alphanumeric chars (keep a-z, 0-9, _)
+	var b strings.Builder
+	for _, c := range name {
+		if (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_' {
+			b.WriteRune(c)
+		}
+	}
+	return b.String()
+}
+
+// profileExists checks if a profile file exists in the embedded filesystem.
+func profileExists(filename string) bool {
+	if filename == "" {
+		return false
+	}
+	data, err := profileFS.ReadFile("profiles/" + filename + ".json")
+	return err == nil && len(data) > 0
 }
 
 // loadProfile loads a carrier profile JSON from embedded filesystem.
