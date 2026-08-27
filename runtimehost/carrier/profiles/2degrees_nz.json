@@ -4,19 +4,13 @@
   "mcc": "530",
   "mnc": "24",
   "ike": {
-    "addr": "epdg.ims.2degrees.net.nz",
-    "apn": "ims",
-    "dpd_interval": 300,
-    "enable_esn": true,
-    "esp_proposals": [
-      "aes256-sha512"
-    ],
-    "ip_stack": "ipv4",
+    "addr": "epdg.epc.mnc005.mcc530.pub.3gppnetwork.spark.co.nz",
     "proposals": [
-      "aes256-sha512-prfsha512-modp1024"
+      "aes256-sha256-prfsha256-modp2048"
     ],
-    "reauth_interval": 80000,
-    "replay_window": 12,
+    "esp_proposals": [
+      "aes256-sha256"
+    ],
     "rf_off_delay": 5
   },
   "eap": {

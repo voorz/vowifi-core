@@ -4,19 +4,6 @@
   "mcc": "234",
   "mnc": "33",
   "ike": {
-    "apn": "ims",
-    "dpd_interval": 600,
-    "enable_esn": true,
-    "esp_proposals": [
-      "aes128-sha256"
-    ],
-    "ip_stack": "ipv6",
-    "nat_keepalive": 20,
-    "proposals": [
-      "aes128-sha256-prfsha256-modp2048"
-    ],
-    "reauth_interval": 80000,
-    "replay_window": 12,
     "rf_off_delay": 5
   },
   "eap": {
