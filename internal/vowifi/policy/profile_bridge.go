@@ -12,9 +12,19 @@ import (
 //
 // This is the JSON-first path; callers fall back to the hardcoded switch-case
 // in ResolveIMSRegisterTemplate when this returns false.
+//
+// Uses LookupWithIdentity (which searches embedded JSON profiles via carrier
+// index → brandToFilename → loadProfile) instead of LookupWithSPN (which only
+// searches user overrides from DB). This ensures carrier-specific JSON profiles
+// like cmlink_uk.json are correctly applied to imscore REGISTER behavior.
 func ResolveIMSRegisterTemplateFromProfile(mcc, mnc, spn string) (IMSRegisterTemplate, bool) {
-	p, err := carrier.LookupWithSPN(mcc, mnc, spn)
+	p, err := carrier.LookupWithIdentity(mcc, mnc, "", "", spn)
 	if err != nil || p == nil {
+		return IMSRegisterTemplate{}, false
+	}
+	// If we fell through to the generic default, treat as "not found" so the
+	// caller's hardcoded switch-case can still match known PLMNs.
+	if p.ID == "3gpp-default" || p.ID == "" {
 		return IMSRegisterTemplate{}, false
 	}
 	return carrierProfileToTemplate(p), true
@@ -50,6 +60,7 @@ func carrierProfileToTemplate(p *carrier.CarrierProfile) IMSRegisterTemplate {
 		StrictSecurityServerOffer:              p.IMS.StrictSecurityServerOffer,
 		EnableInitialRejectFallback:            p.IMS.EnableInitialRejectFallback,
 		FallbackIncludesServerParamsInSecCl:    p.IMS.FallbackIncludesServerParamsInSecCl,
+		DigestPassword:                         p.IMS.DigestPassword,
 		TransportModes:                         nil, // handled by caller
 	}
 

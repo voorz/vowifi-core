@@ -137,6 +137,7 @@ func internalConfigFromIMS(ims IMSConfig, in StartSessionInput) Config {
 		SMSC:                  strings.TrimSpace(in.SMSC),
 		AKA:                   in.AKA,
 		Template:              ims.IMSRegisterTemplate,
+		DigestPassword:        strings.TrimSpace(ims.IMSRegisterTemplate.DigestPassword),
 		MCC:                   strings.TrimSpace(in.MCC),
 		MNC:                   strings.TrimSpace(in.MNC),
 		CellID:                strings.TrimSpace(in.CellID),

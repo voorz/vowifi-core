@@ -76,7 +76,9 @@ func ComputeDigest(provider sim.AKAProvider, chal *digest.Challenge, opts digest
 		return Result{}, err
 	}
 	if strings.EqualFold(wireAlgorithm, "MD5") && len(rawNonce) < 2*randAUTNLen {
-		opts.Password = ""
+		// Plain MD5 Digest: use the password from opts (may be set by the
+		// caller from a carrier profile). When opts.Password is empty the
+		// behavior is unchanged (empty-password digest).
 		cred, err := digest.Digest(&mathChal, opts)
 		if err != nil {
 			return Result{}, fmt.Errorf("simauth: compute plain digest: %w", err)

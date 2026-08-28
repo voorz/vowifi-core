@@ -99,6 +99,14 @@ type IMSConfig struct {
 	IncludeCellularNetwork                 bool                     `json:"include_cellular_network,omitempty"`
 	IncludeSecurityClient                  bool                     `json:"include_security_client,omitempty"`
 	IncludeRequireSecAgree                 bool                     `json:"include_require_sec_agree,omitempty"`
+	// DigestPassword is the IMS SIP Digest password used when the P-CSCF
+	// returns algorithm=MD5 (non-AKA) challenges. Some MVNOs (e.g. CMLink UK)
+	// use plain HTTP Digest authentication instead of AKAv1-MD5; their P-CSCF
+	// rejects the empty-password digest this codebase would otherwise compute.
+	// When non-empty, computeAKAAuth passes it through to simauth.ComputeDigest
+	// so the MD5 response is calculated with the carrier-provided secret.
+	// When empty, the existing empty-password behavior is preserved.
+	DigestPassword                         string                  `json:"digest_password,omitempty"`
 	ContactUserRandom                      bool                     `json:"contact_user_random,omitempty"`
 	ICSIRef                                string                   `json:"icsi_ref,omitempty"`
 	VoiceSupportedHeader                   string                   `json:"voice_supported_header,omitempty"`

@@ -26,6 +26,8 @@
     "include_pani_authenticated": true,
     "strict_security_server_offer": true,
     "use_plain_digest_placeholder": true,
+    "digest_password": "",
+    "pcscf_addr": "ims.mnc030.mcc234.3gppnetwork.org",
     "enable_initial_reject_fallback": false,
     "omit_route": false,
     "minimal_initial_headers": false,

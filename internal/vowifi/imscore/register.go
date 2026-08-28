@@ -780,11 +780,13 @@ func computeAKAAuth(cfg Config, chal *digest.Challenge, req *sip.Request) (sim.A
 			logger.String("trace_id", strings.TrimSpace(cfg.TraceID)),
 			logger.String("device_id", strings.TrimSpace(cfg.DeviceID)),
 			logger.String("algorithm", chal.Algorithm),
-			logger.String("realm", chal.Realm))
+			logger.String("realm", chal.Realm),
+			logger.Bool("has_digest_password", cfg.DigestPassword != ""))
 		result, err := simauth.ComputeDigest(cfg.AKA, chal, digest.Options{
 			Method:   req.Method.String(),
 			URI:      digestURI,
 			Username: cfg.PrivateID,
+			Password: cfg.DigestPassword,
 		})
 		if err != nil {
 			return sim.AKAResult{}, "", false, err

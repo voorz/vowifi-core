@@ -38,6 +38,8 @@ type Config struct {
 
 	Template policy.IMSRegisterTemplate
 
+	DigestPassword string
+
 	MCC    string
 	MNC    string
 	CellID string

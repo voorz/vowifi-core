@@ -37,6 +37,11 @@ type IMSRegisterTemplate struct {
 	FallbackIncludesServerParamsInSecCl    bool
 	TransportModes                         []string
 	RegisterPolicy                         IMSRegisterPolicy
+	// DigestPassword is the IMS SIP Digest password for carriers whose P-CSCF
+	// returns algorithm=MD5 (non-AKA) challenges. When non-empty, the pure-MD5
+	// digest path uses this instead of the default empty password.
+	DigestPassword string
+
 	// IKEGatewayPrefixScores ranks ePDG/P-CSCF IPv6 gateway candidates by
 	// prefix. When nil, callers fall back to DefaultIKEGatewayPrefixScores().
 	IKEGatewayPrefixScores []IKEGatewayPrefixScore
