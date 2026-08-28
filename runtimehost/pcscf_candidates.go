@@ -8,9 +8,23 @@ import (
 const defaultPCSCFPort = "5060"
 
 // resolvePCSCFCandidates collects registrar endpoints for IMS REGISTER probing.
-// Author v1.5.5 discoverRegistrarViaIMSNetwork uses the UE inner IPv6 as the
-// primary registrar, then falls back to IKE/ePDG P-CSCF addresses.
+//
+// Priority order:
+//  1. Carrier profile override (pcscf_addr) — when set, it takes precedence
+//     over all auto-discovered addresses so the operator can pin a specific
+//     P-CSCF (e.g. one that returns AKAv1-MD5 instead of plain MD5).
+//  2. UE inner IPv6 (when the tunnel assigns an IPv6 inner address, the UE
+//     itself often hosts the P-CSCF on its link-local or ULA).
+//  3. IKEv2 Configuration Payload P-CSCF addresses (from ePDG).
+//
+// When the carrier override is set it becomes the *only* candidate — we do not
+// mix operator-pinned and auto-discovered addresses to avoid hitting a
+// different P-CSCF that may have incompatible auth requirements.
 func resolvePCSCFCandidates(snapshot swuSnapshot, override string, localIP net.IP) []string {
+	if v := strings.TrimSpace(override); v != "" {
+		return []string{v}
+	}
+
 	seen := make(map[string]struct{})
 	out := make([]string, 0, 1+len(snapshot.PCSCFv4)+len(snapshot.PCSCFv6))
 
@@ -36,11 +50,6 @@ func resolvePCSCFCandidates(snapshot swuSnapshot, override string, localIP net.I
 			}
 			seen[addr] = struct{}{}
 			out = append(out, addr)
-		}
-	}
-	if len(out) == 0 {
-		if v := strings.TrimSpace(override); v != "" {
-			return []string{v}
 		}
 	}
 	return out

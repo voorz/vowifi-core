@@ -32,7 +32,20 @@ func TestResolvePCSCFCandidatesPrefersMatchingFamily(t *testing.T) {
 	}
 }
 
-func TestResolvePCSCFCandidatesUsesOverrideWhenIKEEmpty(t *testing.T) {
+func TestResolvePCSCFCandidatesOverrideTakesPriority(t *testing.T) {
+	// Override must take priority even when IKEv2 has discovered P-CSCF addresses.
+	v4 := net.ParseIP("203.0.113.1")
+	v6 := net.ParseIP("2a03:dd00:1f80:4860::4")
+	got := resolvePCSCFCandidates(swuSnapshot{
+		PCSCFv4: []net.IP{v4},
+		PCSCFv6: []net.IP{v6},
+	}, "[2a03:dd00:1f80:60::4]:5060", nil)
+	if len(got) != 1 || got[0] != "[2a03:dd00:1f80:60::4]:5060" {
+		t.Fatalf("override should be the only candidate, got=%v", got)
+	}
+}
+
+func TestResolvePCSCFCandidatesOverrideWhenIKEEmpty(t *testing.T) {
 	got := resolvePCSCFCandidates(swuSnapshot{}, "[2a03:dd00:1f80:60::4]:5060", nil)
 	if len(got) != 1 || got[0] != "[2a03:dd00:1f80:60::4]:5060" {
 		t.Fatalf("got=%v", got)
