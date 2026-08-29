@@ -17,6 +17,28 @@ import (
 	"sync"
 )
 
+// ProfileResolver resolves active carrier profiles from an external store (e.g. DB).
+// The host application (vohive-next) injects an implementation at startup.
+// If no resolver is injected, LookupWithSPN returns nil (fallback to embedded profiles).
+type ProfileResolver interface {
+	// LookupActiveProfile returns the active carrier profile for the given key,
+	// or nil if no active profile exists.
+	LookupActiveProfile(key string) (*CarrierProfile, error)
+}
+
+var (
+	resolverOnce sync.Once
+	resolver     ProfileResolver
+)
+
+// SetProfileResolver injects the DB-backed profile resolver.
+// Must be called once at startup before any LookupWithSPN call.
+func SetProfileResolver(r ProfileResolver) {
+	resolverOnce.Do(func() {
+		resolver = r
+	})
+}
+
 //go:embed embed/generic.json
 var genericProfileRaw []byte
 
@@ -170,45 +192,36 @@ var plmnAliases = map[string]string{
 	"460-5":  "460-3",  // China Telecom alias
 }
 
-var (
-	userMu        sync.RWMutex
-	userOverrides = map[string]*CarrierProfile{}
-)
-
 // Lookup returns the carrier profile for the given PLMN, or nil if not found.
-// User overrides (registered via SetUserOverride) take priority.
-// MNC is normalized (leading zeros stripped) and aliases are resolved.
+// Delegates to LookupWithSPN with empty SPN.
 func Lookup(mcc, mnc string) (*CarrierProfile, error) {
 	return LookupWithSPN(mcc, mnc, "")
 }
 
-// LookupWithSPN returns the user-defined carrier profile for the given PLMN
-// if one has been registered via SetUserOverride or SetUserOverrideByKey.
-// Returns nil if no user override exists (caller should use LookupWithIdentity
+// LookupWithSPN returns the active user-defined carrier profile for the given PLMN
+// by querying the injected ProfileResolver (DB). Returns nil if no resolver is
+// injected or no active profile exists (caller should use LookupWithIdentity
 // or Generic for embedded profile lookup).
-//
-// Priority: user override > nil.
 func LookupWithSPN(mcc, mnc, spn string) (*CarrierProfile, error) {
+	if resolver == nil {
+		return nil, nil
+	}
 	key := plmnKey(mcc, mnc)
 	if alias, ok := plmnAliases[key]; ok {
 		key = alias
 	}
-	userMu.RLock()
-	defer userMu.RUnlock()
-	brandKey := key
+	// Try brand key first (e.g. "262-002__Vodafone DE")
 	if spn != "" {
-		brandSlug := strings.ToLower(strings.TrimSpace(spn))
-		if brandSlug != "" {
-			brandKey = key + "__" + brandSlug
+		brandKey := key + "__" + strings.TrimSpace(spn)
+		if p, err := resolver.LookupActiveProfile(brandKey); err == nil && p != nil {
+			if p.TemplateLevel == "" {
+				p.TemplateLevel = "user"
+			}
+			return p, nil
 		}
 	}
-	if p, ok := userOverrides[brandKey]; ok {
-		if p.TemplateLevel == "" {
-			p.TemplateLevel = "user"
-		}
-		return p, nil
-	}
-	if p, ok := userOverrides[key]; ok {
+	// Fallback to base PLMN key
+	if p, err := resolver.LookupActiveProfile(key); err == nil && p != nil {
 		if p.TemplateLevel == "" {
 			p.TemplateLevel = "user"
 		}
@@ -244,72 +257,4 @@ func Generic() (*CarrierProfile, error) {
 	return genericProf, nil
 }
 
-// All returns all user-registered carrier profile overrides.
-func All() (map[string]*CarrierProfile, error) {
-	userMu.RLock()
-	defer userMu.RUnlock()
-	out := make(map[string]*CarrierProfile, len(userOverrides))
-	for k, v := range userOverrides {
-		out[k] = v
-	}
-	return out, nil
-}
 
-// SetUserOverride registers a user-defined carrier profile that takes priority
-// over the embedded JSON system default for the same PLMN. Pass nil to remove
-// the override for a PLMN.
-func SetUserOverride(mcc, mnc string, p *CarrierProfile) {
-	key := plmnKey(mcc, mnc)
-	if alias, ok := plmnAliases[key]; ok {
-		key = alias
-	}
-	userMu.Lock()
-	defer userMu.Unlock()
-	if p == nil {
-		delete(userOverrides, key)
-		return
-	}
-	userOverrides[key] = p
-}
-
-// SetUserOverrideByKey registers a user-defined carrier profile by full key
-// (e.g. "234-33" or "234-33__cmlink"). This allows per-variant overrides for
-// MVNOs sharing the same PLMN. Pass nil to remove the override for a key.
-func SetUserOverrideByKey(key string, p *CarrierProfile) {
-	key = strings.TrimSpace(key)
-	if key == "" {
-		return
-	}
-	// Resolve alias for the base PLMN part (before __)
-	baseKey := key
-	if idx := strings.Index(key, "__"); idx >= 0 {
-		baseKey = key[:idx]
-	}
-	if alias, ok := plmnAliases[baseKey]; ok {
-		// Preserve brand suffix if present
-		if idx := strings.Index(key, "__"); idx >= 0 {
-			key = alias + key[idx:]
-		} else {
-			key = alias
-		}
-	}
-	userMu.Lock()
-	defer userMu.Unlock()
-	if p == nil {
-		delete(userOverrides, key)
-		if key != baseKey {
-			delete(userOverrides, baseKey)
-		}
-		return
-	}
-	userOverrides[key] = p
-	// 同时注册纯 PLMN key，确保运行时 LookupWithSPN 无 SPN 也能命中
-	if key != baseKey {
-		userOverrides[baseKey] = p
-	}
-}
-func ClearUserOverrides() {
-	userMu.Lock()
-	userOverrides = map[string]*CarrierProfile{}
-	userMu.Unlock()
-}

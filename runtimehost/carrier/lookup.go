@@ -368,11 +368,11 @@ func loadProfile(filename string) *CarrierProfile {
 func PlmnKey(mcc, mnc string) string {
 	mcc = strings.TrimSpace(mcc)
 	mnc = strings.TrimSpace(mnc)
-	mncTrimmed := strings.TrimLeft(mnc, "0")
-	if mncTrimmed == "" && mnc != "" {
-		mncTrimmed = "0"
+	// MNC 统一补零到 3 位（3GPP 标准格式）
+	if len(mnc) < 3 {
+		mnc = strings.Repeat("0", 3-len(mnc)) + mnc
 	}
-	return mcc + "-" + mncTrimmed
+	return mcc + "-" + mnc
 }
 
 // plmnKey is retained as an alias for internal use to minimize diff noise.

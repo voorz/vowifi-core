@@ -187,12 +187,7 @@ func allEntries() map[string]Preset {
 		merged[k] = v
 	}
 	mu.RUnlock()
-	// JSON profiles (including user overrides) take priority
-	if all, err := All(); err == nil {
-		for k, p := range all {
-			merged[k] = carrierProfileToPreset(p)
-		}
-	}
+	// 用户 overrides 现在通过 DB resolver 查询，不在内存中
 	return merged
 }
 
