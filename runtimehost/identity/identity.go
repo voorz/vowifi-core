@@ -145,14 +145,15 @@ func ReadISIMIdentity(m interface{}) (Identity, error) {
 	return reader.GetISIMIdentity()
 }
 
-// NormalizeProfile trims whitespace and canonicalizes MNC digit-width
-// (stripping any leading zero) so profiles built from a 2-digit vs. 3-digit
-// MNC source compare equal.
+// NormalizeProfile trims whitespace from all profile fields.
+// MNC is kept as-is (preserving leading zeros) because downstream consumers
+// (plmnKey, padMNC) both handle leading-zero normalization independently.
+// Stripping here would lose information needed by padMNC for 3-digit FQDNs.
 func NormalizeProfile(p Profile) Profile {
 	return Profile{
 		IMSI: strings.TrimSpace(p.IMSI),
 		MCC:  strings.TrimSpace(p.MCC),
-		MNC:  normalizeMNCDigits(strings.TrimSpace(p.MNC)),
+		MNC:  strings.TrimSpace(p.MNC),
 		IMEI: strings.TrimSpace(p.IMEI),
 		SMSC: strings.TrimSpace(p.SMSC),
 		SPN:  strings.TrimSpace(p.SPN),
@@ -161,12 +162,12 @@ func NormalizeProfile(p Profile) Profile {
 	}
 }
 
+// normalizeMNCDigits is retained for backward compatibility but now returns
+// the MNC as-is (only trimming whitespace). It is a no-op alias to prevent
+// accidental breakage of code that still calls it.
+// Deprecated: Use strings.TrimSpace directly; plmnKey/padMNC handle normalization.
 func normalizeMNCDigits(mnc string) string {
-	trimmed := strings.TrimLeft(mnc, "0")
-	if trimmed == "" && mnc != "" {
-		return "0"
-	}
-	return trimmed
+	return strings.TrimSpace(mnc)
 }
 
 // padMNC normalizes a 2- or 3-digit MNC to the zero-padded 3-digit form used

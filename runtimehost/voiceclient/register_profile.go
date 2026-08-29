@@ -331,11 +331,14 @@ func plmnFromIMSDomain(domain string) string {
 	if mcc == "" || mnc == "" {
 		return ""
 	}
-	mnc = strings.TrimLeft(mnc, "0")
-	if mnc == "" {
-		mnc = "0"
+	// Normalize MNC: strip leading zeros, consistent with carrier.PlmnKey.
+	// plmnFromIMSDomain returns a concatenated "MCCMNC" format (no separator)
+	// used for Cellular-Network-Info header, not a PLMN lookup key.
+	mncTrimmed := strings.TrimLeft(mnc, "0")
+	if mncTrimmed == "" {
+		mncTrimmed = "0"
 	}
-	return mcc + mnc
+	return mcc + mncTrimmed
 }
 
 func buildCellularNetworkInfo(plmn, cellID string) string {

@@ -747,7 +747,13 @@ func buildIMSCoreContactForTransport(cfg Config, state registerState, localPort 
 }
 
 func buildCellularNetworkInfo(cfg Config) string {
-	plmn := strings.TrimSpace(cfg.MCC) + strings.TrimLeft(strings.TrimSpace(cfg.MNC), "0")
+	// Compact PLMN: MCC + MNC with leading zeros stripped (per 3GPP TS 25.331
+	// CellGlobalId format). Consistent with carrier.PlmnKey's normalization.
+	mncStripped := strings.TrimLeft(strings.TrimSpace(cfg.MNC), "0")
+	if mncStripped == "" && strings.TrimSpace(cfg.MNC) != "" {
+		mncStripped = "0"
+	}
+	plmn := strings.TrimSpace(cfg.MCC) + mncStripped
 	if plmn == "" {
 		plmn = "00000"
 	}

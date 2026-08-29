@@ -353,12 +353,19 @@ func loadProfile(filename string) *CarrierProfile {
 		return nil
 	}
 
+	// System templates always have template_level=default
+	if p.TemplateLevel == "" {
+		p.TemplateLevel = "default"
+	}
+
 	profileCache.Store(filename, &p)
 	return &p
 }
 
-// plmnKey builds a normalized PLMN key (e.g. "234-10").
-func plmnKey(mcc, mnc string) string {
+// PlmnKey builds a normalized PLMN key (e.g. "234-10").
+// MNC leading zeros are stripped so that "15" and "015" both produce "234-15".
+// This is the single source of truth for PLMN key generation across the codebase.
+func PlmnKey(mcc, mnc string) string {
 	mcc = strings.TrimSpace(mcc)
 	mnc = strings.TrimSpace(mnc)
 	mncTrimmed := strings.TrimLeft(mnc, "0")
@@ -366,4 +373,10 @@ func plmnKey(mcc, mnc string) string {
 		mncTrimmed = "0"
 	}
 	return mcc + "-" + mncTrimmed
+}
+
+// plmnKey is retained as an alias for internal use to minimize diff noise.
+// New code should use PlmnKey directly.
+func plmnKey(mcc, mnc string) string {
+	return PlmnKey(mcc, mnc)
 }

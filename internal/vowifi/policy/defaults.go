@@ -60,7 +60,9 @@ func GenericTemplate() IMSRegisterTemplate {
 // (profiles/*.json). Unknown PLMNs fall back to GenericTemplate (3GPP standard).
 func ResolveIMSRegisterTemplate(mcc, mnc, spn string) IMSRegisterTemplate {
 	mcc = strings.TrimSpace(mcc)
-	mnc = strings.TrimLeft(strings.TrimSpace(mnc), "0")
+	mnc = strings.TrimSpace(mnc)
+	// MNC leading-zero normalization is handled by carrier.PlmnKey inside
+	// LookupWithIdentity; no need to strip here. Just guard against empty.
 	if mnc == "" {
 		mnc = "0"
 	}

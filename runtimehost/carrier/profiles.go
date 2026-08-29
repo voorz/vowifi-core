@@ -25,14 +25,18 @@ var genericProfileRaw []byte
 type CarrierProfile struct {
 	ID     string `json:"id"`
 	Name   string `json:"name"`
-	MCC    string `json:"mcc"`
-	MNC    string `json:"mnc"`
-	IKE    IKEConfig    `json:"ike"`
-	EAP    EAPConfig    `json:"eap"`
-	IMS    IMSConfig    `json:"ims"`
-	E911   E911Config   `json:"e911"`
-	Device DeviceConfig `json:"device"`
-	Blocked bool        `json:"blocked"`
+// TemplateLevel identifies the source of this profile:
+//   "default" — embedded system template (profiles/*.json or generic.json)
+//   "user"    — user-defined override (DB carrier_templates)
+	TemplateLevel string      `json:"template_level,omitempty"`
+	MCC           string      `json:"mcc"`
+	MNC           string      `json:"mnc"`
+	IKE           IKEConfig   `json:"ike"`
+	EAP           EAPConfig   `json:"eap"`
+	IMS           IMSConfig   `json:"ims"`
+	E911          E911Config  `json:"e911"`
+	Device        DeviceConfig `json:"device"`
+	Blocked       bool        `json:"blocked"`
 }
 
 type IKEConfig struct {
@@ -199,9 +203,15 @@ func LookupWithSPN(mcc, mnc, spn string) (*CarrierProfile, error) {
 		}
 	}
 	if p, ok := userOverrides[brandKey]; ok {
+		if p.TemplateLevel == "" {
+			p.TemplateLevel = "user"
+		}
 		return p, nil
 	}
 	if p, ok := userOverrides[key]; ok {
+		if p.TemplateLevel == "" {
+			p.TemplateLevel = "user"
+		}
 		return p, nil
 	}
 	return nil, nil
@@ -221,12 +231,15 @@ func Generic() (*CarrierProfile, error) {
 			genericErr = fmt.Errorf("carrier: parse generic.json: %w", err)
 			return
 		}
+		if genericProf != nil && genericProf.TemplateLevel == "" {
+			genericProf.TemplateLevel = "default"
+		}
 	})
 	if genericErr != nil {
 		return nil, genericErr
 	}
 	if genericProf == nil {
-		return &CarrierProfile{ID: "3gpp-default"}, nil
+		return &CarrierProfile{ID: "3gpp-default", TemplateLevel: "default"}, nil
 	}
 	return genericProf, nil
 }
@@ -284,12 +297,17 @@ func SetUserOverrideByKey(key string, p *CarrierProfile) {
 	defer userMu.Unlock()
 	if p == nil {
 		delete(userOverrides, key)
+		if key != baseKey {
+			delete(userOverrides, baseKey)
+		}
 		return
 	}
 	userOverrides[key] = p
+	// 同时注册纯 PLMN key，确保运行时 LookupWithSPN 无 SPN 也能命中
+	if key != baseKey {
+		userOverrides[baseKey] = p
+	}
 }
-
-// ClearUserOverrides removes all user-defined carrier profile overrides.
 func ClearUserOverrides() {
 	userMu.Lock()
 	userOverrides = map[string]*CarrierProfile{}
