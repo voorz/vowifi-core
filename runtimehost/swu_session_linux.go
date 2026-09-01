@@ -93,7 +93,7 @@ func (i *Instance) startSWuSession(ctx context.Context, req StartRequest, epdgIP
 		MNC:                     mnc,
 		IMSI:                    strings.TrimSpace(req.Profile.IMSI),
 		LocalPort:               0,
-		DisableEAPMACValidation: true,
+		EAPMACValidation: true,
 		DeviceID:                req.DeviceID,
 		TraceID:                 req.TraceID,
 		IKERetryCount:           req.IKERetryCount,
@@ -112,9 +112,11 @@ func (i *Instance) startSWuSession(ctx context.Context, req StartRequest, epdgIP
 			logger.String("udp_ports", "500->4500"))
 	}
 
-	// maxSWuRetries=1: retransmissions exhausted → return error immediately,
-	// triggering full VoWiFi teardown + rebuild (equivalent to manual restart).
-	const maxSWuRetries = 1
+	// maxSWuRetries=2: some ePDGs (e.g. 3HK) reject the first EAP-AKA attempt
+	// and require a fresh SA re-establishment to succeed — matching the
+	// community v1.5.5 behaviour where the first EAP Failure is immediately
+	// followed by a new IKE_SA_INIT + IKE_AUTH that succeeds.
+	const maxSWuRetries = 3
 	const swuRetryDelay = 5 * time.Second
 	var lastSnap swuSnapshot
 	var lastErr error

@@ -48,6 +48,7 @@ func applySimAdminSWuProfile(cfg *externalswu.Config, mcc, mnc, spn string) {
 		if p.IKE.EnableESN {
 			cfg.EnableESN = true
 		}
+		cfg.EAPMACValidation = p.IKE.EAPMACValidation
 		if p.IKE.ReplayWindow > 0 {
 			cfg.ReplayWindow = p.IKE.ReplayWindow
 		}

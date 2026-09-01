@@ -15,7 +15,7 @@
     "apn": "",
     "replay_window": 0,
     "enable_esn": false,
-    "disable_eap_mac_validation": false,
+    "eap_mac_validation": false,
     "rf_off_delay": 5
   },
   "eap": {

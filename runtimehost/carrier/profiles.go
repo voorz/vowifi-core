@@ -73,7 +73,7 @@ type IKEConfig struct {
 	APN                    string   `json:"apn,omitempty"`
 	ReplayWindow           int      `json:"replay_window,omitempty"`
 	EnableESN              bool     `json:"enable_esn,omitempty"`
-	DisableEAPMACValidation bool    `json:"disable_eap_mac_validation,omitempty"`
+	EAPMACValidation      bool     `json:"eap_mac_validation,omitempty"`
 	RFOffDelay             int      `json:"rf_off_delay,omitempty"` // RFOff 后等待秒数（默认 5s），让 mihomo 路由表重建
 }
 
