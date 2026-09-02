@@ -98,6 +98,17 @@ func (i *Instance) startSWuSession(ctx context.Context, req StartRequest, epdgIP
 		TraceID:                 req.TraceID,
 		IKERetryCount:           req.IKERetryCount,
 	}
+	// Pass the resolved EAP identity (ISIM IMPI or IMSI-derived NAI) from
+	// the identity layer into swu-go so it doesn't hardcode an IMSI NAI.
+	if req.Prepared != nil {
+		if eapID := strings.TrimSpace(req.Prepared.EAPIdentity()); eapID != "" {
+			cfg.EAPIdentity = eapID
+		}
+	}
+	// Pass IMEI from the device profile for AT_CHECKCODE computation.
+	if imei := strings.TrimSpace(req.Profile.IMEI); imei != "" {
+		cfg.IMEI = imei
+	}
 	applySimAdminSWuProfile(cfg, req.Profile.MCC, req.Profile.MNC, req.Profile.SPN)
 	if factory := buildSWuTransportFactory(req.Proxy); factory != nil {
 		cfg.TransportFactory = factory

@@ -8,7 +8,7 @@
     "apn": "ims",
     "dpd_interval": 0,
     "enable_esn": false,
-    "eap_mac_validation": true,
+    "eap_mac_validation": false,
     "esp_proposals": [
       "aes256-sha256"
     ],
@@ -17,11 +17,13 @@
       "aes256-sha256-modp2048"
     ],
     "reauth_interval": 7200,
-    "rf_off_delay": 5
+    "rf_off_delay": 5,
+    "ticket_request": true,
+    "cp_in_first_auth": false
   },
   "eap": {
     "identity_source": "isim",
-    "challenge_mode": "checkcode"
+    "challenge_mode": "minimal"
   },
   "ims": {
     "contact_features": "sms_only",
@@ -75,7 +77,7 @@
     ],
     "supported_header": "path,sec-agree,gruu",
     "allow_header": "OPTIONS,REGISTER,SUBSCRIBE,NOTIFY,PUBLISH,INVITE,ACK,BYE,CANCEL,UPDATE,PRACK,REFER,INFO,MESSAGE",
-    "user_agent": "User-Agent: Apple iPhone17,2/26.6 (17,2; iOS 26.6; 23G82) Boot/3.0.0 VoIP/1.0 Carrier/59.0",
+    "user_agent": "Apple iPhone17,2/26.6 (17,2; iOS 26.6; 23G82) Boot/3.0.0 VoIP/1.0 Carrier/59.0",
     "include_accept_contact": true,
     "include_p_preferred_id": true,
     "include_p_visited_network_id": true,

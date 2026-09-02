@@ -143,13 +143,34 @@ func lookup(mcc, mnc string) (Preset, bool) {
 	return p, ok
 }
 
-// lookupWithJSON checks the embedded JSON profiles (including user overrides)
-// first, falling back to lookup() (loaded external overrides).
-// This is the JSON-first path used by all L1 carrier functions.
+// lookupWithJSON resolves the active carrier preset using a two-line strategy:
+//
+//   - Line 1 (user config): if a DB-registered user override is active for
+//     this PLMN, it takes priority — the user explicitly chose this config.
+//   - Line 2 (system default): if no user config is active, fall back to
+//     the embedded JSON profiles (profiles/*.json) via LookupWithIdentity,
+//     which uses carrier_index + GID/SPN/brand matching to find the right
+//     file. This ensures carrier-specific ePDG addresses, challenge modes,
+//     and IMS parameters are loaded even without a user config.
+//   - If neither line matches, the caller gets (Preset{}, false) and should
+//     fall back to generic.json (3GPP standard defaults).
+//
+// This function is the single source of truth for L1 carrier functions
+// (ePDG addr, challenge mode, IMS TAC/CellID, etc.).
 func lookupWithJSON(mcc, mnc, spn string) (Preset, bool) {
+	// Line 1: user config (DB)
 	if p, err := LookupWithSPN(mcc, mnc, spn); err == nil && p != nil {
 		return carrierProfileToPreset(p), true
 	}
+	// Line 2: system default (embedded profiles/*.json)
+	if p, err := LookupWithIdentity(mcc, mnc, "", "", spn); err == nil && p != nil {
+		// LookupWithIdentity returns Generic() as final fallback;
+		// only accept it if it's a real carrier profile (not generic).
+		if p.ID != "" && p.ID != "3gpp-default" {
+			return carrierProfileToPreset(p), true
+		}
+	}
+	// Legacy external overrides (LoadCarrierOverrides)
 	return lookup(mcc, mnc)
 }
 

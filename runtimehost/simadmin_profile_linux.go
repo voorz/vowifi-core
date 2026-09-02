@@ -13,8 +13,10 @@ func applySimAdminSWuProfile(cfg *externalswu.Config, mcc, mnc, spn string) {
 	if cfg == nil {
 		return
 	}
-	// Load carrier-specific IKE/ESP/EAP settings from embedded JSON profiles.
-	if p, err := carrier.LookupWithSPN(mcc, mnc, spn); err == nil && p != nil {
+	// Load carrier-specific IKE/ESP/EAP settings.
+	// Uses LookupWithIdentity which checks: DB user config → embedded profiles/*.json → Generic.
+	// This ensures system default profiles work even when no user config is active.
+	if p, err := carrier.LookupWithIdentity(mcc, mnc, "", "", spn); err == nil && p != nil {
 		if len(p.IKE.Proposals) > 0 {
 			cfg.IKEProposals = append([]string(nil), p.IKE.Proposals...)
 		}
@@ -45,6 +47,12 @@ func applySimAdminSWuProfile(cfg *externalswu.Config, mcc, mnc, spn string) {
 		if p.EAP.DeviceIdentityEnabled != nil {
 			cfg.DeviceIdentityEnabled = p.EAP.DeviceIdentityEnabled
 		}
+		if p.IKE.TicketRequestEnabled != nil {
+			cfg.TicketRequestEnabled = p.IKE.TicketRequestEnabled
+		}
+		if p.IKE.CPInFirstAuth != nil {
+			cfg.CPInFirstAuth = p.IKE.CPInFirstAuth
+		}
 		if p.IKE.EnableESN {
 			cfg.EnableESN = true
 		}
@@ -68,7 +76,7 @@ func applySimAdminSWuProfile(cfg *externalswu.Config, mcc, mnc, spn string) {
 }
 
 func simAdminIMSTransport(mcc, mnc, spn string) string {
-	if p, err := carrier.LookupWithSPN(mcc, mnc, spn); err == nil && p != nil {
+	if p, err := carrier.LookupWithIdentity(mcc, mnc, "", "", spn); err == nil && p != nil {
 		if tm := strings.TrimSpace(p.IMS.TransportMode); tm != "" {
 			return strings.ToLower(tm)
 		}

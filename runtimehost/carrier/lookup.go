@@ -75,17 +75,19 @@ func SetCarrierIndexProvider(p CarrierIndexProvider) {
 	providerMu.Unlock()
 }
 
-// LookupWithIdentity finds the carrier profile for the given PLMN + GID identity.
+// LookupWithIdentity finds the carrier profile for the given PLMN + identity.
 //
 // Matching strategy (priority high → low):
 //  0. User override (DB-registered, highest priority)
-//  1. GID1/GID2 match → carrier_index subs → brandToFilename → profile
-//  2. SPN match → carrier_index subs[].names → brandToFilename → profile
-//  3. Primary operator brand → brandToFilename → profile
+//  1. SPN match → carrier_index subs[].names → brandToFilename → profile
+//  2. Primary operator brand → brandToFilename → profile
+//  3. GID1/GID2 match → carrier_index subs → brandToFilename → profile
+//     (GID is last because multiple subs may share the same GID, making
+//     it unreliable for disambiguation — SPN is the precise identifier)
 //  4. generic default (3GPP standard)
 //
-// PLMN is always available from the SIM. GID1/GID2 may be empty for some USIMs.
-// When GID matching fails, we fall back to the PLMN's primary operator profile
+// PLMN is always available from the SIM. SPN may be empty for some USIMs.
+// When all matching fails, we fall back to the PLMN's primary operator profile
 // (e.g. Vodafone UK for PLMN 234-15), not generic.
 func LookupWithIdentity(mcc, mnc, gid1, gid2, spn string) (*CarrierProfile, error) {
 	plmnKey := plmnKey(mcc, mnc)
@@ -105,16 +107,7 @@ func LookupWithIdentity(mcc, mnc, gid1, gid2, spn string) (*CarrierProfile, erro
 
 	iso := ciEntry.Country.ISO
 
-	// 1. GID1/GID2 match against subs
-	if gid1 != "" || gid2 != "" {
-		if filename := matchByGID(ciEntry, gid1, gid2, iso); filename != "" {
-			if p := loadProfile(filename); p != nil {
-				return p, nil
-			}
-		}
-	}
-
-	// 2. SPN match against subs[].names
+	// 1. SPN match against subs[].names (most precise — each MVNO has unique names)
 	if spn != "" {
 		if filename := matchBySPN(ciEntry, spn, iso); filename != "" {
 			if p := loadProfile(filename); p != nil {
@@ -123,7 +116,7 @@ func LookupWithIdentity(mcc, mnc, gid1, gid2, spn string) (*CarrierProfile, erro
 		}
 	}
 
-	// 3. Primary operator brand → filename
+	// 2. Primary operator brand → filename
 	if len(ciEntry.Operators) > 0 {
 		primaryBrand := ciEntry.Operators[0].Brand
 		if filename := brandToFilename(primaryBrand, iso); filename != "" {
@@ -138,6 +131,15 @@ func LookupWithIdentity(mcc, mnc, gid1, gid2, spn string) (*CarrierProfile, erro
 				if p := loadProfile(filename); p != nil {
 					return p, nil
 				}
+			}
+		}
+	}
+
+	// 3. GID1/GID2 match against subs (last resort — GID may be shared by multiple subs)
+	if gid1 != "" || gid2 != "" {
+		if filename := matchByGID(ciEntry, gid1, gid2, iso); filename != "" {
+			if p := loadProfile(filename); p != nil {
+				return p, nil
 			}
 		}
 	}
@@ -362,9 +364,17 @@ func loadProfile(filename string) *CarrierProfile {
 	return &p
 }
 
-// PlmnKey builds a normalized PLMN key (e.g. "234-10").
-// MNC leading zeros are stripped so that "15" and "015" both produce "234-15".
+// PlmnKey builds a normalized PLMN key with 3-digit zero-padded MNC.
+// e.g. PlmnKey("454", "03") → "454-003", PlmnKey("460", "0") → "460-000".
 // This is the single source of truth for PLMN key generation across the codebase.
+//
+// ⚠️ WARNING: Do NOT change the MNC zero-padding to stripping!
+// This function has been repeatedly modified (padding ↔ stripping) causing
+// bugs repeatedly. The zero-padded format is the canonical standard.
+// DB sync (sync.go entryToCarrierIndex) uses this function, so DB data
+// will be consistent after re-syncing.
+// If you encounter matching issues, do NOT change this function — fix the
+// data or the matching logic elsewhere instead.
 func PlmnKey(mcc, mnc string) string {
 	mcc = strings.TrimSpace(mcc)
 	mnc = strings.TrimSpace(mnc)

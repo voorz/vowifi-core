@@ -153,19 +153,20 @@ func TestLookupWithIdentity_UserOverrideByKey(t *testing.T) {
 	}
 }
 
-// TestPLMNKeyNormalization verifies that MNC leading zeros are stripped.
+// TestPLMNKeyNormalization verifies that MNC is zero-padded to 3 digits.
 func TestPLMNKeyNormalization(t *testing.T) {
 	cases := []struct {
 		mcc, mnc, want string
 	}{
 		{"310", "260", "310-260"},
-		{"310", "0260", "310-260"},
-		{"234", "33", "234-33"},
-		{"234", "033", "234-33"},
-		{"460", "0", "460-0"},
-		{"460", "00", "460-0"},
-		{"204", "4", "204-4"},
-		{"204", "04", "204-4"},
+		{"310", "0260", "310-0260"},
+		{"234", "33", "234-033"},
+		{"234", "033", "234-033"},
+		{"460", "0", "460-000"},
+		{"460", "00", "460-000"},
+		{"204", "4", "204-004"},
+		{"204", "04", "204-004"},
+		{"454", "03", "454-003"},
 	}
 	for _, c := range cases {
 		t.Run(c.mcc+"-"+c.mnc, func(t *testing.T) {
@@ -194,7 +195,7 @@ func TestPLMNAliases(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.mcc+"-"+c.mnc, func(t *testing.T) {
-			// Register an override under the canonical key (e.g. 460-0)
+			// Register an override under the canonical key (e.g. 460-000)
 			canonical := plmnAliases[plmnKey(c.mcc, c.mnc)]
 			if canonical == "" {
 				t.Fatalf("no alias found for %s-%s", c.mcc, c.mnc)

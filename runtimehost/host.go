@@ -1153,7 +1153,10 @@ func resolveEPDGHost(req StartRequest) (string, string) {
 }
 
 func simAdminEPDGHost(mcc, mnc, spn string) string {
-	if p, err := carrier.LookupWithSPN(mcc, mnc, spn); err == nil && p != nil {
+	// Uses LookupWithIdentity which checks: DB user config → embedded profiles/*.json → Generic.
+	// This ensures the carrier-specific ePDG address (e.g. wlan.three.com.hk for 3HK)
+	// is returned even when no user config is active.
+	if p, err := carrier.LookupWithIdentity(mcc, mnc, "", "", spn); err == nil && p != nil {
 		if addr := strings.TrimSpace(p.IKE.Addr); addr != "" {
 			return addr
 		}

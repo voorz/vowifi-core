@@ -75,6 +75,8 @@ type IKEConfig struct {
 	EnableESN              bool     `json:"enable_esn,omitempty"`
 	EAPMACValidation      bool     `json:"eap_mac_validation,omitempty"`
 	RFOffDelay             int      `json:"rf_off_delay,omitempty"` // RFOff 后等待秒数（默认 5s），让 mihomo 路由表重建
+	TicketRequestEnabled   *bool    `json:"ticket_request,omitempty"`       // RFC 5723: N(TICKET_REQUEST) in first IKE_AUTH
+	CPInFirstAuth          *bool    `json:"cp_in_first_auth,omitempty"`     // CP(CFG_REQUEST) in first IKE_AUTH
 }
 
 type EAPConfig struct {
@@ -183,13 +185,18 @@ type DeviceConfig struct {
 
 // plmnAliases maps MNC aliases to their canonical PLMN key.
 // For example, China Mobile uses MNC 0/2/4/7 which all share the same template.
+// Keys MUST use the same zero-padded format as PlmnKey (3-digit MNC).
+// ⚠️ WARNING: Do NOT change MNC to stripped format. PlmnKey zero-pads MNC
+// to 3 digits. If you change this to stripped format, LookupWithSPN will
+// fail to match aliases and break carrier resolution. If you encounter
+// matching issues, fix the root cause, do NOT strip zeros here.
 var plmnAliases = map[string]string{
-	"460-2":  "460-0",  // CMCC alias
-	"460-4":  "460-0",  // CMCC alias
-	"460-7":  "460-0",  // CMCC alias
-	"460-6":  "460-1",  // China Unicom alias
-	"460-9":  "460-1",  // China Unicom alias
-	"460-5":  "460-3",  // China Telecom alias
+	"460-002": "460-000", // CMCC alias
+	"460-004": "460-000", // CMCC alias
+	"460-007": "460-000", // CMCC alias
+	"460-006": "460-001", // China Unicom alias
+	"460-009": "460-001", // China Unicom alias
+	"460-005": "460-003", // China Telecom alias
 }
 
 // Lookup returns the carrier profile for the given PLMN, or nil if not found.
