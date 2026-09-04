@@ -9,8 +9,11 @@
     "dpd_interval": 600,
     "enable_esn": false,
     "esp_proposals": [
+      "aes256gcm16",
+      "aes128gcm16",
       "aes256-sha256",
-      "aes128-sha256"
+      "aes128-sha256",
+      "aes128-sha1"
     ],
     "ip_stack": "ipv4",
     "proposals": [

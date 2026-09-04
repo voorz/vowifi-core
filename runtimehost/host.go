@@ -864,40 +864,30 @@ func (i *Instance) runStagedPipeline(ctx context.Context, req StartRequest, gene
 		return
 	}
 
-	epdgHost, epdgPort := resolveEPDGHost(req)
-	if epdgHost == "" {
+	// Build ePDG address candidates: primary (user/system config) → 3GPP standard fallback.
+	candidates := buildEPDGCandidates(req)
+	if len(candidates) == 0 {
 		i.failStageForGeneration(ctx, generation, "tunnel", "ePDG FQDN not found", "tunnel_epdg_not_found")
 		return
 	}
 
-	resolvedIPs, err := net.LookupHost(epdgHost)
-	if err != nil || len(resolvedIPs) == 0 {
-		i.failStageForGeneration(ctx, generation, "tunnel", fmt.Sprintf("ePDG DNS failed: %s -> %v", epdgHost, err), "tunnel_dns_failed")
-		return
-	}
-	epdgIP := resolvedIPs[0]
-	if !i.setStageForGeneration(ctx, generation, StageTunnelConnect, "建立 SWu 隧道", func(s *State) {
-		s.LastReason = fmt.Sprintf("tunnel_starting ePDG=%s:%s", epdgIP, epdgPort)
-	}) {
-		return
-	}
-
-	tunnelCtx, cancel := context.WithCancel(context.Background())
-	if !i.installSWUCancel(generation, cancel) {
-		cancel()
-		return
-	}
-
-	snapshot, localIP, dataplane, mobike, err := i.startSWuSession(tunnelCtx, req, epdgIP, epdgPort)
+	// Try each candidate: DNS resolve → SWu tunnel. First success wins.
+	result, err := i.tryEPDGCandidates(ctx, req, generation, candidates)
 	if err != nil {
 		reason := classifyTunnelFailure(err)
 		i.failStageForGeneration(ctx, generation, "tunnel", err.Error(), formatTunnelFailureReason(reason, err))
-		cancel()
 		if req.OnTunnelDown != nil {
 			req.OnTunnelDown(i.deviceID)
 		}
 		return
 	}
+
+	snapshot := result.Snapshot
+	localIP := result.LocalIP
+	dataplane := result.Dataplane
+	mobike := result.Mobike
+	cancel := result.Cancel
+	epdgIP := result.EpdgIP
 
 	if !i.installMOBIKE(generation, mobike) {
 		cancel()
