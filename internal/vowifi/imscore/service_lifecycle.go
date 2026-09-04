@@ -3,6 +3,7 @@ package imscore
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net"
 	"strconv"
 	"strings"
@@ -211,8 +212,18 @@ func (s *Service) startInboundSIPServer(ctx context.Context, tcpLn net.Listener,
 	if s.msgSvc == nil {
 		return
 	}
+	deviceLogger := slog.New(logger.NewSlogHandler(logger.Get())).With(
+		"device_id", strings.TrimSpace(s.cfg.DeviceID),
+		"trace_id", strings.TrimSpace(s.cfg.TraceID),
+	)
 	ua, err := sipgo.NewUA(
 		sipgo.WithUserAgent(s.cfg.UserAgent),
+		sipgo.WithUserAgentTransportLayerOptions(
+			sip.WithTransportLayerLogger(deviceLogger),
+		),
+		sipgo.WithUserAgentTransactionLayerOptions(
+			sip.WithTransactionLayerLogger(deviceLogger),
+		),
 	)
 	if err != nil {
 		logger.Warn(fmt.Sprintf("[%s] 入站 SIP Server UA 创建失败", strings.TrimSpace(s.cfg.DeviceID)),
