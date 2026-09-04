@@ -38,7 +38,7 @@
     "proxy_require_sec_agree": false,
     "include_require_sec_agree": false,
     "use_plain_digest_placeholder": true,
-    "initial_authorization": "aka_empty_uri_first",
+    "initial_authorization": "aka_precalculated",
     "include_pani": true,
     "include_pani_authenticated": true,
     "security_client_format": "full_spaced",

@@ -36,6 +36,9 @@ type Config struct {
 
 	AKA sim.AKAProvider
 
+	EAPRand []byte // EAP-AKA Challenge RAND（供预计算 AKA 复用）
+	EAPAutn []byte // EAP-AKA Challenge AUTN（供预计算 AKA 复用）
+
 	Template policy.IMSRegisterTemplate
 
 	DigestPassword string

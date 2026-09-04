@@ -96,6 +96,8 @@ func Dial(ctx context.Context, cfg Config) (*Service, error) {
 		Dataplane:             cfg.Dataplane,
 		RegistrarCandidates:   cfg.RegistrarCandidates,
 		AKA:                   cfg.AKA,
+		EAPRand:               cfg.EAPRand,
+		EAPAutn:               cfg.EAPAutn,
 		DeliveryStore:         cfg.DeliveryStore,
 		IMSI:                  cfg.IMSI,
 		MCC:                   cfg.MCC,

@@ -281,6 +281,8 @@ type swuSnapshot struct {
 	IPv6        net.IP
 	PCSCFv4     []net.IP
 	PCSCFv6     []net.IP
+	EAPRand     []byte // EAP-AKA Challenge RAND（供 IMS 预计算复用）
+	EAPAutn     []byte // EAP-AKA Challenge AUTN（供 IMS 预计算复用）
 }
 
 type Instance struct {
@@ -979,6 +981,8 @@ func (i *Instance) runStagedPipeline(ctx context.Context, req StartRequest, gene
 		Dataplane:             dataplane,
 		RegistrarCandidates:   pcscfCandidates,
 		AKA:                   i.akaProvider,
+		EAPRand:               snapshot.EAPRand,
+		EAPAutn:               snapshot.EAPAutn,
 		DeliveryStore:         i.deliveryStore,
 		Dispatcher:            toEventhostDispatcher(req.Dispatch),
 		IMSI:                  i.imsIMSI,
