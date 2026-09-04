@@ -53,8 +53,17 @@ func applySimAdminSWuProfile(cfg *externalswu.Config, mcc, mnc, spn string) {
 		if p.IKE.CPInFirstAuth != nil {
 			cfg.CPInFirstAuth = p.IKE.CPInFirstAuth
 		}
+		if p.IKE.CPInFinalAuth != nil {
+			cfg.CPInFinalAuth = p.IKE.CPInFinalAuth
+		}
+		if p.IKE.CookiePayloadType != "" {
+			cfg.CookiePayloadType = p.IKE.CookiePayloadType
+		}
 		if p.IKE.EnableESN {
 			cfg.EnableESN = true
+		}
+		if p.IKE.RekeyPFS > 0 {
+			cfg.ESPRekeyPFS = p.IKE.RekeyPFS
 		}
 		cfg.EAPMACValidation = p.IKE.EAPMACValidation
 		if p.IKE.ReplayWindow > 0 {

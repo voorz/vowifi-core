@@ -22,7 +22,18 @@ const defaultPCSCFPort = "5060"
 // different P-CSCF that may have incompatible auth requirements.
 func resolvePCSCFCandidates(snapshot swuSnapshot, override string, localIP net.IP) []string {
 	if v := strings.TrimSpace(override); v != "" {
-		return []string{v}
+		// 支持逗号分隔的多个 P-CSCF 地址
+		parts := strings.Split(v, ",")
+		out := make([]string, 0, len(parts))
+		for _, p := range parts {
+			p = strings.TrimSpace(p)
+			if p != "" {
+				out = append(out, p)
+			}
+		}
+		if len(out) > 0 {
+			return out
+		}
 	}
 
 	seen := make(map[string]struct{})

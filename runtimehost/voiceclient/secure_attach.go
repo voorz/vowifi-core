@@ -186,8 +186,10 @@ func (t *secureMessagingTransport) decorateRequest(req *sip.Request) error {
 	if verify := strings.TrimSpace(t.client.cfg.SecurityVerify); verify != "" {
 		req.RemoveHeader("Security-Verify")
 		req.AppendHeader(sip.NewHeader("Security-Verify", verify))
-		appendHeaderToken(req, "Require", "sec-agree")
-		appendHeaderToken(req, "Proxy-Require", "sec-agree")
+		if t.client.registerProfile.IncludeRequireSecAgree {
+			appendHeaderToken(req, "Require", "sec-agree")
+			appendHeaderToken(req, "Proxy-Require", "sec-agree")
+		}
 	}
 	req.SetTransport(transport)
 	req.SetDestination(t.client.cfg.PCSCFAddr)

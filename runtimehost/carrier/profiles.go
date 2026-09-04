@@ -75,8 +75,11 @@ type IKEConfig struct {
 	EnableESN              bool     `json:"enable_esn,omitempty"`
 	EAPMACValidation      bool     `json:"eap_mac_validation,omitempty"`
 	RFOffDelay             int      `json:"rf_off_delay,omitempty"` // RFOff 后等待秒数（默认 5s），让 mihomo 路由表重建
+	RekeyPFS               int      `json:"rekey_pfs,omitempty"`     // Child SA PFS DH 组 (如 14=MODP2048)，0=禁用
 	TicketRequestEnabled   *bool    `json:"ticket_request,omitempty"`       // RFC 5723: N(TICKET_REQUEST) in first IKE_AUTH
 	CPInFirstAuth          *bool    `json:"cp_in_first_auth,omitempty"`     // CP(CFG_REQUEST) in first IKE_AUTH
+	CPInFinalAuth          *bool    `json:"cp_in_final_auth,omitempty"`      // CP(CFG_REQUEST) in final AUTH message (nil=true)
+	CookiePayloadType      string   `json:"cookie_payload_type,omitempty"`   // COOKIE Notify 载荷类型: "notify"(默认N41) 或 "sa"(SA33, 兼容非标ePDG)
 }
 
 type EAPConfig struct {

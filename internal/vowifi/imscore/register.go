@@ -457,15 +457,17 @@ func buildRegisterRequest(cfg Config, state registerState, initial bool, variant
 		req.AppendHeader(sip.NewHeader("Accept-Contact", "*;+g.3gpp.smsip"))
 		req.AppendHeader(sip.NewHeader("Accept-Contact", "*;+g.3gpp.icsi-ref=\""+icsiRef+"\""))
 	}
-	var secClient string
-	if initial {
-		secClient = buildInitialSecurityClient(cfg.Template, variant, state.spiC, state.spiS, state.portC, state.portS)
-	} else if state.verifyHeader != "" {
-		secClient = buildFullSecurityClient(cfg.Template, state.spiC, state.spiS, state.portC, state.portS)
-	} else {
-		secClient = buildTemplateSecurityClient(cfg.Template, state.spiC, state.spiS, state.portC, state.portS)
+	if secAgreeEnabled(cfg.Template) {
+		var secClient string
+		if initial {
+			secClient = buildInitialSecurityClient(cfg.Template, variant, state.spiC, state.spiS, state.portC, state.portS)
+		} else if state.verifyHeader != "" {
+			secClient = buildFullSecurityClient(cfg.Template, state.spiC, state.spiS, state.portC, state.portS)
+		} else {
+			secClient = buildTemplateSecurityClient(cfg.Template, state.spiC, state.spiS, state.portC, state.portS)
+		}
+		req.AppendHeader(sip.NewHeader("Security-Client", secClient))
 	}
-	req.AppendHeader(sip.NewHeader("Security-Client", secClient))
 	req.AppendHeader(sip.NewHeader("User-Agent", cfg.UserAgent))
 	req.SetBody(nil)
 	req.SetDestination(effectiveTransportAddr(cfg))
@@ -502,7 +504,7 @@ func finalizeRegisterSuccess(cfg Config, state registerState, res *sip.Response)
 		logger.String("device_id", strings.TrimSpace(cfg.DeviceID)),
 		logger.Int("code", res.StatusCode),
 		logger.Int("expires_seconds", expires),
-		logger.String("sip_security_mode", "ipsec3gpp"),
+		logger.String("sip_security_mode", securityModeLabel(state.verifyHeader != "" || state.transport != nil)),
 		logger.Bool("security_verify_present", strings.TrimSpace(state.verifyHeader) != ""),
 		logger.Int("security_verify_len", len(strings.TrimSpace(state.verifyHeader))))
 	serviceRoutes := make([]string, 0)
