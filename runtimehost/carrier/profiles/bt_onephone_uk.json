@@ -7,7 +7,7 @@
     "addr": "epdg.epc.mnc008.mcc234.pub.3gppnetwork.org",
     "apn": "ims.mnc008.mcc234.uktel.org",
     "dpd_interval": 600,
-    "enable_esn": true,
+    "enable_esn": false,
     "esp_proposals": [
       "aes128-sha256"
     ],

@@ -6,7 +6,7 @@
   "ike": {
     "addr": "epdg.monaco-telecom.mc",
     "apn": "ims",
-    "enable_esn": true,
+    "enable_esn": false,
     "esp_proposals": [
       "aes256-sha512"
     ],

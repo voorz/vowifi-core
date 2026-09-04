@@ -5,7 +5,7 @@
   "mnc": "140",
   "ike": {
     "apn": "ims",
-    "enable_esn": true,
+    "enable_esn": false,
     "esp_proposals": [
       "aes128-sha512"
     ],

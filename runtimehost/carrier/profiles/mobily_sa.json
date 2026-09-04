@@ -6,7 +6,7 @@
   "ike": {
     "addr": "epdg.mobily.com.sa",
     "apn": "ims",
-    "enable_esn": true,
+    "enable_esn": false,
     "esp_proposals": [
       "aes128-sha256"
     ],

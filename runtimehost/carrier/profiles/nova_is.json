@@ -6,7 +6,7 @@
   "ike": {
     "addr": "epdg.epc.mnc011.mcc274.pub.3gppnetwork.org",
     "apn": "ims",
-    "enable_esn": true,
+    "enable_esn": false,
     "esp_proposals": [
       "aes128-sha256"
     ],

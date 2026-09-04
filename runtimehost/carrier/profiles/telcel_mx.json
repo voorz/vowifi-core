@@ -7,7 +7,7 @@
     "addr": "epdg.ims.mnc020.mcc334.pub.3gppnetwork.org",
     "apn": "ims",
     "dpd_interval": 600,
-    "enable_esn": true,
+    "enable_esn": false,
     "esp_proposals": [
       "aes256-sha256"
     ],

@@ -6,7 +6,7 @@
   "ike": {
     "addr": "ss.epdg.epc.mnc260.mcc310.pub.3gppnetwork.org",
     "dpd_interval": 600,
-    "enable_esn": true,
+    "enable_esn": false,
     "esp_proposals": [
       "aes256-sha256"
     ],

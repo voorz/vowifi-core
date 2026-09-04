@@ -5,7 +5,7 @@
   "mnc": "08",
   "ike": {
     "addr": "epdg.fastweb.it",
-    "enable_esn": true,
+    "enable_esn": false,
     "esp_proposals": [
       "aes256-sha512"
     ],

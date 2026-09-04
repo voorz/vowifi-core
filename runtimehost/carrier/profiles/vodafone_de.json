@@ -7,14 +7,18 @@
     "addr": "epdg.vodafone.de",
     "apn": "ims",
     "dpd_interval": 600,
-    "enable_esn": true,
+    "enable_esn": false,
     "esp_proposals": [
       "aes256-sha256",
       "aes128-sha256"
     ],
     "ip_stack": "ipv4",
     "proposals": [
-      "aes256-sha256-modp2048"
+      "aes256gcm16-prfsha384-modp3072",
+      "aes128gcm16-prfsha256-modp2048",
+      "aes256-sha256-modp2048",
+      "aes128-sha256-modp2048",
+      "aes128-sha1-modp1024"
     ],
     "reauth_interval": 80000,
     "replay_window": 12,

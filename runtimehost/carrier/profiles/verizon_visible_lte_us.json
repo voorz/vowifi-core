@@ -7,7 +7,7 @@
     "addr": "wo.vzwwo.com",
     "apn": "vsblims",
     "dpd_interval": 600,
-    "enable_esn": true,
+    "enable_esn": false,
     "esp_proposals": [
       "aes128-sha1"
     ],

@@ -7,7 +7,7 @@
     "addr": "wlan.three.com.mo",
     "apn": "ims",
     "dpd_interval": 600,
-    "enable_esn": true,
+    "enable_esn": false,
     "esp_proposals": [
       "aes128-sha1"
     ],

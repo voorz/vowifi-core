@@ -4,7 +4,7 @@
   "mcc": "250",
   "mnc": "99",
   "ike": {
-    "enable_esn": true,
+    "enable_esn": false,
     "esp_proposals": [
       "aes128-sha1"
     ],
