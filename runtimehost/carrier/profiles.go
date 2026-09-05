@@ -80,6 +80,7 @@ type IKEConfig struct {
 	CPInFirstAuth          *bool    `json:"cp_in_first_auth,omitempty"`     // CP(CFG_REQUEST) in first IKE_AUTH
 	CPInFinalAuth          *bool    `json:"cp_in_final_auth,omitempty"`      // CP(CFG_REQUEST) in final AUTH message (nil=true)
 	CookiePayloadType      string   `json:"cookie_payload_type,omitempty"`   // COOKIE Notify 载荷类型: "notify"(默认N41) 或 "sa"(SA33, 兼容非标ePDG)
+	AutoPRF                string   `json:"auto_prf,omitempty"`              // PRF 自动推导模式: ""(默认)/"auto"=从Integrity自动推导, "off"=不推导
 }
 
 type EAPConfig struct {

@@ -66,6 +66,7 @@ func applySimAdminSWuProfile(cfg *externalswu.Config, mcc, mnc, spn string) {
 			cfg.ESPRekeyPFS = p.IKE.RekeyPFS
 		}
 		cfg.EAPMACValidation = p.IKE.EAPMACValidation
+		cfg.AutoPRF = p.IKE.AutoPRF != "off"
 		if p.IKE.ReplayWindow > 0 {
 			cfg.ReplayWindow = p.IKE.ReplayWindow
 		}

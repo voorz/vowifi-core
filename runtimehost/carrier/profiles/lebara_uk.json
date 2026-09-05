@@ -4,9 +4,31 @@
   "mcc": "234",
   "mnc": "87",
   "ike": {
-    "rf_off_delay": 5
+    "proposals": [
+      "aes128-sha256-modp2048",
+      "aes256-sha256-modp2048",
+      "aes256-sha512-modp2048"
+    ],
+    "esp_proposals": [
+      "aes256gcm16",
+      "aes128gcm16",
+      "aes128-sha256",
+      "aes256-sha256",
+      "aes256-sha512"
+    ],
+    "rekey_pfs": 14,
+    "ip_stack": "ipv4v6",
+    "apn": "ims",
+    "rf_off_delay": 5,
+    "ticket_request": true,
+    "cp_in_first_auth": true,
+    "cp_in_final_auth": true,
+    "eap_mac_validation": false
   },
-  "eap": {},
+  "eap": {
+    "challenge_mode": "minimal",
+    "identity_source": "isim"
+  },
   "ims": {
     "sec_agree_mode": "on",
     "use_plain_digest_placeholder": true,
