@@ -34,6 +34,7 @@ func carrierProfileToTemplate(p *carrier.CarrierProfile) IMSRegisterTemplate {
 	t := IMSRegisterTemplate{
 		ID:                                     p.ID,
 		UsePlainDigestPlaceholder:              p.IMS.UsePlainDigestPlaceholder,
+		InitialAuthorization:                   p.IMS.InitialAuthorization,
 		Expires:                                p.IMS.Expires,
 		FixedPANI:                              p.IMS.FixedPANI,
 		SupportedHeader:                        p.IMS.SupportedHeader,

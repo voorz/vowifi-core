@@ -3,6 +3,7 @@ package imscore
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net"
 	"strconv"
 	"strings"
@@ -103,11 +104,13 @@ func (s *Service) Start(ctx context.Context) error {
 		// TCP+ESP mode: ESP handled by netstack transparently.
 		// Start TCP writer log, port_s inbound listeners, and SMS notification.
 		s.logTCPWriterLoop(lifecycleCtx, reg.tcpConn)
-		if err := s.startPortSListeners(lifecycleCtx, swu, reg.ipsecPolicy); err != nil {
-logger.Warn(fmt.Sprintf("[%s] IMS port_s 入站监听启动失败", strings.TrimSpace(s.cfg.DeviceID)),
-			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
-			logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
-			logger.String("error", err.Error()))
+		if reg.ipsecPolicy.LocalPortS > 0 {
+			if err := s.startPortSListeners(lifecycleCtx, swu, reg.ipsecPolicy); err != nil {
+				logger.Warn(fmt.Sprintf("[%s] IMS port_s 入站监听启动失败", strings.TrimSpace(s.cfg.DeviceID)),
+					logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+					logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
+					logger.String("error", err.Error()))
+			}
 		}
 		s.startInboundSIPServer(lifecycleCtx, s.portSListener, s.portSUDP)
 		s.notifySMSCapability()
@@ -211,8 +214,18 @@ func (s *Service) startInboundSIPServer(ctx context.Context, tcpLn net.Listener,
 	if s.msgSvc == nil {
 		return
 	}
+	deviceLogger := slog.New(logger.NewSlogHandler(logger.Get())).With(
+		"device_id", strings.TrimSpace(s.cfg.DeviceID),
+		"trace_id", strings.TrimSpace(s.cfg.TraceID),
+	)
 	ua, err := sipgo.NewUA(
 		sipgo.WithUserAgent(s.cfg.UserAgent),
+		sipgo.WithUserAgentTransportLayerOptions(
+			sip.WithTransportLayerLogger(deviceLogger),
+		),
+		sipgo.WithUserAgentTransactionLayerOptions(
+			sip.WithTransactionLayerLogger(deviceLogger),
+		),
 	)
 	if err != nil {
 		logger.Warn(fmt.Sprintf("[%s] 入站 SIP Server UA 创建失败", strings.TrimSpace(s.cfg.DeviceID)),
@@ -455,11 +468,17 @@ func (s *Service) attachMessaging(ctx context.Context, winningPCSCF string, reg 
 	if remoteIP := net.IP(reg.ipsecPolicy.RemoteIP); remoteIP != nil && reg.ipsecPolicy.FlowC.RemotePort > 0 {
 		protectedPCSCF = net.JoinHostPort(remoteIP.String(), strconv.Itoa(reg.ipsecPolicy.FlowC.RemotePort))
 	}
+	localPort := reg.ipsecPolicy.FlowC.LocalPort
+	if localPort <= 0 && reg.tcpConn != nil {
+		if tcpAddr, ok := reg.tcpConn.LocalAddr().(*net.TCPAddr); ok && tcpAddr != nil {
+			localPort = tcpAddr.Port
+		}
+	}
 	voiceCfg := voiceclient.Config{
 		DeviceID:        s.cfg.DeviceID,
 		TraceID:         s.cfg.TraceID,
 		LocalIP:         s.cfg.LocalIP,
-		LocalPort:       reg.ipsecPolicy.FlowC.LocalPort,
+		LocalPort:       localPort,
 		PCSCFAddr:       protectedPCSCF,
 		SecurityVerify:  reg.verifyHeader,
 		SMSC:            s.cfg.SMSC,

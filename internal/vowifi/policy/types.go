@@ -5,6 +5,7 @@ package policy
 type IMSRegisterTemplate struct {
 	ID                                     string
 	UsePlainDigestPlaceholder              bool
+	InitialAuthorization                    string
 	Expires                                int
 	SMSReceiverTransport                   string
 	ContactMode                            string

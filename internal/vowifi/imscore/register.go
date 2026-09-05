@@ -86,6 +86,10 @@ func initialRejectFallbackEnabled(cfg Config) bool {
 }
 
 func initialRegisterVariants(cfg Config) []initialRegisterVariant {
+	return initialRegisterVariantsPrecalc(cfg)
+}
+
+func initialRegisterVariantsBase(cfg Config) []initialRegisterVariant {
 	base := initialRegisterVariant{
 		initialAuth:     "",
 		includePANI:     templateIncludesPANI(cfg.Template),
@@ -398,7 +402,7 @@ func buildRegisterRequest(cfg Config, state registerState, initial bool, variant
 	req.AppendHeader(sip.NewHeader("To", "<"+cfg.PublicURI+">"))
 	req.AppendHeader(sip.NewHeader("Contact", buildIMSCoreContact(cfg, state, registerSIPLocalPort(cfg))))
 	if initial {
-		if auth := buildInitialAuthorization(cfg, variant.initialAuth); auth != "" {
+		if auth := resolvePrecalculatedAuth(cfg, variant); auth != "" {
 			req.AppendHeader(sip.NewHeader("Authorization", auth))
 		}
 	}

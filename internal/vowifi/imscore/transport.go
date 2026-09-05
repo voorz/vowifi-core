@@ -3,10 +3,13 @@ package imscore
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net"
 	"strconv"
+	"strings"
 	"sync"
 
+	"github.com/voorz/swu-go/pkg/logger"
 	"github.com/voorz/vowifi-core/internal/vowifi/ipsec3gpp"
 	"github.com/voorz/vowifi-core/runtimehost/voiceclient"
 	"github.com/voorz/sipgo"
@@ -90,10 +93,13 @@ func newSecureRegisterSIPStack(cfg Config, conn *ipsec3gpp.SecureChannelConn) (*
 
 func newSIPStack(cfg Config, dialer *fixedConnDialer, swu voiceclient.SWUTCPDialer, localPort int) (*sipgo.UserAgent, *sipgo.Client, error) {
 	installSIPTrace(cfg.TraceID, cfg.DeviceID)
-	uaOpts := []sipgo.UserAgentOption{
-		sipgo.WithUserAgent(cfg.UserAgent),
-		sipgo.WithUserAgentTransportLayerOptions(
-			sip.WithTransportLayerTransports(sip.TransportsConfig{
+	deviceLogger := slog.New(logger.NewSlogHandler(logger.Get())).With(
+		"device_id", strings.TrimSpace(cfg.DeviceID),
+		"trace_id", strings.TrimSpace(cfg.TraceID),
+	)
+	tpOpts := []sip.TransportLayerOption{
+		sip.WithTransportLayerLogger(deviceLogger),
+		sip.WithTransportLayerTransports(sip.TransportsConfig{
 				TCP: &sip.TransportTCP{
 					DialContext: func(ctx context.Context, laddr net.Addr, raddr net.Addr) (net.Conn, error) {
 						if dialer != nil {
@@ -127,6 +133,12 @@ func newSIPStack(cfg Config, dialer *fixedConnDialer, swu voiceclient.SWUTCPDial
 					},
 				},
 			}),
+	}
+	uaOpts := []sipgo.UserAgentOption{
+		sipgo.WithUserAgent(cfg.UserAgent),
+		sipgo.WithUserAgentTransportLayerOptions(tpOpts...),
+		sipgo.WithUserAgentTransactionLayerOptions(
+			sip.WithTransactionLayerLogger(deviceLogger),
 		),
 	}
 	ua, err := sipgo.NewUA(uaOpts...)

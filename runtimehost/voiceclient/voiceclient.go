@@ -33,6 +33,7 @@ package voiceclient
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net"
 	"strconv"
 	"strings"
@@ -260,12 +261,15 @@ func Dial(ctx context.Context, cfg Config) (*Client, error) {
 	if strings.TrimSpace(cfg.RegisterProfile.ContactFeatures) != "" {
 		registerProfile = cfg.RegisterProfile.Normalized()
 	}
-	uaOptions := []sipgo.UserAgentOption{
-		sipgo.WithUserAgent(registerProfile.UserAgent),
+	deviceLogger := slog.New(logger.NewSlogHandler(logger.Get())).With(
+		"device_id", strings.TrimSpace(cfg.DeviceID),
+		"trace_id", strings.TrimSpace(cfg.TraceID),
+	)
+	tpOpts := []sip.TransportLayerOption{
+		sip.WithTransportLayerLogger(deviceLogger),
 	}
 	if swuTCP != nil {
-		uaOptions = append(uaOptions, sipgo.WithUserAgentTransportLayerOptions(
-			sip.WithTransportLayerTransports(sip.TransportsConfig{
+		tpOpts = append(tpOpts, sip.WithTransportLayerTransports(sip.TransportsConfig{
 				TCP: &sip.TransportTCP{
 					DialContext: func(ctx context.Context, laddr net.Addr, raddr net.Addr) (net.Conn, error) {
 						tcpAddr, ok := raddr.(*net.TCPAddr)
@@ -281,8 +285,14 @@ func Dial(ctx context.Context, cfg Config) (*Client, error) {
 						return swuTCP.DialContextTCP(ctx, cfg.LocalIP, localPort, tcpAddr.IP, tcpAddr.Port)
 					},
 				},
-			}),
-		))
+			}))
+	}
+	uaOptions := []sipgo.UserAgentOption{
+		sipgo.WithUserAgent(registerProfile.UserAgent),
+		sipgo.WithUserAgentTransportLayerOptions(tpOpts...),
+		sipgo.WithUserAgentTransactionLayerOptions(
+			sip.WithTransactionLayerLogger(deviceLogger),
+		),
 	}
 	ua, err := sipgo.NewUA(uaOptions...)
 	if err != nil {
