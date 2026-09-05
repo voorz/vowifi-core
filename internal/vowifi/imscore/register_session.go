@@ -171,6 +171,14 @@ func (s *registerSession) closeConn() {
 	if s == nil {
 		return
 	}
+	// plain 模式 200 OK 后保留了 TCP 连接给 messaging，跳过关闭
+	if s.state.tcpConn != nil {
+		// 不关闭 sipUA，否则会关闭底层 TCP 连接
+		s.sipUA = nil
+		s.sipClient = nil
+		s.conn = nil
+		return
+	}
 	// TCP 模式：连接由 sipgo UA 管理，只关闭 UA（会自动关闭底层连接）
 	if s.sipUA != nil {
 		_ = s.sipUA.Close()
@@ -184,6 +192,36 @@ func (s *registerSession) closeConn() {
 	if s.conn != nil {
 		_ = s.conn.Close()
 		s.conn = nil
+	}
+}
+
+// extractTCPConnForMessaging extracts the underlying TCP connection from the
+// register transport and saves it to state.tcpConn for post-REGISTER messaging.
+// This is used in plain (non-sec_agree) mode where the 200 OK response has no
+// Security-Server header, so no IPsec channel is established. The TCP connection
+// used for REGISTER must be kept alive for subsequent SMS/USSD messaging.
+func (s *registerSession) extractTCPConnForMessaging() {
+	if s == nil {
+		logger.Warn(fmt.Sprintf("[%s] extractTCPConn: session is nil", strings.TrimSpace(s.cfg.DeviceID)))
+		return
+	}
+	if s.conn == nil {
+		logger.Warn(fmt.Sprintf("[%s] extractTCPConn: conn is nil, cannot extract TCP connection for messaging", strings.TrimSpace(s.cfg.DeviceID)),
+			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)))
+		return
+	}
+	// ReleaseConn returns the rawConn and nils out the transport's references.
+	conn := s.conn.ReleaseConn()
+	if conn != nil {
+		s.state.tcpConn = conn
+		logger.Info(fmt.Sprintf("[%s] extractTCPConn: TCP 连接已提取保留给 messaging", strings.TrimSpace(s.cfg.DeviceID)),
+			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+			logger.String("conn_type", fmt.Sprintf("%T", conn)),
+			logger.String("local_addr", conn.LocalAddr().String()),
+			logger.String("remote_addr", conn.RemoteAddr().String()))
+	} else {
+		logger.Warn(fmt.Sprintf("[%s] extractTCPConn: ReleaseConn returned nil", strings.TrimSpace(s.cfg.DeviceID)),
+			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)))
 	}
 }
 
@@ -323,6 +361,8 @@ func (s *registerSession) runInitialRegisterFlow(ctx context.Context) (*register
 				s.phase = registerPhaseSecure
 				return runSecureAuthenticatedRegister(ctx, s.cfg, s.swu, s.state, nil, res)
 			}
+			// plain 模式 200 OK：提取 TCP 连接保留给 messaging
+			s.extractTCPConnForMessaging()
 			return finalizeRegisterSuccess(s.cfg, *s.state, res)
 		case sip.StatusUnauthorized, sip.StatusProxyAuthRequired:
 			s.phase = registerPhaseAuth
@@ -525,6 +565,8 @@ func (s *registerSession) runAuthRegisterPhase(ctx context.Context, transport *c
 			s.reportSIPResponse(res.StatusCode, res.Reason, 0, 0, "")
 			lastReq, lastRes = newReq, res
 			if lastRes.StatusCode == sip.StatusOK {
+				// plain 模式 200 OK：提取 TCP 连接保留给 messaging
+				s.extractTCPConnForMessaging()
 				return finalizeRegisterSuccess(s.cfg, *s.state, lastRes)
 			}
 			continue
@@ -556,6 +598,8 @@ func (s *registerSession) runAuthRegisterPhase(ctx context.Context, transport *c
 			s.reportSIPResponse(res.StatusCode, res.Reason, 0, 0, "")
 			lastReq, lastRes = newReq, res
 			if lastRes.StatusCode == sip.StatusOK {
+				// plain 模式 200 OK（sec_agree off）：提取 TCP 连接保留给 messaging
+				s.extractTCPConnForMessaging()
 				return finalizeRegisterSuccess(s.cfg, *s.state, lastRes)
 			}
 			continue
