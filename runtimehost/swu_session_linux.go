@@ -251,6 +251,9 @@ func fromExternalSnapshot(s externalswu.SessionSnapshot) swuSnapshot {
 		PCSCFv6:     append([]net.IP(nil), s.PCSCFv6...),
 		EAPRand:     append([]byte(nil), s.EAPRand...),
 		EAPAutn:     append([]byte(nil), s.EAPAutn...),
+		EAPRES:      append([]byte(nil), s.EAPRES...),
+		EAPCK:       append([]byte(nil), s.EAPCK...),
+		EAPIK:       append([]byte(nil), s.EAPIK...),
 	}
 }
 

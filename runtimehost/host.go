@@ -283,6 +283,9 @@ type swuSnapshot struct {
 	PCSCFv6     []net.IP
 	EAPRand     []byte // EAP-AKA Challenge RAND（供 IMS 预计算复用）
 	EAPAutn     []byte // EAP-AKA Challenge AUTN（供 IMS 预计算复用）
+	EAPRES      []byte // EAP-AKA Challenge RES（供 IMS eap_direct 模式复用）
+	EAPCK       []byte // EAP-AKA Challenge CK（供 IMS eap_direct 模式复用）
+	EAPIK       []byte // EAP-AKA Challenge IK（供 IMS eap_direct 模式复用）
 }
 
 type Instance struct {
@@ -983,6 +986,9 @@ func (i *Instance) runStagedPipeline(ctx context.Context, req StartRequest, gene
 		AKA:                   i.akaProvider,
 		EAPRand:               snapshot.EAPRand,
 		EAPAutn:               snapshot.EAPAutn,
+		EAPRES:                snapshot.EAPRES,
+		EAPCK:                 snapshot.EAPCK,
+		EAPIK:                 snapshot.EAPIK,
 		DeliveryStore:         i.deliveryStore,
 		Dispatcher:            toEventhostDispatcher(req.Dispatch),
 		IMSI:                  i.imsIMSI,

@@ -53,6 +53,9 @@ type StartSessionInput struct {
 	AKA                   sim.AKAProvider
 	EAPRand               []byte // EAP-AKA Challenge RAND（供 IMS 预计算 AKA 复用）
 	EAPAutn               []byte // EAP-AKA Challenge AUTN（供 IMS 预计算 AKA 复用）
+	EAPRES                []byte // EAP-AKA Challenge RES（供 IMS eap_direct 模式复用）
+	EAPCK                 []byte // EAP-AKA Challenge CK（供 IMS eap_direct 模式复用）
+	EAPIK                 []byte // EAP-AKA Challenge IK（供 IMS eap_direct 模式复用）
 	DeliveryStore         messaging.DeliveryStore
 	Dispatcher            eventhost.Dispatcher
 	IMSI                  string
@@ -140,6 +143,9 @@ func internalConfigFromIMS(ims IMSConfig, in StartSessionInput) Config {
 AKA:                   in.AKA,
 	EAPRand:               append([]byte(nil), in.EAPRand...),
 	EAPAutn:               append([]byte(nil), in.EAPAutn...),
+	EAPRES:                append([]byte(nil), in.EAPRES...),
+	EAPCK:                 append([]byte(nil), in.EAPCK...),
+	EAPIK:                 append([]byte(nil), in.EAPIK...),
 	Template:              ims.IMSRegisterTemplate,
 		DigestPassword:        strings.TrimSpace(ims.IMSRegisterTemplate.DigestPassword),
 		MCC:                   strings.TrimSpace(in.MCC),
