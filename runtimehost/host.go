@@ -1208,7 +1208,7 @@ func resolveIMSUserAgent(template policy.IMSRegisterTemplate, fallback string) s
 	if fallback = strings.TrimSpace(fallback); fallback != "" {
 		return fallback
 	}
-	return "User-Agent: Apple iPhone17,2/26.6 (17,2; iOS 26.6; 23G82) Boot/3.0.0 VoIP/1.0 Carrier/59.0"
+	return "Apple iPhone17,2/26.6 (17,2; iOS 26.6; 23G82) Boot/3.0.0 VoIP/1.0 Carrier/59.0"
 }
 
 func resolveIMSPublicURI(prepared *identity.PreparedSession, fallbackIMSI string) string {

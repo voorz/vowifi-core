@@ -250,6 +250,10 @@ func (a *IMSOutboundAgent) StartOutboundCall(ctx context.Context, req OutboundCa
 	if ua == "" {
 		ua = "vowifi-core"
 	}
+	ua = strings.TrimSpace(ua)
+	if len(ua) > len("User-Agent:") && strings.EqualFold(ua[:len("User-Agent:")], "User-Agent:") {
+		ua = strings.TrimSpace(ua[len("User-Agent:"):])
+	}
 	inviteReq.AppendHeader(sip.NewHeader("User-Agent", ua))
 	if len(req.RawSDP) > 0 {
 		inviteReq.AppendHeader(sip.NewHeader("Content-Type", "application/sdp"))

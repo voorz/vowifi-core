@@ -305,7 +305,7 @@ func (t *ussdTransport) buildDialogRequest(method sip.RequestMethod, d *ussdDial
 	req.AppendHeader(sip.NewHeader("CSeq", strconv.Itoa(d.cseq)+" "+string(method)))
 	contact := c.cfg.buildContactHeader(c.registerProfile, c.sipInstanceURN, c.contactUser)
 	req.AppendHeader(sip.NewHeader("Contact", contact))
-	req.AppendHeader(sip.NewHeader("User-Agent", c.registerProfile.UserAgent))
+	req.AppendHeader(sip.NewHeader("User-Agent", NormalizeUserAgent(c.registerProfile.UserAgent)))
 	for _, route := range d.routeSet {
 		req.AppendHeader(sip.NewHeader("Route", route))
 	}

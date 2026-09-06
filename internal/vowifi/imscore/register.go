@@ -472,7 +472,7 @@ func buildRegisterRequest(cfg Config, state registerState, initial bool, variant
 		}
 		req.AppendHeader(sip.NewHeader("Security-Client", secClient))
 	}
-	req.AppendHeader(sip.NewHeader("User-Agent", cfg.UserAgent))
+	req.AppendHeader(sip.NewHeader("User-Agent", voiceclient.NormalizeUserAgent(cfg.UserAgent)))
 	req.SetBody(nil)
 	req.SetDestination(effectiveTransportAddr(cfg))
 	req.SetTransport("TCP")
