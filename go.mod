@@ -9,14 +9,13 @@ require (
 	github.com/pion/srtp/v3 v3.0.12
 	github.com/strongswan/govici v0.8.2
 	github.com/voorz/sipgo v1.5.0
-	github.com/voorz/swu-go v0.3.1
+	github.com/voorz/swu-go v0.3.5
 	go.uber.org/zap v1.27.1
 	golang.org/x/sys v0.47.0
 	gvisor.dev/gvisor v0.0.0-20240521174809-5eedbf551134
 )
 
 require (
-	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/gobwas/httphead v0.1.0 // indirect
 	github.com/gobwas/pool v0.2.1 // indirect
 	github.com/gobwas/ws v1.4.0 // indirect
@@ -26,7 +25,6 @@ require (
 	github.com/pion/randutil v0.1.0 // indirect
 	github.com/pion/rtp v1.10.2 // indirect
 	github.com/pion/transport/v4 v4.0.2 // indirect
-	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/songgao/water v0.0.0-20200317203138-2b4b6d7c09d8 // indirect
 	github.com/vishvananda/netns v0.0.5 // indirect
 	github.com/voorz/netlink v1.3.4 // indirect
