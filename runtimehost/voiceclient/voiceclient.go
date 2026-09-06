@@ -641,7 +641,7 @@ func (c *Client) newRequest(method sip.RequestMethod, target string, initialRegi
 		if c.registerProfile.IncludeSecurityClient {
 			req.AppendHeader(sip.NewHeader("Security-Client", buildSecurityClientHeader(c.registerProfile, c.securityClient)))
 		}
-		req.AppendHeader(sip.NewHeader("User-Agent", c.registerProfile.UserAgent))
+		req.AppendHeader(sip.NewHeader("User-Agent", NormalizeUserAgent(c.registerProfile.UserAgent)))
 		if !c.registerProfile.IncludeRoute && strings.TrimSpace(c.cfg.PCSCFAddr) != "" {
 			// Handset-style REGISTER omits Route but still sends over the discovered P-CSCF.
 			req.SetDestination(c.cfg.PCSCFAddr)

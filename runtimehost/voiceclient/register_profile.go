@@ -59,7 +59,7 @@ func DefaultGBEERegisterProfile() RegisterProfile {
 		SecurityClientFormat:      "full_spaced",
 		SupportedHeader:           "path,sec-agree,gruu",
 		IncludePANIAuthenticated:  true,
-		UserAgent:                 "User-Agent: Apple iPhone17,2/26.6 (17,2; iOS 26.6; 23G82) Boot/3.0.0 VoIP/1.0 Carrier/59.0",
+		UserAgent:                 "Apple iPhone17,2/26.6 (17,2; iOS 26.6; 23G82) Boot/3.0.0 VoIP/1.0 Carrier/59.0",
 	}
 }
 
@@ -123,7 +123,7 @@ func (p RegisterProfile) Normalized() RegisterProfile {
 		out.SupportedHeader = "path,sec-agree,gruu"
 	}
 	if strings.TrimSpace(out.UserAgent) == "" {
-		out.UserAgent = "User-Agent: Apple iPhone17,2/26.6 (17,2; iOS 26.6; 23G82) Boot/3.0.0 VoIP/1.0 Carrier/59.0"
+		out.UserAgent = "Apple iPhone17,2/26.6 (17,2; iOS 26.6; 23G82) Boot/3.0.0 VoIP/1.0 Carrier/59.0"
 	}
 	return out
 }
@@ -239,7 +239,7 @@ func registerProfileForConfig(cfg Config) RegisterProfile {
 		SecurityClientFormat:      "full_spaced",
 		SupportedHeader:           "path,sec-agree,gruu",
 		IncludePANIAuthenticated:  true,
-		UserAgent:                 "User-Agent: Apple iPhone17,2/26.6 (17,2; iOS 26.6; 23G82) Boot/3.0.0 VoIP/1.0 Carrier/59.0",
+		UserAgent:                 "Apple iPhone17,2/26.6 (17,2; iOS 26.6; 23G82) Boot/3.0.0 VoIP/1.0 Carrier/59.0",
 	}
 }
 
