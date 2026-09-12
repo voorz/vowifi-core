@@ -4,10 +4,11 @@
   "mcc": "234",
   "mnc": "87",
   "ike": {
+    "addr": "84.246.113.151",
     "proposals": [
-      "aes128-sha256-modp2048",
-      "aes256-sha256-modp2048",
-      "aes256-sha512-modp2048"
+      "aes256-sha256-prfsha256-modp2048",
+      "aes128-sha256-prfsha256-modp2048",
+      "aes256-sha512-prfsha512-modp2048"
     ],
     "esp_proposals": [
       "aes256gcm16",
