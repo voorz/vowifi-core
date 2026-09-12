@@ -37,6 +37,7 @@ func TestBrandToFilename(t *testing.T) {
 		{"Vodafone UK", "GB", "vodafone_uk"}, // strip country suffix
 		{"O2", "GB", "o2_uk"},             // direct match
 		{"AT&T", "US", "att_us"},          // US, no alias
+		{"Vodafone", "AU/CC/CX", "vodafone_au"}, // multi ISO: AU/CC/CX → au
 		{"", "GB", ""},                    // empty brand
 	}
 	for _, c := range cases {

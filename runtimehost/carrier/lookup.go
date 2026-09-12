@@ -255,6 +255,10 @@ var isoAliases = map[string]string{
 //  2. Strip country suffix from brand: "Vodafone UK" → "vodafone" + _ + "uk"
 //  3. Try original brand without any country suffix (for MVNOs without country)
 //
+// The iso field may contain multiple slash-separated codes (e.g. "AU/CC/CX"
+// for Australia/Christmas Island/Cocos Islands). In that case, each code is
+// tried individually in order, with the first match winning.
+//
 // Returns empty string if no matching file exists in profiles/.
 func brandToFilename(brand, iso string) string {
 	brand = strings.TrimSpace(brand)
@@ -262,24 +266,41 @@ func brandToFilename(brand, iso string) string {
 		return ""
 	}
 
-	isoLower := strings.ToLower(iso)
-	// Apply ISO alias (e.g. gb → uk)
-	if alias, ok := isoAliases[isoLower]; ok {
-		isoLower = alias
+	// Build the list of ISO candidates from the (possibly multi-valued) iso field.
+	// e.g. "AU/CC/CX" → ["au", "cc", "cx"]
+	isoParts := strings.Split(strings.ToLower(iso), "/")
+	isoCandidates := make([]string, 0, len(isoParts))
+	for _, part := range isoParts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		// Apply ISO alias (e.g. gb → uk)
+		if alias, ok := isoAliases[part]; ok {
+			part = alias
+		}
+		isoCandidates = append(isoCandidates, part)
+	}
+	if len(isoCandidates) == 0 {
+		isoCandidates = []string{""}
 	}
 
-	// Strategy 1: direct brand + _ + iso
-	candidate := normalizeBrand(brand) + "_" + isoLower
-	if profileExists(candidate) {
-		return candidate
+	// Strategy 1: direct brand + _ + iso (try each iso candidate)
+	for _, isoLower := range isoCandidates {
+		candidate := normalizeBrand(brand) + "_" + isoLower
+		if profileExists(candidate) {
+			return candidate
+		}
 	}
 
 	// Strategy 2: strip country suffix from brand, then add iso
 	stripped := stripCountrySuffix(brand)
 	if stripped != "" && stripped != brand {
-		candidate2 := normalizeBrand(stripped) + "_" + isoLower
-		if profileExists(candidate2) {
-			return candidate2
+		for _, isoLower := range isoCandidates {
+			candidate2 := normalizeBrand(stripped) + "_" + isoLower
+			if profileExists(candidate2) {
+				return candidate2
+			}
 		}
 	}
 
