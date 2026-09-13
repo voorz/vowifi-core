@@ -33,16 +33,16 @@ func (p *mockCarrierIndexProvider) GetCarrierIndexRawJSON(plmnKey string) string
 // resolves to the correct embedded profile filename.
 func (p *mockCarrierIndexProvider) build() {
 	p.data = map[string]string{
-		"234-33": `{"mcc":"234","mnc":"33","country":{"name":"United Kingdom","iso":"GB","code":"234","region":"Europe"},"operators":[{"brand":"EE","operator":"Everything Everywhere","subs":[{"brand":"EE","names":["EE","Everything Everywhere"],"gid1":"","gid2":""},{"brand":"CMLink UK","names":["CMLink","CMlink"],"gid1":"","gid2":""},{"brand":"CTExcel UK","names":["CTExcel"],"gid1":"","gid2":""}]}]}`,
-		"234-15": `{"mcc":"234","mnc":"15","country":{"name":"United Kingdom","iso":"GB","code":"234","region":"Europe"},"operators":[{"brand":"Vodafone UK","operator":"Vodafone","subs":[]}]}`,
-		"234-30": `{"mcc":"234","mnc":"30","country":{"name":"United Kingdom","iso":"GB","code":"234","region":"Europe"},"operators":[{"brand":"BT","operator":"BT","subs":[]}]}`,
-		"234-10": `{"mcc":"234","mnc":"10","country":{"name":"United Kingdom","iso":"GB","code":"234","region":"Europe"},"operators":[{"brand":"O2","operator":"Telefonica","subs":[{"brand":"O2 Giffgaff UK","names":["giffgaff"],"gid1":"","gid2":""}]}]}`,
-		"234-20": `{"mcc":"234","mnc":"20","country":{"name":"United Kingdom","iso":"GB","code":"234","region":"Europe"},"operators":[{"brand":"3","operator":"Three UK","subs":[]}]}`,
+		"234-33":  `{"mcc":"234","mnc":"33","country":{"name":"United Kingdom","iso":"GB","code":"234","region":"Europe"},"operators":[{"brand":"EE","operator":"Everything Everywhere","subs":[{"brand":"EE","names":["EE","Everything Everywhere"],"gid1":"","gid2":""},{"brand":"CMLink UK","names":["CMLink","CMlink"],"gid1":"","gid2":""},{"brand":"CTExcel UK","names":["CTExcel"],"gid1":"","gid2":""}]}]}`,
+		"234-15":  `{"mcc":"234","mnc":"15","country":{"name":"United Kingdom","iso":"GB","code":"234","region":"Europe"},"operators":[{"brand":"Vodafone UK","operator":"Vodafone","subs":[]}]}`,
+		"234-30":  `{"mcc":"234","mnc":"30","country":{"name":"United Kingdom","iso":"GB","code":"234","region":"Europe"},"operators":[{"brand":"BT","operator":"BT","subs":[]}]}`,
+		"234-10":  `{"mcc":"234","mnc":"10","country":{"name":"United Kingdom","iso":"GB","code":"234","region":"Europe"},"operators":[{"brand":"O2","operator":"Telefonica","subs":[{"brand":"O2 Giffgaff UK","names":["giffgaff"],"gid1":"","gid2":""}]}]}`,
+		"234-20":  `{"mcc":"234","mnc":"20","country":{"name":"United Kingdom","iso":"GB","code":"234","region":"Europe"},"operators":[{"brand":"3","operator":"Three UK","subs":[]}]}`,
 		"310-260": `{"mcc":"310","mnc":"260","country":{"name":"United States","iso":"US","code":"310","region":"Americas"},"operators":[{"brand":"tmobile US","operator":"T-Mobile","subs":[]}]}`,
 		"310-240": `{"mcc":"310","mnc":"240","country":{"name":"United States","iso":"US","code":"310","region":"Americas"},"operators":[{"brand":"tmobile US","operator":"T-Mobile","subs":[]}]}`,
 		"310-280": `{"mcc":"310","mnc":"280","country":{"name":"United States","iso":"US","code":"310","region":"Americas"},"operators":[{"brand":"AT&T","operator":"AT&T","subs":[]}]}`,
 		"310-410": `{"mcc":"310","mnc":"410","country":{"name":"United States","iso":"US","code":"310","region":"Americas"},"operators":[{"brand":"LycaMobile","operator":"Lycamobile","subs":[]}]}`,
-		"204-4":  `{"mcc":"204","mnc":"4","country":{"name":"Netherlands","iso":"NL","code":"204","region":"Europe"},"operators":[{"brand":"Vodafone","operator":"Vodafone","subs":[]}]}`,
+		"204-4":   `{"mcc":"204","mnc":"4","country":{"name":"Netherlands","iso":"NL","code":"204","region":"Europe"},"operators":[{"brand":"Vodafone","operator":"Vodafone","subs":[]}]}`,
 		"530-5":   `{"mcc":"530","mnc":"5","country":{"name":"New Zealand","iso":"NZ","code":"530","region":"Oceania"},"operators":[{"brand":"spark NZ","operator":"Spark","subs":[]}]}`,
 		"530-24":  `{"mcc":"530","mnc":"24","country":{"name":"New Zealand","iso":"NZ","code":"530","region":"Oceania"},"operators":[{"brand":"2degrees NZ","operator":"2degrees","subs":[]}]}`,
 		"530-1":   `{"mcc":"530","mnc":"1","country":{"name":"New Zealand","iso":"NZ","code":"530","region":"Oceania"},"operators":[{"brand":"one NZ","operator":"One NZ","subs":[]}]}`,

@@ -12,24 +12,24 @@ const imsMmtelICSIRef = "urn%3Aurn-7%3A3gpp-service.ims.icsi.mmtel"
 
 // RegisterProfile controls carrier-specific IMS REGISTER headers.
 type RegisterProfile struct {
-	ContactFeatures          string
-	IncludeAcceptContact     bool
-	IncludePPreferredID      bool
-	IncludePVisitedNetworkID bool
+	ContactFeatures           string
+	IncludeAcceptContact      bool
+	IncludePPreferredID       bool
+	IncludePVisitedNetworkID  bool
 	IncludePAccessNetworkInfo bool
-	IncludeRoute             bool
-	IncludeCellularNetwork   bool
-	IncludeSecurityClient    bool
-	IncludeRequireSecAgree   bool
-	InitialAuthorization     string
-	SecurityClientFormat     string
-	SupportedHeader          string
-	AllowHeader              string
-	IcsiRef                  string
-	IncludePANIAuthenticated bool
-	UserAgent                string
-	ContactUserRandom        bool
-	RegisterExpirySeconds    int
+	IncludeRoute              bool
+	IncludeCellularNetwork    bool
+	IncludeSecurityClient     bool
+	IncludeRequireSecAgree    bool
+	InitialAuthorization      string
+	SecurityClientFormat      string
+	SupportedHeader           string
+	AllowHeader               string
+	IcsiRef                   string
+	IncludePANIAuthenticated  bool
+	UserAgent                 string
+	ContactUserRandom         bool
+	RegisterExpirySeconds     int
 	// Voice session headers (INVITE/MESSAGE/UPDATE etc.)
 	VoiceSupportedHeader   string
 	VoiceAllowHeader       string

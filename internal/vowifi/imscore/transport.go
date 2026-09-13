@@ -9,11 +9,11 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/voorz/sipgo"
+	"github.com/voorz/sipgo/sip"
 	"github.com/voorz/swu-go/pkg/logger"
 	"github.com/voorz/vowifi-core/internal/vowifi/ipsec3gpp"
 	"github.com/voorz/vowifi-core/runtimehost/voiceclient"
-	"github.com/voorz/sipgo"
-	"github.com/voorz/sipgo/sip"
 )
 
 func newSWUNetstack(localIP net.IP, dp voiceclient.PacketDataplane, traceID, deviceID string) (voiceclient.SWUTCPDialer, error) {
@@ -100,39 +100,39 @@ func newSIPStack(cfg Config, dialer *fixedConnDialer, swu voiceclient.SWUTCPDial
 	tpOpts := []sip.TransportLayerOption{
 		sip.WithTransportLayerLogger(deviceLogger),
 		sip.WithTransportLayerTransports(sip.TransportsConfig{
-				TCP: &sip.TransportTCP{
-					DialContext: func(ctx context.Context, laddr net.Addr, raddr net.Addr) (net.Conn, error) {
-						if dialer != nil {
-							return dialer.dial(ctx, laddr, raddr)
+			TCP: &sip.TransportTCP{
+				DialContext: func(ctx context.Context, laddr net.Addr, raddr net.Addr) (net.Conn, error) {
+					if dialer != nil {
+						return dialer.dial(ctx, laddr, raddr)
+					}
+					if swu != nil {
+						tcpAddr, ok := raddr.(*net.TCPAddr)
+						if !ok || tcpAddr == nil {
+							return nil, fmt.Errorf("imscore: invalid TCP remote addr %v", raddr)
 						}
-						if swu != nil {
-							tcpAddr, ok := raddr.(*net.TCPAddr)
-							if !ok || tcpAddr == nil {
-								return nil, fmt.Errorf("imscore: invalid TCP remote addr %v", raddr)
-							}
-							port := localPort
-							if localTCP, ok := laddr.(*net.TCPAddr); ok && localTCP != nil && localTCP.Port > 0 {
-								port = localTCP.Port
-							}
-							transportAddr := effectiveTransportAddr(cfg)
-							transportHost, transportPortStr, err := net.SplitHostPort(transportAddr)
-							if err != nil {
-								return nil, err
-							}
-							transportPort, err := strconv.Atoi(transportPortStr)
-							if err != nil {
-								return nil, err
-							}
-							transportIP := net.ParseIP(transportHost)
-							if transportIP == nil {
-								return nil, fmt.Errorf("imscore: invalid transport P-CSCF %q", transportAddr)
-							}
-							return swu.DialContextTCP(ctx, cfg.LocalIP, port, transportIP, transportPort)
+						port := localPort
+						if localTCP, ok := laddr.(*net.TCPAddr); ok && localTCP != nil && localTCP.Port > 0 {
+							port = localTCP.Port
 						}
-						return net.DialTimeout("tcp", raddr.String(), registerTransactionTimeout)
-					},
+						transportAddr := effectiveTransportAddr(cfg)
+						transportHost, transportPortStr, err := net.SplitHostPort(transportAddr)
+						if err != nil {
+							return nil, err
+						}
+						transportPort, err := strconv.Atoi(transportPortStr)
+						if err != nil {
+							return nil, err
+						}
+						transportIP := net.ParseIP(transportHost)
+						if transportIP == nil {
+							return nil, fmt.Errorf("imscore: invalid transport P-CSCF %q", transportAddr)
+						}
+						return swu.DialContextTCP(ctx, cfg.LocalIP, port, transportIP, transportPort)
+					}
+					return net.DialTimeout("tcp", raddr.String(), registerTransactionTimeout)
 				},
-			}),
+			},
+		}),
 	}
 	uaOpts := []sipgo.UserAgentOption{
 		sipgo.WithUserAgent(cfg.UserAgent),

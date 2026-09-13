@@ -398,11 +398,11 @@ func (n *swuNetstack) outboundLoop() {
 		if transformer != nil {
 			transformed, err := transformer.TransformOutbound(payload)
 			if err != nil {
-logger.Warn(fmt.Sprintf("[%s] SWu 出站 ESP 转换失败", n.deviceID),
-			logger.String("trace_id", n.traceID),
-			logger.String("device_id", n.deviceID),
-				logger.String("error", err.Error()),
-				logger.Int("packet_len", len(payload)))
+				logger.Warn(fmt.Sprintf("[%s] SWu 出站 ESP 转换失败", n.deviceID),
+					logger.String("trace_id", n.traceID),
+					logger.String("device_id", n.deviceID),
+					logger.String("error", err.Error()),
+					logger.Int("packet_len", len(payload)))
 				continue
 			}
 			fmt.Printf("[ESP-DBG] outboundLoop: after transform len=%d (was %d)\n", len(transformed), len(payload))
@@ -412,9 +412,9 @@ logger.Warn(fmt.Sprintf("[%s] SWu 出站 ESP 转换失败", n.deviceID),
 		}
 
 		if err := n.dp.SendInnerPacket(payload); err != nil {
-logger.Warn(fmt.Sprintf("[%s] SWu 出站内部数据包被拒绝", n.deviceID),
-			logger.String("trace_id", n.traceID),
-			logger.String("device_id", n.deviceID),
+			logger.Warn(fmt.Sprintf("[%s] SWu 出站内部数据包被拒绝", n.deviceID),
+				logger.String("trace_id", n.traceID),
+				logger.String("device_id", n.deviceID),
 				logger.String("error", err.Error()),
 				logger.Int("packet_len", len(payload)))
 		}

@@ -40,9 +40,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/voorz/swu-go/pkg/logger"
 	"github.com/voorz/sipgo"
 	"github.com/voorz/sipgo/sip"
+	"github.com/voorz/swu-go/pkg/logger"
 
 	"github.com/voorz/vowifi-core/engine/sim"
 	"github.com/voorz/vowifi-core/runtimehost/messaging"
@@ -270,22 +270,22 @@ func Dial(ctx context.Context, cfg Config) (*Client, error) {
 	}
 	if swuTCP != nil {
 		tpOpts = append(tpOpts, sip.WithTransportLayerTransports(sip.TransportsConfig{
-				TCP: &sip.TransportTCP{
-					DialContext: func(ctx context.Context, laddr net.Addr, raddr net.Addr) (net.Conn, error) {
-						tcpAddr, ok := raddr.(*net.TCPAddr)
-						if !ok || tcpAddr == nil {
-							return nil, fmt.Errorf("voiceclient: invalid SWu TCP remote addr %v", raddr)
+			TCP: &sip.TransportTCP{
+				DialContext: func(ctx context.Context, laddr net.Addr, raddr net.Addr) (net.Conn, error) {
+					tcpAddr, ok := raddr.(*net.TCPAddr)
+					if !ok || tcpAddr == nil {
+						return nil, fmt.Errorf("voiceclient: invalid SWu TCP remote addr %v", raddr)
+					}
+					localPort := cfg.localPort()
+					if localTCP, ok := laddr.(*net.TCPAddr); ok && localTCP != nil {
+						if localTCP.Port > 0 {
+							localPort = localTCP.Port
 						}
-						localPort := cfg.localPort()
-						if localTCP, ok := laddr.(*net.TCPAddr); ok && localTCP != nil {
-							if localTCP.Port > 0 {
-								localPort = localTCP.Port
-							}
-						}
-						return swuTCP.DialContextTCP(ctx, cfg.LocalIP, localPort, tcpAddr.IP, tcpAddr.Port)
-					},
+					}
+					return swuTCP.DialContextTCP(ctx, cfg.LocalIP, localPort, tcpAddr.IP, tcpAddr.Port)
 				},
-			}))
+			},
+		}))
 	}
 	uaOptions := []sipgo.UserAgentOption{
 		sipgo.WithUserAgent(registerProfile.UserAgent),

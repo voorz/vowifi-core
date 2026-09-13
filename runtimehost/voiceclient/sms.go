@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/voorz/sipgo/sip"
 	"github.com/google/uuid"
+	"github.com/voorz/sipgo/sip"
 
 	"github.com/voorz/swu-go/pkg/logger"
 	"github.com/voorz/vowifi-core/runtimehost/messaging"
@@ -249,22 +249,22 @@ func (c *Client) SendSMSPart(ctx context.Context, req messaging.SMSSendRequest) 
 	if err != nil {
 		return messaging.SMSSendResult{State: "failed", ErrorText: fmt.Sprintf("RP-DATA encode: %v", err)}, err
 	}
-	
+
 	smscURI, err := c.smsServiceCentreURI()
 	if err != nil {
 		return messaging.SMSSendResult{State: "failed", ErrorText: fmt.Sprintf("SMSC URI: %v", err)}, err
 	}
-	
+
 	sipReq, err := c.newRequest(sip.MESSAGE, smscURI, false)
 	if err != nil {
 		return messaging.SMSSendResult{State: "failed", ErrorText: fmt.Sprintf("SIP request: %v", err)}, err
 	}
-	
+
 	sipReq.AppendHeader(sip.NewHeader("Content-Type", messaging.IMS3GPPSMSContentType))
 	sipReq.AppendHeader(sip.NewHeader("P-Preferred-Identity", "<"+c.cfg.PublicURI+">"))
 	sipReq.AppendHeader(sip.NewHeader("P-Asserted-Identity", "<"+c.cfg.PublicURI+">"))
 	sipReq.SetBody(rpData)
-	
+
 	res, err := c.doTransaction(ctx, sipReq)
 	if err != nil {
 		logger.Warn(fmt.Sprintf("[%s] IMS SMS 分片发送失败", strings.TrimSpace(c.cfg.DeviceID)),
@@ -274,20 +274,20 @@ func (c *Client) SendSMSPart(ctx context.Context, req messaging.SMSSendRequest) 
 			logger.Int("part_no", part.PartNo),
 			logger.String("error", err.Error()))
 		return messaging.SMSSendResult{
-			CallID:  sipReq.CallID().Value(),
-			RPMR:    req.Part.PartNo,
-			State:   "failed",
-			SIPCode: 0,
+			CallID:    sipReq.CallID().Value(),
+			RPMR:      req.Part.PartNo,
+			State:     "failed",
+			SIPCode:   0,
 			ErrorText: err.Error(),
 		}, err
 	}
-	
+
 	result := messaging.SMSSendResult{
-		CallID: sipReq.CallID().Value(),
-		RPMR:   req.Part.PartNo,
+		CallID:  sipReq.CallID().Value(),
+		RPMR:    req.Part.PartNo,
 		SIPCode: res.StatusCode,
 	}
-	
+
 	if res.StatusCode < 200 || res.StatusCode >= 300 {
 		result.State = "failed"
 		result.ErrorText = res.Reason

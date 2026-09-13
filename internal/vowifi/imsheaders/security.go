@@ -92,10 +92,10 @@ func SelectSecurityServerOffer(offers []SecurityOffer, clientMechanisms []policy
 	}
 
 	var (
-		bestMatch   *SecurityOffer
-		bestMatchQ  = -1.0
-		bestAny     *SecurityOffer
-		bestAnyQ    = -1.0
+		bestMatch  *SecurityOffer
+		bestMatchQ = -1.0
+		bestAny    *SecurityOffer
+		bestAnyQ   = -1.0
 	)
 
 	for i := range offers {

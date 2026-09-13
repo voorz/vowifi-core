@@ -46,12 +46,12 @@ func startTransportRuntime(parent context.Context, cfg Config, swu voiceclient.S
 
 	ctx, cancel := context.WithCancel(parent)
 	rt := &transportRuntime{
-		cfg:       cfg,
-		policy:    policy,
-		transport: transport,
-		portCConn: portCConn,
+		cfg:        cfg,
+		policy:     policy,
+		transport:  transport,
+		portCConn:  portCConn,
 		tcpWriteCh: make(chan sipWriteTask, 8),
-		cancel:    cancel,
+		cancel:     cancel,
 	}
 	rt.portSListener = newSingleConnListener(&net.TCPAddr{
 		IP:   cfg.LocalIP,
@@ -103,10 +103,10 @@ func (rt *transportRuntime) runTCPWriteChannel(ctx context.Context) {
 				close(task.done)
 			}
 			if err != nil {
-logger.Warn(fmt.Sprintf("[%s] IMS port-c 写入失败", strings.TrimSpace(rt.cfg.DeviceID)),
-				logger.String("trace_id", strings.TrimSpace(rt.cfg.TraceID)),
-				logger.String("device_id", strings.TrimSpace(rt.cfg.DeviceID)),
-				logger.String("error", err.Error()))
+				logger.Warn(fmt.Sprintf("[%s] IMS port-c 写入失败", strings.TrimSpace(rt.cfg.DeviceID)),
+					logger.String("trace_id", strings.TrimSpace(rt.cfg.TraceID)),
+					logger.String("device_id", strings.TrimSpace(rt.cfg.DeviceID)),
+					logger.String("error", err.Error()))
 			}
 		}
 	}
@@ -177,10 +177,10 @@ func (rt *transportRuntime) drainInboundPortS(ctx context.Context, conn *ipsec3g
 		n, err := conn.Read(buf)
 		if err != nil {
 			if err != io.EOF {
-logger.Warn(fmt.Sprintf("[%s] IMS port-s 读取结束", strings.TrimSpace(rt.cfg.DeviceID)),
-				logger.String("trace_id", strings.TrimSpace(rt.cfg.TraceID)),
-				logger.String("device_id", strings.TrimSpace(rt.cfg.DeviceID)),
-				logger.String("error", err.Error()))
+				logger.Warn(fmt.Sprintf("[%s] IMS port-s 读取结束", strings.TrimSpace(rt.cfg.DeviceID)),
+					logger.String("trace_id", strings.TrimSpace(rt.cfg.TraceID)),
+					logger.String("device_id", strings.TrimSpace(rt.cfg.DeviceID)),
+					logger.String("error", err.Error()))
 			}
 			return
 		}

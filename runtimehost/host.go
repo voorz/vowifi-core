@@ -133,17 +133,17 @@ const PhaseSIMReady = "sim_ready"
 
 // VoWiFi pipeline 阶段标识
 const (
-	StageSimInit        = "sim_init"
-	StageEPDGDns        = "epdg_dns"
-	StageTunnelConnect  = "tunnel_connect"
-	StageTunnelReady    = "tunnel_ready"
-	StageIMSRegister    = "ims_register"
-	StageIMSChallenge   = "ims_challenge"
-	StageIMSProtected   = "ims_protected"
-	StageIMSReady       = "ims_ready"
-	StageSMSReady       = "sms_ready"
-	StageCallReady      = "call_ready"
-	StageFailed         = "failed"
+	StageSimInit       = "sim_init"
+	StageEPDGDns       = "epdg_dns"
+	StageTunnelConnect = "tunnel_connect"
+	StageTunnelReady   = "tunnel_ready"
+	StageIMSRegister   = "ims_register"
+	StageIMSChallenge  = "ims_challenge"
+	StageIMSProtected  = "ims_protected"
+	StageIMSReady      = "ims_ready"
+	StageSMSReady      = "sms_ready"
+	StageCallReady     = "call_ready"
+	StageFailed        = "failed"
 )
 
 type SessionConfig struct {

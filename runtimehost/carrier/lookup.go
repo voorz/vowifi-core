@@ -47,8 +47,8 @@ type carrierIndexSub struct {
 
 // carrierIndexOperator represents an operator entry in the carrier index.
 type carrierIndexOperator struct {
-	Brand    string             `json:"brand"`
-	Operator string             `json:"operator"`
+	Brand    string            `json:"brand"`
+	Operator string            `json:"operator"`
 	Subs     []carrierIndexSub `json:"subs"`
 }
 

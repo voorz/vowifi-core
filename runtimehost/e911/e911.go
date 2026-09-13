@@ -6,9 +6,9 @@ import (
 )
 
 var (
-	ErrUnsupportedProvider      = errors.New("unsupported provider")
-	ErrChallengeNotImplemented  = errors.New("challenge not implemented")
-	ErrWebsheetUnavailable      = errors.New("websheet unavailable")
+	ErrUnsupportedProvider     = errors.New("unsupported provider")
+	ErrChallengeNotImplemented = errors.New("challenge not implemented")
+	ErrWebsheetUnavailable     = errors.New("websheet unavailable")
 )
 
 type HeaderPair struct {

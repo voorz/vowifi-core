@@ -24,12 +24,12 @@ type ussdTransport struct {
 }
 
 type ussdDialog struct {
-	callID    string
-	cseq      int
-	fromTag   string
-	toTag     string
+	callID     string
+	cseq       int
+	fromTag    string
+	toTag      string
 	contactURI string
-	routeSet  []string
+	routeSet   []string
 }
 
 // NewUSSDTransport creates a messaging.USSDTransport backed by the given voiceclient.Client.

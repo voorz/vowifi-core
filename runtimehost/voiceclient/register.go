@@ -10,10 +10,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/voorz/swu-go/pkg/logger"
+	"github.com/icholy/digest"
 	"github.com/voorz/sipgo"
 	"github.com/voorz/sipgo/sip"
-	"github.com/icholy/digest"
+	"github.com/voorz/swu-go/pkg/logger"
 
 	"github.com/voorz/vowifi-core/runtimehost/simauth"
 )
@@ -159,21 +159,21 @@ func (c *Client) registerOnceAttempt(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("initial REGISTER: %w", err)
 	}
-logger.Info(fmt.Sprintf("[%s] IMS REGISTER 收到响应", strings.TrimSpace(c.cfg.DeviceID)),
-			logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
-			logger.String("device_id", strings.TrimSpace(c.cfg.DeviceID)),
-			logger.Int("status", res.StatusCode),
-			logger.String("reason", res.Reason))
+	logger.Info(fmt.Sprintf("[%s] IMS REGISTER 收到响应", strings.TrimSpace(c.cfg.DeviceID)),
+		logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
+		logger.String("device_id", strings.TrimSpace(c.cfg.DeviceID)),
+		logger.Int("status", res.StatusCode),
+		logger.String("reason", res.Reason))
 	if res.StatusCode == 423 {
 		res, req, err = c.retryRegisterAfterIntervalTooBrief(ctx, res)
 		if err != nil {
 			return fmt.Errorf("interval-too-brief retry: %w", err)
 		}
-logger.Info(fmt.Sprintf("[%s] IMS REGISTER 收到间隔重试响应", strings.TrimSpace(c.cfg.DeviceID)),
-				logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
-				logger.String("device_id", strings.TrimSpace(c.cfg.DeviceID)),
-				logger.Int("status", res.StatusCode),
-				logger.String("reason", res.Reason))
+		logger.Info(fmt.Sprintf("[%s] IMS REGISTER 收到间隔重试响应", strings.TrimSpace(c.cfg.DeviceID)),
+			logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
+			logger.String("device_id", strings.TrimSpace(c.cfg.DeviceID)),
+			logger.Int("status", res.StatusCode),
+			logger.String("reason", res.Reason))
 	}
 
 	for round := 0; round < maxChallengeRounds && (res.StatusCode == 401 || res.StatusCode == 407); round++ {
@@ -197,10 +197,10 @@ logger.Info(fmt.Sprintf("[%s] IMS REGISTER 收到间隔重试响应", strings.Tr
 	if res.StatusCode != 200 {
 		return fmt.Errorf("unexpected final REGISTER response: %d %s", res.StatusCode, res.Reason)
 	}
-logger.Info(fmt.Sprintf("[%s] IMS REGISTER 完成", strings.TrimSpace(c.cfg.DeviceID)),
-			logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
-			logger.String("device_id", strings.TrimSpace(c.cfg.DeviceID)),
-			logger.Int("status", res.StatusCode))
+	logger.Info(fmt.Sprintf("[%s] IMS REGISTER 完成", strings.TrimSpace(c.cfg.DeviceID)),
+		logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
+		logger.String("device_id", strings.TrimSpace(c.cfg.DeviceID)),
+		logger.Int("status", res.StatusCode))
 	return nil
 }
 
@@ -242,10 +242,10 @@ func (c *Client) retryRegisterAfterIntervalTooBrief(ctx context.Context, prevRes
 		}
 	}
 	c.cfg.RegisterExpiry = time.Duration(expires) * time.Second
-logger.Info(fmt.Sprintf("[%s] IMS REGISTER 使用更大 Expires 重试", strings.TrimSpace(c.cfg.DeviceID)),
-			logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
-			logger.String("device_id", strings.TrimSpace(c.cfg.DeviceID)),
-			logger.Int("expires", expires))
+	logger.Info(fmt.Sprintf("[%s] IMS REGISTER 使用更大 Expires 重试", strings.TrimSpace(c.cfg.DeviceID)),
+		logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
+		logger.String("device_id", strings.TrimSpace(c.cfg.DeviceID)),
+		logger.Int("expires", expires))
 	req, err := c.newRequest(sip.REGISTER, c.cfg.PCSCFAddr, false)
 	if err != nil {
 		return nil, nil, err
@@ -312,9 +312,9 @@ func (c *Client) selectDigestChallenge(prevRes *sip.Response) (*digest.Challenge
 				continue
 			}
 			score := c.scoreDigestChallenge(chal)
-logger.Info(fmt.Sprintf("[%s] IMS REGISTER 挑战候选", strings.TrimSpace(c.cfg.DeviceID)),
-					logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
-					logger.String("device_id", strings.TrimSpace(c.cfg.DeviceID)),
+			logger.Info(fmt.Sprintf("[%s] IMS REGISTER 挑战候选", strings.TrimSpace(c.cfg.DeviceID)),
+				logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
+				logger.String("device_id", strings.TrimSpace(c.cfg.DeviceID)),
 				logger.String("realm", chal.Realm),
 				logger.String("algorithm", chal.Algorithm),
 				logger.Int("nonce_len", decodedNonceLen(chal.Nonce)),

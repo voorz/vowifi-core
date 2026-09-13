@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/voorz/swu-go/pkg/logger"
 	"github.com/voorz/sipgo/sip"
+	"github.com/voorz/swu-go/pkg/logger"
 )
 
 type registerAttemptCandidate struct {

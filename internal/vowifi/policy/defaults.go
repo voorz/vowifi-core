@@ -71,4 +71,3 @@ func ResolveIMSRegisterTemplate(mcc, mnc, spn string) IMSRegisterTemplate {
 	}
 	return GenericTemplate()
 }
-

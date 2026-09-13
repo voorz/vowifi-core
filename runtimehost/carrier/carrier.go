@@ -39,13 +39,13 @@ type Preset struct {
 	PhoneIMEI string `json:"phone_imei,omitempty"`
 	// IMSPcscfAddr optionally overrides the IKE-discovered P-CSCF ("host:port").
 	// Useful when ePDG assigns a silent node but a known-good P-CSCF responds.
-	IMSPcscfAddr string `json:"ims_pcscf_addr,omitempty"`
-	E911Enabled              bool   `json:"e911_enabled,omitempty"`
-	E911Provider             string `json:"e911_provider,omitempty"`
-	E911Websheet             string `json:"e911_websheet,omitempty"`
-	E911EntitlementEndpoint  string `json:"e911_entitlement_endpoint,omitempty"`
-	RFOffDelay               int    `json:"rf_off_delay,omitempty"`
-	Blocked                  bool   `json:"blocked,omitempty"`
+	IMSPcscfAddr            string `json:"ims_pcscf_addr,omitempty"`
+	E911Enabled             bool   `json:"e911_enabled,omitempty"`
+	E911Provider            string `json:"e911_provider,omitempty"`
+	E911Websheet            string `json:"e911_websheet,omitempty"`
+	E911EntitlementEndpoint string `json:"e911_entitlement_endpoint,omitempty"`
+	RFOffDelay              int    `json:"rf_off_delay,omitempty"`
+	Blocked                 bool   `json:"blocked,omitempty"`
 }
 
 type EffectiveCarrierConfigInput struct {
@@ -85,7 +85,6 @@ var (
 // of which network the SIM is on. Add an MCC here to block all operators
 // under that country.
 var blockedMCCs = map[string]bool{}
-
 
 // LoadCarrierOverrides loads a JSON array of Preset from path, replacing any
 // previously loaded overrides. An empty path or a nonexistent file is not an
@@ -178,23 +177,23 @@ func lookupWithJSON(mcc, mnc, spn string) (Preset, bool) {
 // so that L1 functions can consume JSON profile fields uniformly.
 func carrierProfileToPreset(p *CarrierProfile) Preset {
 	return Preset{
-		ID:                     p.ID,
-		MCC:                    p.MCC,
-		MNC:                    p.MNC,
-		EPDGAddr:               p.IKE.Addr,
-		AKAAppPreference:       p.EAP.AppPreference,
-		IMSTAC:                 uint32(p.Device.IMSTAC),
-		IMSCellID:              uint32(p.Device.IMSCellID),
-		IMSCellIDMode:          p.Device.IMSCellIDMode,
-		IMSRegisterProfile:     p.Device.IMSRegisterProfile,
-		PhoneIMEI:              p.Device.IMEI,
-		IMSPcscfAddr:           p.IMS.PCSCFAddr,
-		E911Enabled:            p.E911.Enabled,
-		E911Provider:           p.E911.Provider,
-		E911Websheet:           p.E911.Websheet,
+		ID:                      p.ID,
+		MCC:                     p.MCC,
+		MNC:                     p.MNC,
+		EPDGAddr:                p.IKE.Addr,
+		AKAAppPreference:        p.EAP.AppPreference,
+		IMSTAC:                  uint32(p.Device.IMSTAC),
+		IMSCellID:               uint32(p.Device.IMSCellID),
+		IMSCellIDMode:           p.Device.IMSCellIDMode,
+		IMSRegisterProfile:      p.Device.IMSRegisterProfile,
+		PhoneIMEI:               p.Device.IMEI,
+		IMSPcscfAddr:            p.IMS.PCSCFAddr,
+		E911Enabled:             p.E911.Enabled,
+		E911Provider:            p.E911.Provider,
+		E911Websheet:            p.E911.Websheet,
 		E911EntitlementEndpoint: p.E911.EntitlementEndpoint,
-		RFOffDelay:             p.IKE.RFOffDelay,
-		Blocked:                p.Blocked,
+		RFOffDelay:              p.IKE.RFOffDelay,
+		Blocked:                 p.Blocked,
 	}
 }
 

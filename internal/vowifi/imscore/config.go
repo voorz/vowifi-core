@@ -55,8 +55,8 @@ type Config struct {
 
 	RegisterExpirySeconds int
 
-	DeliveryStore   messaging.DeliveryStore
-	Dispatcher       eventhost.Dispatcher
+	DeliveryStore messaging.DeliveryStore
+	Dispatcher    eventhost.Dispatcher
 
 	// OnIMSReady is called after IMS REGISTER succeeds and the secure
 	// messaging channel is attached. It gives the caller access to the

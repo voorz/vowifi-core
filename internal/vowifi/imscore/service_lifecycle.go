@@ -347,7 +347,7 @@ func (s *Service) startInboundSIPServer(ctx context.Context, tcpLn net.Listener,
 
 	if tcpLn != nil {
 		go func() {
-		if err := srv.ServeTCP(tcpLn); err != nil {
+			if err := srv.ServeTCP(tcpLn); err != nil {
 				logger.Warn(fmt.Sprintf("[%s] 入站 SIP Server TCP 退出", strings.TrimSpace(s.cfg.DeviceID)),
 					logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
 					logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
@@ -357,7 +357,7 @@ func (s *Service) startInboundSIPServer(ctx context.Context, tcpLn net.Listener,
 	}
 	if udpConn != nil {
 		go func() {
-		if err := srv.ServeUDP(udpConn); err != nil {
+			if err := srv.ServeUDP(udpConn); err != nil {
 				logger.Warn(fmt.Sprintf("[%s] 入站 SIP Server UDP 退出", strings.TrimSpace(s.cfg.DeviceID)),
 					logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
 					logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),

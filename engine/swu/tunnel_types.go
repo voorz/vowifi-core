@@ -301,14 +301,14 @@ type IKELivenessController interface {
 type MOBIKENATObservation struct{}
 type MOBIKENATChange struct {
 	RequiresMOBIKEUpdate bool
-	Request             MOBIKERequest
+	Request              MOBIKERequest
 }
 type MOBIKENATEndpoint struct{}
 type IKELivenessDecision struct {
-	Action           IKELivenessAction
-	Dead             bool
-	MissedDPDProbes  int
-	Reason           string
+	Action          IKELivenessAction
+	Dead            bool
+	MissedDPDProbes int
+	Reason          string
 }
 type IKELivenessSnapshot struct {
 	Dead bool

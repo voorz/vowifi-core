@@ -34,7 +34,6 @@ func buildInitialSecurityClient(template policy.IMSRegisterTemplate, variant ini
 	)
 }
 
-
 func initialSecurityClientProbeMechanisms(template policy.IMSRegisterTemplate) []policy.IPSec3GPPSecurityMechanism {
 	type pair struct {
 		alg  string

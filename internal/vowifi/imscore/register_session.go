@@ -10,10 +10,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/voorz/swu-go/pkg/logger"
+	"github.com/google/uuid"
 	"github.com/voorz/sipgo"
 	"github.com/voorz/sipgo/sip"
-	"github.com/google/uuid"
+	"github.com/voorz/swu-go/pkg/logger"
 
 	"github.com/voorz/vowifi-core/runtimehost/voiceclient"
 )
@@ -263,13 +263,13 @@ func (s *registerSession) logFSM(event, reason string, variantIndex, variantTota
 func (s *registerSession) reportSIPResponse(statusCode int, reason string, variantIdx, variantTotal int, variantName string) {
 	if s.progressCb != nil {
 		s.progressCb(RegisterProgress{
-			Stage:          "ims_register",
-			StageLabel:     fmt.Sprintf("SIP %d %s", statusCode, reason),
-			VariantIndex:   variantIdx,
-			VariantTotal:   variantTotal,
-			VariantName:    variantName,
-			SIPStatus:      statusCode,
-			SIPReason:      reason,
+			Stage:        "ims_register",
+			StageLabel:   fmt.Sprintf("SIP %d %s", statusCode, reason),
+			VariantIndex: variantIdx,
+			VariantTotal: variantTotal,
+			VariantName:  variantName,
+			SIPStatus:    statusCode,
+			SIPReason:    reason,
 		})
 	}
 }
@@ -306,7 +306,7 @@ func (s *registerSession) runInitialRegisterFlow(ctx context.Context) (*register
 			continue
 		}
 
-			logger.Info(fmt.Sprintf("[%s] IMS REGISTER 初始响应", strings.TrimSpace(s.cfg.DeviceID)),
+		logger.Info(fmt.Sprintf("[%s] IMS REGISTER 初始响应", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
 			logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.String("pcscf", s.cfg.PCSCFAddr),
@@ -404,18 +404,18 @@ func (s *registerSession) runInitialRegisterFlow(ctx context.Context) (*register
 			}
 			outcome := decideRegisterFailureOutcome(s.cfg, res.StatusCode, res.Reason, i, len(variants), false)
 			if outcome.retryVariant {
-			logger.Info(fmt.Sprintf("[%s] IMS REGISTER 初始拒绝回退", strings.TrimSpace(s.cfg.DeviceID)),
-				logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
-				logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
-				logger.Int("status", res.StatusCode),
-				logger.String("reason", res.Reason),
-				logger.Int("variant_index", i+1),
-				logger.Int("variant_total", len(variants)),
-				logger.String("variant_name", strings.TrimSpace(variant.name)),
-				logger.String("next_variant_name", strings.TrimSpace(variants[i+1].name)),
-				logger.String("next_initial_auth_mode", variants[i+1].initialAuth),
-				logger.Bool("next_include_pani", variants[i+1].includePANI),
-				logger.Bool("next_include_cellular", variants[i+1].includeCellular))
+				logger.Info(fmt.Sprintf("[%s] IMS REGISTER 初始拒绝回退", strings.TrimSpace(s.cfg.DeviceID)),
+					logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+					logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
+					logger.Int("status", res.StatusCode),
+					logger.String("reason", res.Reason),
+					logger.Int("variant_index", i+1),
+					logger.Int("variant_total", len(variants)),
+					logger.String("variant_name", strings.TrimSpace(variant.name)),
+					logger.String("next_variant_name", strings.TrimSpace(variants[i+1].name)),
+					logger.String("next_initial_auth_mode", variants[i+1].initialAuth),
+					logger.Bool("next_include_pani", variants[i+1].includePANI),
+					logger.Bool("next_include_cellular", variants[i+1].includeCellular))
 				i++
 				continue
 			}

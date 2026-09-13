@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/voorz/sipgo/sip"
 	"github.com/icholy/digest"
+	"github.com/voorz/sipgo/sip"
 
 	"github.com/voorz/vowifi-core/engine/sim"
 	"github.com/voorz/vowifi-core/internal/vowifi/policy"

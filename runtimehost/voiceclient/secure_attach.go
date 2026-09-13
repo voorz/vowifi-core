@@ -10,8 +10,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/voorz/sipgo/sip"
 	"github.com/google/uuid"
+	"github.com/voorz/sipgo/sip"
 	"github.com/voorz/swu-go/pkg/logger"
 )
 

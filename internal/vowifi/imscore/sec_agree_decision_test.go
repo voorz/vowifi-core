@@ -3,8 +3,8 @@ package imscore
 import (
 	"testing"
 
-	"github.com/voorz/vowifi-core/internal/vowifi/policy"
 	"github.com/voorz/sipgo/sip"
+	"github.com/voorz/vowifi-core/internal/vowifi/policy"
 )
 
 func TestBuildSecurityVerifyPreservesSecurityServerValueVerbatim(t *testing.T) {

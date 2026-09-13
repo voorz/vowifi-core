@@ -33,12 +33,12 @@ func TestBrandToFilename(t *testing.T) {
 	cases := []struct {
 		brand, iso, want string
 	}{
-		{"EE", "GB", "ee_uk"},            // ISO alias: gb→uk
-		{"Vodafone UK", "GB", "vodafone_uk"}, // strip country suffix
-		{"O2", "GB", "o2_uk"},             // direct match
-		{"AT&T", "US", "att_us"},          // US, no alias
+		{"EE", "GB", "ee_uk"},                   // ISO alias: gb→uk
+		{"Vodafone UK", "GB", "vodafone_uk"},    // strip country suffix
+		{"O2", "GB", "o2_uk"},                   // direct match
+		{"AT&T", "US", "att_us"},                // US, no alias
 		{"Vodafone", "AU/CC/CX", "vodafone_au"}, // multi ISO: AU/CC/CX → au
-		{"", "GB", ""},                    // empty brand
+		{"", "GB", ""},                          // empty brand
 	}
 	for _, c := range cases {
 		t.Run(c.brand+"_"+c.iso, func(t *testing.T) {
@@ -226,13 +226,13 @@ func TestGIDPrefixMatch(t *testing.T) {
 		simGID, mapGID string
 		want           bool
 	}{
-		{"AABB", "AABB", true},     // exact match
-		{"AABBCC", "AABB", true},   // SIM longer than map
-		{"AABB", "AABBCC", true},   // map longer than SIM
-		{"AABB", "CCDD", false},    // no match
-		{"", "AABB", false},        // empty SIM GID
-		{"AABB", "", false},        // empty map GID
-		{"aabb", "AABB", true},     // case insensitive (lowercased by caller)
+		{"AABB", "AABB", true},   // exact match
+		{"AABBCC", "AABB", true}, // SIM longer than map
+		{"AABB", "AABBCC", true}, // map longer than SIM
+		{"AABB", "CCDD", false},  // no match
+		{"", "AABB", false},      // empty SIM GID
+		{"AABB", "", false},      // empty map GID
+		{"aabb", "AABB", true},   // case insensitive (lowercased by caller)
 	}
 	for i, c := range cases {
 		t.Run(string(rune('A'+i)), func(t *testing.T) {

@@ -54,8 +54,8 @@ type IMSOutboundAgent struct {
 	// and the IMS media path. nil disables media relay (call setup only).
 	MediaRelay *RTPRelayConfig
 
-	mu       sync.Mutex
-	dialogs  map[string]*imsDialogState
+	mu      sync.Mutex
+	dialogs map[string]*imsDialogState
 }
 
 // IMSProfile carries the IMS identity information needed to build
@@ -79,15 +79,15 @@ type IMSRegistrationBinding struct {
 // IMSRegistrationUpdate is passed to UpdateIMSRegistration to
 // refresh the agent's transport and registration state.
 type IMSRegistrationUpdate struct {
-	Transport     *sipgo.Client
-	UA            *sipgo.UserAgent
-	Profile       IMSProfile
-	Registration  IMSRegistrationBinding
-	Domain        string
-	UserAgent     string
+	Transport        *sipgo.Client
+	UA               *sipgo.UserAgent
+	Profile          IMSProfile
+	Registration     IMSRegistrationBinding
+	Domain           string
+	UserAgent        string
 	SessionExpires   int
 	SessionRefresher string
-	MediaRelay    *RTPRelayConfig
+	MediaRelay       *RTPRelayConfig
 }
 
 // IMSRegistrationUpdater is implemented by agents that can receive
@@ -361,7 +361,7 @@ func (a *IMSOutboundAgent) StartOutboundCall(ctx context.Context, req OutboundCa
 		clientEP := relay.ClientEndpoint()
 		localSDPBody = BuildSDPAnswer(SDPInfo{
 			ConnectionIP: clientEP.ConnectionIP,
-			MediaPort:     clientEP.MediaPort,
+			MediaPort:    clientEP.MediaPort,
 			Payloads:     remoteSDP.Payloads,
 			Direction:    "sendrecv",
 		})
@@ -411,7 +411,7 @@ func (a *IMSOutboundAgent) StartOutboundCall(ctx context.Context, req OutboundCa
 		ce := relay.ClientEndpoint()
 		result.LocalSDP = SDPInfo{
 			ConnectionIP: ce.ConnectionIP,
-			MediaPort:     ce.MediaPort,
+			MediaPort:    ce.MediaPort,
 			Payloads:     remoteSDP.Payloads,
 			Direction:    "sendrecv",
 		}
@@ -527,5 +527,3 @@ func normalizeSessionRefresher(value string) string {
 		return ""
 	}
 }
-
-

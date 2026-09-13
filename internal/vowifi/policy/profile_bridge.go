@@ -86,11 +86,11 @@ func carrierProfileToTemplate(p *carrier.CarrierProfile) IMSRegisterTemplate {
 	// Convert register policy
 	if p.IMS.RegisterPolicy != nil {
 		t.RegisterPolicy = IMSRegisterPolicy{
-			ID:                              p.IMS.RegisterPolicy.ID,
-			TemporaryStatusCodes:            p.IMS.RegisterPolicy.TemporaryStatusCodes,
-			ForbiddenStatusCodes:            p.IMS.RegisterPolicy.ForbiddenStatusCodes,
+			ID:                               p.IMS.RegisterPolicy.ID,
+			TemporaryStatusCodes:             p.IMS.RegisterPolicy.TemporaryStatusCodes,
+			ForbiddenStatusCodes:             p.IMS.RegisterPolicy.ForbiddenStatusCodes,
 			InitialRejectFallbackStatusCodes: p.IMS.RegisterPolicy.InitialRejectFallbackStatusCodes,
-			TemporaryRetrySeconds:           p.IMS.RegisterPolicy.TemporaryRetrySeconds,
+			TemporaryRetrySeconds:            p.IMS.RegisterPolicy.TemporaryRetrySeconds,
 		}
 	}
 

@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/voorz/vowifi-core/internal/vowifi/policy"
 	"github.com/voorz/sipgo"
+	"github.com/voorz/vowifi-core/internal/vowifi/policy"
 	"github.com/voorz/vowifi-core/runtimehost/messaging"
 	"github.com/voorz/vowifi-core/runtimehost/voiceclient"
 )

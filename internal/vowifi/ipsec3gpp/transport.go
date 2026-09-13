@@ -143,9 +143,9 @@ func (t *Transport) TransformOutbound(packet []byte) ([]byte, error) {
 		return append([]byte(nil), packet...), nil
 	}
 	fmt.Printf("[ESP-DBG] outbound matched: src=%s dst=%s srcPort=%d dstPort=%d nextHeader=%d flowLocalPort=%d flowRemotePort=%d\n",
-			net.IP(parsed.src).String(), net.IP(parsed.dst).String(),
-			parsed.srcPort, parsed.dstPort, parsed.nextHeader,
-			flow.flow.LocalPort, flow.flow.RemotePort)
+		net.IP(parsed.src).String(), net.IP(parsed.dst).String(),
+		parsed.srcPort, parsed.dstPort, parsed.nextHeader,
+		flow.flow.LocalPort, flow.flow.RemotePort)
 	if parsed.nextHeader != ipProtoTCP && parsed.nextHeader != ipProtoUDP {
 		t.transformErrors.Add(1)
 		return nil, fmt.Errorf("ipsec3gpp: unsupported outbound transport protocol %d", parsed.nextHeader)
@@ -197,7 +197,7 @@ func (t *Transport) TransformInbound(packet []byte) ([]byte, error) {
 		return nil, err
 	}
 	fmt.Printf("[ESP-DBG] inbound ESP: src=%s dst=%s spi=0x%08x seq=%d\n",
-			net.IP(parsed.src).String(), net.IP(parsed.dst).String(), spi, seq)
+		net.IP(parsed.src).String(), net.IP(parsed.dst).String(), spi, seq)
 	flow, ok := t.inbound[spi]
 	if !ok {
 		t.transformErrors.Add(1)

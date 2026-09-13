@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/voorz/sipgo/sip"
-	"github.com/voorz/vowifi-core/internal/vowifi/policy"
 	"github.com/voorz/swu-go/pkg/logger"
+	"github.com/voorz/vowifi-core/internal/vowifi/policy"
 )
 
 type registrarCandidate struct {

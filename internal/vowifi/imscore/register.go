@@ -13,10 +13,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/voorz/swu-go/pkg/logger"
+	"github.com/icholy/digest"
 	"github.com/voorz/sipgo"
 	"github.com/voorz/sipgo/sip"
-	"github.com/icholy/digest"
+	"github.com/voorz/swu-go/pkg/logger"
 
 	"github.com/voorz/vowifi-core/engine/sim"
 	"github.com/voorz/vowifi-core/internal/vowifi/imsheaders"
@@ -209,7 +209,7 @@ func runSecureAuthenticatedRegister(ctx context.Context, cfg Config, swuTCP voic
 	}
 	_ = secureTransport.ReleaseConn()
 
-	state.secureConn = nil    // TCP+ESP mode: ESP handled by netstack, no SecureChannelConn
+	state.secureConn = nil     // TCP+ESP mode: ESP handled by netstack, no SecureChannelConn
 	state.tcpConn = secureConn // Keep TCP connection alive for messaging
 	return finalizeRegisterSuccess(cfg, *state, finalRes)
 }

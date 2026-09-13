@@ -82,21 +82,21 @@ func (i *Instance) startSWuSession(ctx context.Context, req StartRequest, epdgIP
 	}
 
 	cfg := &externalswu.Config{
-		EpDGAddr:                epdgIP,
-		EpDGPort:                uint16(port),
-		APN:                     "ims",
-		LocalAddr:               localIPStr,
-		SIM:                     externalSIMAdapter{inner: req.SIM},
-		EnableDriver:            true,
-		DataplaneMode:           externalDataplaneMode(req.Dataplane.Mode),
-		MCC:                     strings.TrimSpace(req.Profile.MCC),
-		MNC:                     mnc,
-		IMSI:                    strings.TrimSpace(req.Profile.IMSI),
-		LocalPort:               0,
+		EpDGAddr:         epdgIP,
+		EpDGPort:         uint16(port),
+		APN:              "ims",
+		LocalAddr:        localIPStr,
+		SIM:              externalSIMAdapter{inner: req.SIM},
+		EnableDriver:     true,
+		DataplaneMode:    externalDataplaneMode(req.Dataplane.Mode),
+		MCC:              strings.TrimSpace(req.Profile.MCC),
+		MNC:              mnc,
+		IMSI:             strings.TrimSpace(req.Profile.IMSI),
+		LocalPort:        0,
 		EAPMACValidation: true,
-		DeviceID:                req.DeviceID,
-		TraceID:                 req.TraceID,
-		IKERetryCount:           req.IKERetryCount,
+		DeviceID:         req.DeviceID,
+		TraceID:          req.TraceID,
+		IKERetryCount:    req.IKERetryCount,
 	}
 	// Pass the resolved EAP identity (ISIM IMPI or IMSI-derived NAI) from
 	// the identity layer into swu-go so it doesn't hardcode an IMSI NAI.

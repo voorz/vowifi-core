@@ -34,7 +34,7 @@ type IMSProfileData struct {
 	Expires                   int
 	VoiceSupportedHeader      string
 	VoiceAllowHeader          string
-	VoiceAcceptContact         string
+	VoiceAcceptContact        string
 	VoicePPreferredService    string
 	AuthorizationIdentity     string
 }
