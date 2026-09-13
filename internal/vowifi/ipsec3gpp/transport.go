@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"net"
 	"sync/atomic"
 
 	"github.com/voorz/swu-go/pkg/crypto"
@@ -135,8 +136,16 @@ func (t *Transport) TransformOutbound(packet []byte) ([]byte, error) {
 	flow, ok := t.matchOutbound(parsed)
 	if !ok {
 		t.passthroughPackets.Add(1)
+		fmt.Printf("[ESP-DBG] outbound passthrough: src=%s dst=%s srcPort=%d dstPort=%d nextHeader=%d localIP=%s remoteIP=%s\n",
+			net.IP(parsed.src).String(), net.IP(parsed.dst).String(),
+			parsed.srcPort, parsed.dstPort, parsed.nextHeader,
+			net.IP(t.policy.LocalIP).String(), net.IP(t.policy.RemoteIP).String())
 		return append([]byte(nil), packet...), nil
 	}
+	fmt.Printf("[ESP-DBG] outbound matched: src=%s dst=%s srcPort=%d dstPort=%d nextHeader=%d flowLocalPort=%d flowRemotePort=%d\n",
+			net.IP(parsed.src).String(), net.IP(parsed.dst).String(),
+			parsed.srcPort, parsed.dstPort, parsed.nextHeader,
+			flow.flow.LocalPort, flow.flow.RemotePort)
 	if parsed.nextHeader != ipProtoTCP && parsed.nextHeader != ipProtoUDP {
 		t.transformErrors.Add(1)
 		return nil, fmt.Errorf("ipsec3gpp: unsupported outbound transport protocol %d", parsed.nextHeader)
@@ -146,6 +155,10 @@ func (t *Transport) TransformOutbound(packet []byte) ([]byte, error) {
 		t.transformErrors.Add(1)
 		return nil, err
 	}
+	fmt.Printf("[ESP-DBG] outbound ESP encapsulated: spi=0x%08x encAlg=%s authAlg=%s encKeyLen=%d authKeyLen=%d payloadLen=%d espLen=%d\n",
+		flow.outboundSA.SPI, flow.flow.EncAlg, flow.flow.AuthAlg,
+		len(flow.outboundSA.EncryptionKey), len(flow.outboundSA.IntegrityKey),
+		len(parsed.transportPayload), len(esp))
 	out, err := replaceIPPayload(parsed.header, esp, ipProtoESP)
 	if err != nil {
 		t.transformErrors.Add(1)
@@ -174,6 +187,8 @@ func (t *Transport) TransformInbound(packet []byte) ([]byte, error) {
 	}
 	if parsed.nextHeader != ipProtoESP {
 		t.passthroughPackets.Add(1)
+		fmt.Printf("[ESP-DBG] inbound passthrough (not ESP): src=%s dst=%s nextHeader=%d\n",
+			net.IP(parsed.src).String(), net.IP(parsed.dst).String(), parsed.nextHeader)
 		return append([]byte(nil), packet...), nil
 	}
 	spi, seq, err := parseESPSPISeq(parsed.transportPayload)
@@ -181,14 +196,18 @@ func (t *Transport) TransformInbound(packet []byte) ([]byte, error) {
 		t.transformErrors.Add(1)
 		return nil, err
 	}
+	fmt.Printf("[ESP-DBG] inbound ESP: src=%s dst=%s spi=0x%08x seq=%d\n",
+			net.IP(parsed.src).String(), net.IP(parsed.dst).String(), spi, seq)
 	flow, ok := t.inbound[spi]
 	if !ok {
 		t.transformErrors.Add(1)
+		fmt.Printf("[ESP-DBG] inbound unknown SPI: 0x%08x, known SPIs: %v\n", spi, t.inboundSPIs())
 		return nil, fmt.Errorf("ipsec3gpp: unknown inbound ESP SPI 0x%08x", spi)
 	}
 	plain, nextHeader, err := decapsulateTransport(parsed.transportPayload, flow.inboundSA)
 	if err != nil {
 		t.transformErrors.Add(1)
+		fmt.Printf("[ESP-DBG] inbound decapsulate error: %v\n", err)
 		return nil, err
 	}
 	if !flow.replay.Accept(seq) {
@@ -581,4 +600,16 @@ func decapsulateTransport(packet []byte, sa *ipsec.SecurityAssociation) ([]byte,
 	}
 	nextHeader := plaintext[len(plaintext)-1]
 	return plaintext[:len(plaintext)-2-padLen], nextHeader, nil
+}
+
+// inboundSPIs returns a slice of all known inbound SPI values for debug logging.
+func (t *Transport) inboundSPIs() []uint32 {
+	if t == nil {
+		return nil
+	}
+	out := make([]uint32, 0, len(t.inbound))
+	for spi := range t.inbound {
+		out = append(out, spi)
+	}
+	return out
 }

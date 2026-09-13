@@ -330,6 +330,8 @@ func (n *swuNetstack) inboundLoop() {
 				continue
 			}
 
+			fmt.Printf("[ESP-DBG] inboundLoop: received packet len=%d firstByte=0x%02x\n", len(packet), packet[0])
+
 			// If IPsec is active, try to decrypt ESP packets.
 			n.ipsecMu.RLock()
 			transformer := n.ipsecTransport
@@ -337,14 +339,16 @@ func (n *swuNetstack) inboundLoop() {
 			if transformer != nil {
 				decrypted, err := transformer.TransformInbound(packet)
 				if err != nil {
-			logger.Debug(fmt.Sprintf("[%s] SWu 入站 ESP 转换失败", n.deviceID),
-					logger.String("trace_id", n.traceID),
-					logger.String("device_id", n.deviceID),
-					logger.String("error", err.Error()),
-					logger.Int("packet_len", len(packet)))
+					logger.Debug(fmt.Sprintf("[%s] SWu 入站 ESP 转换失败", n.deviceID),
+						logger.String("trace_id", n.traceID),
+						logger.String("device_id", n.deviceID),
+						logger.String("error", err.Error()),
+						logger.Int("packet_len", len(packet)))
 					continue
 				}
 				packet = decrypted
+			} else {
+				fmt.Printf("[ESP-DBG] inboundLoop: no transformer, passthrough len=%d\n", len(packet))
 			}
 
 			if n.dispatchRawIPPacket(packet) {
@@ -385,6 +389,8 @@ func (n *swuNetstack) outboundLoop() {
 			continue
 		}
 
+		fmt.Printf("[ESP-DBG] outboundLoop: gVisor packet len=%d firstByte=0x%02x\n", len(payload), payload[0])
+
 		// If IPsec is active, wrap matching packets in ESP.
 		n.ipsecMu.RLock()
 		transformer := n.ipsecTransport
@@ -399,7 +405,10 @@ logger.Warn(fmt.Sprintf("[%s] SWu 出站 ESP 转换失败", n.deviceID),
 				logger.Int("packet_len", len(payload)))
 				continue
 			}
+			fmt.Printf("[ESP-DBG] outboundLoop: after transform len=%d (was %d)\n", len(transformed), len(payload))
 			payload = transformed
+		} else {
+			fmt.Printf("[ESP-DBG] outboundLoop: no transformer, passthrough len=%d\n", len(payload))
 		}
 
 		if err := n.dp.SendInnerPacket(payload); err != nil {

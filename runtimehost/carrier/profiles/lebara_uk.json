@@ -6,8 +6,8 @@
   "ike": {
     "addr": "84.246.113.151",
     "proposals": [
-      "aes256-sha256-prfsha256-modp2048",
       "aes128-sha256-prfsha256-modp2048",
+      "aes256-sha256-prfsha256-modp2048",
       "aes256-sha512-prfsha512-modp2048"
     ],
     "esp_proposals": [
@@ -99,7 +99,8 @@
     "include_p_visited_network_id": true,
     "include_p_access_network_info": true,
     "include_route": true,
-    "include_security_client": true
+    "include_security_client": true,
+    "transport_mode": "tcp"
   },
   "e911": {},
   "device": {},
