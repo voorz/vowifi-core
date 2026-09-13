@@ -8,8 +8,8 @@ require (
 	github.com/pion/rtcp v1.2.16
 	github.com/pion/srtp/v3 v3.0.12
 	github.com/strongswan/govici v0.8.2
-	github.com/voorz/sipgo v1.6.3
-	github.com/voorz/swu-go v0.3.7
+	github.com/voorz/sipgo v1.6.4
+	github.com/voorz/swu-go v0.3.8
 	go.uber.org/zap v1.27.1
 	golang.org/x/sys v0.47.0
 	gvisor.dev/gvisor v0.0.0-20240521174809-5eedbf551134
