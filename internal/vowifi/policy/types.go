@@ -46,6 +46,16 @@ type IMSRegisterTemplate struct {
 	// IKEGatewayPrefixScores ranks ePDG/P-CSCF IPv6 gateway candidates by
 	// prefix. When nil, callers fall back to DefaultIKEGatewayPrefixScores().
 	IKEGatewayPrefixScores []IKEGatewayPrefixScore
+
+	// TCPKeepaliveSeconds controls how often to send application-layer
+	// keepalive on the IMS TCP connection to prevent P-CSCF from closing
+	// idle connections. 0 means use the default (15s). Negative disables.
+	TCPKeepaliveSeconds int
+
+	// OptionsPingIntervalSeconds controls how often to send SIP OPTIONS
+	// ping as a higher-level liveness check. 0 means use the default (30s).
+	// Negative disables. This is complementary to TCPKeepaliveSeconds.
+	OptionsPingIntervalSeconds int
 }
 
 // IPSec3GPPSecurityMechanism is one ipsec-3gpp offer the client advertises in

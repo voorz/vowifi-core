@@ -83,4 +83,13 @@ type Config struct {
 	// The caller (vohive-next) should forward the CANCEL to Linphone and
 	// clean up any associated relay. nil disables CANCEL forwarding.
 	OnInboundCancel func(ctx context.Context, deviceID, callID string) error
+
+	// TCPKeepaliveSeconds controls how often to send SIP OPTIONS keepalive on
+	// the IMS TCP connection to prevent P-CSCF from closing idle connections.
+	// 0 means use the default (15s). Negative disables.
+	TCPKeepaliveSeconds int
+
+	// OptionsPingIntervalSeconds is reserved for future SIP OPTIONS liveness
+	// probing at the application layer. Currently unused.
+	OptionsPingIntervalSeconds int
 }

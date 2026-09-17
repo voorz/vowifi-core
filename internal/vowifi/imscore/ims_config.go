@@ -104,6 +104,8 @@ func IMSConfigFromVoice(v voiceclient.Config, template policy.IMSRegisterTemplat
 		IMSRegisterTemplate:     template,
 		IMSRegisterPolicySource: policySource,
 		Transport:               transport,
+		TCPKeepaliveSeconds:        template.TCPKeepaliveSeconds,
+		OptionsPingIntervalSeconds: template.OptionsPingIntervalSeconds,
 		UserAgent:               strings.TrimSpace(v.RegisterProfile.UserAgent),
 		SIPInstance:             strings.TrimSpace(v.SIPInstanceURN),
 	}
@@ -156,6 +158,8 @@ func internalConfigFromIMS(ims IMSConfig, in StartSessionInput) Config {
 		RegisterExpirySeconds: in.RegisterExpirySeconds,
 		DeliveryStore:         in.DeliveryStore,
 		Dispatcher:            in.Dispatcher,
+		TCPKeepaliveSeconds:        ims.TCPKeepaliveSeconds,
+		OptionsPingIntervalSeconds: ims.OptionsPingIntervalSeconds,
 	}
 	if cfg.UserAgent == "" {
 		cfg.UserAgent = "Apple iPhone17,2/26.6 (17,2; iOS 26.6; 23G82) Boot/3.0.0 VoIP/1.0 Carrier/59.0"

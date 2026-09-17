@@ -105,5 +105,9 @@ func carrierProfileToTemplate(p *carrier.CarrierProfile) IMSRegisterTemplate {
 		}
 	}
 
+	// TCP keepalive and OPTIONS ping intervals
+	t.TCPKeepaliveSeconds = p.IMS.TCPKeepaliveSeconds
+	t.OptionsPingIntervalSeconds = p.IMS.OptionsPingIntervalSeconds
+
 	return t
 }

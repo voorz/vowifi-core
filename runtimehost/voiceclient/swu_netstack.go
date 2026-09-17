@@ -339,11 +339,11 @@ func (n *swuNetstack) inboundLoop() {
 			if transformer != nil {
 				decrypted, err := transformer.TransformInbound(packet)
 				if err != nil {
-					logger.Debug(fmt.Sprintf("[%s] SWu 入站 ESP 转换失败", n.deviceID),
-						logger.String("trace_id", n.traceID),
-						logger.String("device_id", n.deviceID),
-						logger.String("error", err.Error()),
-						logger.Int("packet_len", len(packet)))
+					// logger.Debug(fmt.Sprintf("[%s] SWu 入站 ESP 转换失败", n.deviceID),
+				// 	logger.String("trace_id", n.traceID),
+				// 	logger.String("device_id", n.deviceID),
+				// 	logger.String("error", err.Error()),
+				// 	logger.Int("packet_len", len(packet)))
 					continue
 				}
 				packet = decrypted

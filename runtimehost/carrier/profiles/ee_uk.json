@@ -78,7 +78,8 @@
     "include_p_visited_network_id": true,
     "include_p_access_network_info": true,
     "include_route": true,
-    "include_security_client": true
+    "include_security_client": true,
+    "tcp_keepalive_seconds": 15
   },
   "e911": {},
   "device": {},
