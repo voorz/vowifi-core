@@ -111,13 +111,12 @@ func (s *Service) sendSubscribeReg(ctx context.Context) error {
 
 // buildSubscribeRegRequest constructs the SUBSCRIBE(reg) SIP request.
 func (s *Service) buildSubscribeRegRequest() (*sip.Request, error) {
-	// Determine the Request-URI: use home domain.
-	homeDomain := strings.TrimSpace(s.cfg.HomeDomain)
-	if homeDomain == "" {
-		homeDomain = strings.TrimSpace(s.cfg.Realm)
-	}
-	if homeDomain == "" {
-		return nil, fmt.Errorf("home domain is empty")
+	// Request-URI: use PublicURI (IMPU) as AOR, matching community version.
+	// S-CSCF needs the user part to resolve the subscriber via Cx interface.
+	// Using bare domain causes "500 Cx Unable To Comply".
+	publicURI := strings.TrimSpace(s.cfg.PublicURI)
+	if publicURI == "" {
+		return nil, fmt.Errorf("public URI (IMPU) is empty")
 	}
 
 	// Log domain source for debugging (matches community closed-source log line 121).
@@ -125,11 +124,11 @@ func (s *Service) buildSubscribeRegRequest() (*sip.Request, error) {
 		logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
 		logger.String("cfg_realm", strings.TrimSpace(s.cfg.Realm)),
 		logger.String("auth_realm", ""),
-		logger.String("home_domain", homeDomain))
+		logger.String("public_uri", publicURI))
 
 	// Build the SUBSCRIBE request via voiceclient's newRequest.
 	// This ensures Security-Verify, Supported, Allow, and other headers are set.
-	req, err := s.inner.NewRequest(sip.SUBSCRIBE, homeDomain, false)
+	req, err := s.inner.NewRequest(sip.SUBSCRIBE, publicURI, false)
 	if err != nil {
 		return nil, err
 	}
