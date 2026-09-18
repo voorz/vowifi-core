@@ -165,14 +165,20 @@ func AttachSecureMessaging(ctx context.Context, cfg Config, conn net.Conn) (*Cli
 	// The refresh interval = expires * 80%. SkipRegister is true because the
 	// initial registration was done by imscore, but we still need periodic
 	// refresh to prevent the P-CSCF from tearing down the session.
-	if cfg.RegisterExpiry > 0 {
-		c.startRefreshLoop(cfg.RegisterExpiry)
-	} else {
-		// Default to 3600s if not specified.
-		c.startRefreshLoop(3600 * time.Second)
-	}
+if cfg.RegisterExpiry > 0 {
+	c.startRefreshLoop(cfg.RegisterExpiry)
+} else {
+	// Default to 3600s if not specified.
+	c.startRefreshLoop(3600 * time.Second)
+}
 
-	return c, nil
+// Start SIP OPTIONS keepalive loop to prevent P-CSCF from closing idle
+// TCP connections between REGISTER refreshes. The keepalive interval
+// is controlled by TCPKeepaliveSeconds (default 15s) and OptionsPingIntervalSeconds
+// (default 30s) from the carrier profile.
+c.startKeepaliveLoop(cfg.TCPKeepaliveSeconds, cfg.OptionsPingIntervalSeconds)
+
+return c, nil
 }
 
 // appendHeaderToken appends a token to a SIP header if not already present.

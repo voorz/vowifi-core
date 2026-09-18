@@ -144,6 +144,16 @@ type Config struct {
 	// SkipRegister skips the REGISTER handshake when IMS registration was already
 	// completed by imscore (ipsec-3gpp path).
 	SkipRegister bool
+
+	// TCPKeepaliveSeconds controls how often to send SIP OPTIONS keepalive on
+	// the IMS TCP connection to prevent P-CSCF from closing idle connections.
+	// 0 means use the default (15s). Negative disables.
+	TCPKeepaliveSeconds int
+
+	// OptionsPingIntervalSeconds controls how often to send SIP OPTIONS
+	// ping as a higher-level liveness check. 0 means use the default (30s).
+	// Negative disables.
+	OptionsPingIntervalSeconds int
 }
 
 func (c Config) contactURI() string {
@@ -660,12 +670,16 @@ func (c *Client) newRequest(method sip.RequestMethod, target string, initialRegi
 		return nil, err
 	}
 	req := sip.NewRequest(method, recipient)
-	if method == sip.MESSAGE {
+	// Service-Route (as Route headers) applies to all non-REGISTER requests
+	// (MESSAGE, SUBSCRIBE, INVITE, etc.) per IMS routing rules.
+	if method != sip.REGISTER {
 		for _, route := range c.cfg.ServiceRoutes {
 			if value := strings.TrimSpace(route); value != "" {
 				req.AppendHeader(sip.NewHeader("Route", value))
 			}
 		}
+	}
+	if method == sip.MESSAGE {
 		if identity := strings.TrimSpace(c.cfg.PublicURI); identity != "" {
 			req.AppendHeader(sip.NewHeader("P-Preferred-Identity", "<"+identity+">"))
 		}

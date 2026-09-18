@@ -513,6 +513,8 @@ func (s *Service) attachMessaging(ctx context.Context, winningPCSCF string, reg 
 		SIPInstanceURN:  s.cfg.SIPInstanceURN,
 		RegisterProfile: voiceclient.SimAdminGBEERegisterProfile(),
 		SkipRegister:    true,
+		TCPKeepaliveSeconds:        s.cfg.TCPKeepaliveSeconds,
+		OptionsPingIntervalSeconds: s.cfg.OptionsPingIntervalSeconds,
 	}
 	if s.cfg.RegisterExpirySeconds > 0 {
 		voiceCfg.RegisterExpiry = time.Duration(s.cfg.RegisterExpirySeconds) * time.Second

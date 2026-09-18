@@ -89,9 +89,10 @@ type Config struct {
 	// 0 means use the default (15s). Negative disables.
 	TCPKeepaliveSeconds int
 
-	// OptionsPingIntervalSeconds is reserved for future SIP OPTIONS liveness
-	// probing at the application layer. Currently unused.
-	OptionsPingIntervalSeconds int
+// OptionsPingIntervalSeconds controls how often to send SIP OPTIONS
+// ping as a higher-level liveness check. 0 means use the default (30s).
+// Negative disables. This is complementary to TCPKeepaliveSeconds.
+OptionsPingIntervalSeconds int
 
 	// OnIMSConnDown is called when the IMS TCP connection to the P-CSCF is
 	// closed (EOF, reset, or read error). The caller should trigger pipeline
