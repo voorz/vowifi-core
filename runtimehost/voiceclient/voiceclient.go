@@ -200,8 +200,7 @@ type Client struct {
 	client     *sipgo.Client
 	server     *sipgo.Server
 	packetConn net.PacketConn
-	swuTCP     *swuNetstack
-	secure     *secureMessagingTransport
+	swuTCP *swuNetstack
 
 	registerProfile RegisterProfile
 	sipInstanceURN  string
@@ -214,6 +213,20 @@ type Client struct {
 	closed   bool
 	stopCh   chan struct{}
 	stopDone chan struct{}
+
+	// connDone is closed when the injected TCP connection is closed by the
+	// remote side (EOF, reset, or read error). Used by imscore to detect
+	// P-CSCF TCP teardown and trigger pipeline recovery.
+	// Per 改动点 5 spec.
+	connDone     chan struct{}
+	connDoneOnce sync.Once
+
+	// OnInboundMessage is called when an inbound SIP MESSAGE arrives on the
+	// injected TCP connection. If set, it takes precedence over the default
+	// delivery-report handler. Used by imscore to handle inbound SMS (RP-DATA).
+	OnInboundMessage func(ctx context.Context, req *sip.Request, tx sip.ServerTransaction)
+	// inboundCtx is the context passed to OnInboundMessage (the imscore lifecycle context).
+	inboundCtx context.Context
 }
 
 // Dial builds the SIP UA/client/server bound to cfg.LocalIP, performs the
@@ -469,6 +482,12 @@ func probeTCPBind(localIP net.IP) error {
 	return ln.Close()
 }
 
+// SetInboundCtx sets the context passed to OnInboundMessage callback.
+// Used by imscore to pass its lifecycle context.
+func (c *Client) SetInboundCtx(ctx context.Context) {
+	c.inboundCtx = ctx
+}
+
 // Close stops the re-register loop and the SIP listener/client. Best
 // effort: does not attempt an explicit un-REGISTER (Expires: 0) since the
 // registration will simply lapse, and the caller tearing down the SWu
@@ -542,11 +561,76 @@ func (c *Client) LocalIP() net.IP {
 	return c.cfg.LocalIP
 }
 
-func (c *Client) shutdownSIPStack() error {
-	if c.secure != nil {
-		_ = c.secure.Close()
-		c.secure = nil
+// LocalPort returns the local SIP port.
+func (c *Client) LocalPort() int {
+	if c == nil {
+		return 0
 	}
+	return c.cfg.localPort()
+}
+
+// ServiceRoutes returns the Service-Route headers learned from REGISTER.
+func (c *Client) ServiceRoutes() []string {
+	if c == nil {
+		return nil
+	}
+	return c.cfg.ServiceRoutes
+}
+
+// SecurityVerify returns the Security-Verify header value from registration.
+func (c *Client) SecurityVerify() string {
+	if c == nil {
+		return ""
+	}
+	return c.cfg.SecurityVerify
+}
+
+// PCSCFAddr returns the P-CSCF address used for SIP routing.
+func (c *Client) PCSCFAddr() string {
+	if c == nil {
+		return ""
+	}
+	return c.cfg.PCSCFAddr
+}
+
+// ContactUser returns the contact user part for SIP Contact header.
+func (c *Client) ContactUser() string {
+	if c == nil {
+		return ""
+	}
+	if c.contactUser != "" {
+		return c.contactUser
+	}
+	return c.cfg.contactUser()
+}
+
+// NewRequest builds a SIP request through the client's request builder,
+// ensuring all security headers (Security-Verify, Supported, Allow, etc.)
+// are properly set. Used by imscore to construct SUBSCRIBE and other
+// non-REGISTER requests on the injected TCP connection.
+func (c *Client) NewRequest(method sip.RequestMethod, target string, initialRegister bool) (*sip.Request, error) {
+	return c.newRequest(method, target, initialRegister)
+}
+
+// ConnDone returns a channel that is closed when the injected TCP connection
+// is closed by the remote side (EOF, reset, or read error). Used by imscore
+// to detect P-CSCF TCP teardown and trigger pipeline recovery.
+// Per 改动点 5 spec.
+func (c *Client) ConnDone() <-chan struct{} {
+	if c == nil {
+		return nil
+	}
+	return c.connDone
+}
+
+// signalConnDone safely closes the connDone channel exactly once.
+func (c *Client) signalConnDone() {
+	c.connDoneOnce.Do(func() {
+		close(c.connDone)
+	})
+}
+
+func (c *Client) shutdownSIPStack() error {
 	if c.packetConn != nil {
 		_ = c.packetConn.Close()
 		c.packetConn = nil
@@ -649,6 +733,15 @@ func (c *Client) newRequest(method sip.RequestMethod, target string, initialRegi
 	}
 	// Voice session headers for non-REGISTER requests (INVITE/MESSAGE/UPDATE etc.)
 	if method != sip.REGISTER {
+		// Security-Verify must be present on all protected non-REGISTER requests
+		// (previously added by secureMessagingTransport.decorateRequest).
+		if verify := strings.TrimSpace(c.cfg.SecurityVerify); verify != "" {
+			req.AppendHeader(sip.NewHeader("Security-Verify", verify))
+			if c.registerProfile.IncludeRequireSecAgree {
+				appendHeaderToken(req, "Require", "sec-agree")
+				appendHeaderToken(req, "Proxy-Require", "sec-agree")
+			}
+		}
 		if v := strings.TrimSpace(c.registerProfile.VoiceSupportedHeader); v != "" {
 			req.AppendHeader(sip.NewHeader("Supported", v))
 		}
@@ -668,6 +761,11 @@ func (c *Client) newRequest(method sip.RequestMethod, target string, initialRegi
 		req.SetTransport("UDP")
 	} else {
 		req.SetTransport("TCP")
+	}
+	// Ensure non-REGISTER requests route through the P-CSCF (previously set by
+	// secureMessagingTransport.decorateRequest).
+	if method != sip.REGISTER && strings.TrimSpace(c.cfg.PCSCFAddr) != "" {
+		req.SetDestination(c.cfg.PCSCFAddr)
 	}
 	return req, nil
 }

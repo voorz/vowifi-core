@@ -67,6 +67,12 @@ type StartSessionInput struct {
 	// ProgressCallback is invoked at key IMS REGISTER state-machine transitions
 	// to report granular progress to the caller (e.g. runtimehost.Instance).
 	ProgressCallback func(info RegisterProgress)
+
+	// OnIMSConnDown is called when the IMS TCP connection to the P-CSCF is
+	// closed (EOF, reset, or read error). The caller should trigger pipeline
+	// recovery (re-establish SWu tunnel + re-REGISTER). nil disables.
+	// Per 改动点 5 spec.
+	OnIMSConnDown func()
 }
 
 // RegisterProgress carries real-time IMS registration progress info.
@@ -160,6 +166,7 @@ func internalConfigFromIMS(ims IMSConfig, in StartSessionInput) Config {
 		Dispatcher:            in.Dispatcher,
 		TCPKeepaliveSeconds:        ims.TCPKeepaliveSeconds,
 		OptionsPingIntervalSeconds: ims.OptionsPingIntervalSeconds,
+		OnIMSConnDown:              in.OnIMSConnDown,
 	}
 	if cfg.UserAgent == "" {
 		cfg.UserAgent = "Apple iPhone17,2/26.6 (17,2; iOS 26.6; 23G82) Boot/3.0.0 VoIP/1.0 Carrier/59.0"

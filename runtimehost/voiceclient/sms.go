@@ -197,6 +197,17 @@ func classifyRPEnvelope(body []byte) (deliveryReport, error) {
 // comment) and just gets a bare 200 OK so we don't leave the sender's
 // transaction hanging.
 func (c *Client) handleIncomingMessage(req *sip.Request, tx sip.ServerTransaction) {
+	// If OnInboundMessage callback is set (by imscore), forward the MESSAGE
+	// to the imscore layer for SMS processing (RP-DATA decode, RP-ACK send).
+	if c.OnInboundMessage != nil {
+		ctx := c.inboundCtx
+		if ctx == nil {
+			ctx = context.Background()
+		}
+		c.OnInboundMessage(ctx, req, tx)
+		return
+	}
+	// Default: handle as delivery report for our own outbound SMS.
 	_ = tx.Respond(c.incomingMessageResponse(req))
 }
 

@@ -92,4 +92,10 @@ type Config struct {
 	// OptionsPingIntervalSeconds is reserved for future SIP OPTIONS liveness
 	// probing at the application layer. Currently unused.
 	OptionsPingIntervalSeconds int
+
+	// OnIMSConnDown is called when the IMS TCP connection to the P-CSCF is
+	// closed (EOF, reset, or read error). The caller should trigger pipeline
+	// recovery (re-establish SWu tunnel + re-REGISTER). nil disables.
+	// Per 改动点 5 spec.
+	OnIMSConnDown func()
 }

@@ -1013,6 +1013,13 @@ func (i *Instance) runStagedPipeline(ctx context.Context, req StartRequest, gene
 			})
 			i.notifyObserversForGeneration(ctx, generation)
 		},
+		// 改动点 5: When the IMS TCP connection closes (P-CSCF EOF), trigger
+		// pipeline recovery via OnTunnelDown, same as SWu tunnel teardown.
+		OnIMSConnDown: func() {
+			if req.OnTunnelDown != nil {
+				req.OnTunnelDown(i.deviceID)
+			}
+		},
 	})
 	if err != nil {
 		i.failStageForGeneration(ctx, generation, "ims", fmt.Sprintf("IMS dial failed: %v", err), formatStageFailureReason("ims_dial_failed", err))

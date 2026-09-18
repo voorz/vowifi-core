@@ -467,9 +467,6 @@ func (c *Client) doRegisterTransaction(ctx context.Context, req *sip.Request, op
 }
 
 func (c *Client) doTransaction(ctx context.Context, req *sip.Request, opts ...sipgo.ClientRequestOption) (*sip.Response, error) {
-	if c.secure != nil {
-		return c.secure.RoundTrip(ctx, req)
-	}
 	tx, err := c.client.TransactionRequest(ctx, req, opts...)
 	if err != nil {
 		return nil, err
@@ -496,9 +493,6 @@ func (c *Client) doTransaction(ctx context.Context, req *sip.Request, opts ...si
 // Used for INVITE and other dialog-initiating requests where provisional responses like
 // 100 Trying / 183 Session Progress are expected before the final 2xx/3xx/4xx/5xx/6xx.
 func (c *Client) doTransactionFinal(ctx context.Context, req *sip.Request) (*sip.Response, error) {
-	if c.secure != nil {
-		return c.secure.RoundTrip(ctx, req)
-	}
 	tx, err := c.client.TransactionRequest(ctx, req)
 	if err != nil {
 		return nil, err

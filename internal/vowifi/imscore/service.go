@@ -43,6 +43,10 @@ type Service struct {
 	msgSvc    *messaging.Service
 	sipServer *sipgo.Server
 
+	// subscribeDialog stores the dialog info from SUBSCRIBE(reg) 200 OK,
+	// used for potential refresh within the same dialog.
+	subscribeDialog subscribeDialogInfo
+
 	progressCb func(RegisterProgress)
 }
 

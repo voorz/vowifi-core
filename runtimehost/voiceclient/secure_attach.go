@@ -4,19 +4,25 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/voorz/sipgo"
 	"github.com/voorz/sipgo/sip"
 	"github.com/voorz/swu-go/pkg/logger"
 )
 
 // AttachSecureMessaging binds the messaging client to an already-authenticated
-// IMS ESP channel. It does not create another SWu netstack or repeat REGISTER.
+// IMS ESP channel. It creates a unified sipgo UA + Client + Server, injects
+// the pre-established TCP connection via InjectTCPConnection, and registers
+// OnMessage handler for inbound SIP MESSAGE (SMS delivery reports, incoming SMS).
+//
+// This is the unified SIP stack architecture: all SIP transactions (SUBSCRIBE,
+// NOTIFY, MESSAGE, RP-ACK) flow through this single UA, sharing one IMS tunnel
+// with VoWiFi. See VOWIFI_SMS_IMPLEMENTATION_SPEC.md 改动点 1 for design rationale.
 func AttachSecureMessaging(ctx context.Context, cfg Config, conn net.Conn) (*Client, error) {
 	if conn == nil {
 		return nil, errors.New("voiceclient: secure messaging connection is required")
@@ -50,8 +56,74 @@ func AttachSecureMessaging(ctx context.Context, cfg Config, conn net.Conn) (*Cli
 	if registerProfile.ContactUserRandom {
 		contactUser = newContactUserUUID()
 	}
+
+	// Create unified sipgo UA + Client + Server.
+	// The UA's transport layer will own the injected TCP connection.
+
+	// 改动点 5: connDone channel for TCP EOF detection.
+	// Closed when the P-CSCF closes the TCP connection, signaling imscore
+	// to trigger pipeline recovery.
+	connDone := make(chan struct{})
+	connDoneOnce := &sync.Once{}
+	signalConnDone := func() {
+		connDoneOnce.Do(func() { close(connDone) })
+	}
+
+	uaOptions := []sipgo.UserAgentOption{
+		sipgo.WithUserAgent(registerProfile.UserAgent),
+		// 改动点 5: Register OnConnClose callback to detect TCP EOF.
+		sipgo.WithUserAgentTransactionLayerOptions(
+			sip.WithTransactionLayerOnConnClose(func(_ sip.Connection) {
+				logger.Info(fmt.Sprintf("[%s] IMS TCP OnConnClose 回调触发", strings.TrimSpace(cfg.DeviceID)),
+					logger.String("trace_id", strings.TrimSpace(cfg.TraceID)),
+					logger.String("device_id", strings.TrimSpace(cfg.DeviceID)))
+				signalConnDone()
+			}),
+			sip.WithTransactionLayerTerminateOnConnClose(),
+		),
+	}
+	// Attach device_id/trace_id context to sipgo's transport and transaction
+	// layer logs, matching the pattern used in Dial() and startInboundSIPServer().
+	deviceLogger := slog.New(logger.NewSlogHandler(logger.Get())).With(
+		"device_id", strings.TrimSpace(cfg.DeviceID),
+		"trace_id", strings.TrimSpace(cfg.TraceID),
+	)
+	uaOptions = append(uaOptions,
+		sipgo.WithUserAgentTransportLayerOptions(
+			sip.WithTransportLayerLogger(deviceLogger),
+		),
+		sipgo.WithUserAgentTransactionLayerOptions(
+			sip.WithTransactionLayerLogger(deviceLogger),
+		),
+	)
+	ua, err := sipgo.NewUA(uaOptions...)
+	if err != nil {
+		return nil, fmt.Errorf("voiceclient: secure messaging UA: %w", err)
+	}
+
+	clientOptions := []sipgo.ClientOption{
+		sipgo.WithClientHostname(cfg.LocalIP.String()),
+		sipgo.WithClientPort(cfg.localPort()),
+		sipgo.WithClientConnectionAddr(net.JoinHostPort(cfg.LocalIP.String(), fmt.Sprintf("%d", cfg.localPort()))),
+	}
+	sipClient, err := sipgo.NewClient(ua, clientOptions...)
+	if err != nil {
+		_ = ua.Close()
+		return nil, fmt.Errorf("voiceclient: secure messaging client: %w", err)
+	}
+
+	sipServer, err := sipgo.NewServer(ua)
+	if err != nil {
+		_ = sipClient.Close()
+		_ = ua.Close()
+		return nil, fmt.Errorf("voiceclient: secure messaging server: %w", err)
+	}
+
 	c := &Client{
 		cfg:             cfg,
+		ua:              ua,
+		client:          sipClient,
+		server:          sipServer,
 		registerProfile: registerProfile,
 		sipInstanceURN:  sipInstanceURN,
 		contactUser:     contactUser,
@@ -60,142 +132,51 @@ func AttachSecureMessaging(ctx context.Context, cfg Config, conn net.Conn) (*Cli
 		securityClient:  newSecurityClientState(),
 		stopCh:          make(chan struct{}),
 		stopDone:        make(chan struct{}),
+		connDone:        connDone,
+		connDoneOnce:    *connDoneOnce,
 	}
-	c.secure = newSecureMessagingTransport(c, conn)
+
+	// Register OnMessage handler for inbound SIP MESSAGE (SMS + delivery reports).
+	sipServer.OnMessage(c.handleIncomingMessage)
+
+	// Inject the pre-established TCP connection into sipgo transport layer.
+	// After injection, inbound SIP messages are parsed and dispatched by sipgo's
+	// Server TransactionLayer — no manual readLoop needed.
+	ua.TransportLayer().InjectTCPConnection(conn)
+
+	logger.Debug(fmt.Sprintf("[%s] sipgo 安全连接注入成功", strings.TrimSpace(cfg.DeviceID)),
+		logger.String("trace_id", strings.TrimSpace(cfg.TraceID)),
+		logger.String("local", conn.LocalAddr().String()),
+		logger.String("remote", conn.RemoteAddr().String()))
+
+	// 改动点 6: stopDone goroutine — ensures Client.Close() doesn't block for 10s.
+	// 06d896c forgot this goroutine; must always be present when creating a Client.
+	// Also signals connDone as a fallback when the client is shutting down.
 	go func() {
 		select {
 		case <-ctx.Done():
 		case <-c.stopCh:
 		}
 		close(c.stopDone)
+		c.signalConnDone() // fallback: ensure connDone is closed on shutdown
 	}()
+
+	// 改动点 3: Start REGISTER refresh loop to keep the TCP connection alive.
+	// The refresh interval = expires * 80%. SkipRegister is true because the
+	// initial registration was done by imscore, but we still need periodic
+	// refresh to prevent the P-CSCF from tearing down the session.
+	if cfg.RegisterExpiry > 0 {
+		c.startRefreshLoop(cfg.RegisterExpiry)
+	} else {
+		// Default to 3600s if not specified.
+		c.startRefreshLoop(3600 * time.Second)
+	}
+
 	return c, nil
 }
 
-type secureMessagingTransport struct {
-	client *Client
-	conn   net.Conn
-
-	writeMu sync.Mutex
-	mu      sync.Mutex
-	pending map[string]chan *sip.Response
-	cseq    atomic.Uint32
-
-	done      chan struct{}
-	doneOnce  sync.Once
-	closeOnce sync.Once
-	wg        sync.WaitGroup
-}
-
-func newSecureMessagingTransport(client *Client, conn net.Conn) *secureMessagingTransport {
-	t := &secureMessagingTransport{
-		client:  client,
-		conn:    conn,
-		pending: make(map[string]chan *sip.Response),
-		done:    make(chan struct{}),
-	}
-	t.cseq.Store(1)
-	t.wg.Add(1)
-	go t.readLoop()
-	return t
-}
-
-func (t *secureMessagingTransport) RoundTrip(ctx context.Context, req *sip.Request) (*sip.Response, error) {
-	if t == nil || t.conn == nil || req == nil {
-		return nil, errors.New("voiceclient: secure messaging transport unavailable")
-	}
-	if err := t.decorateRequest(req); err != nil {
-		return nil, err
-	}
-	key, err := secureMessagingTransactionKey(req)
-	if err != nil {
-		return nil, err
-	}
-	responses := make(chan *sip.Response, 16)
-	t.mu.Lock()
-	if _, exists := t.pending[key]; exists {
-		t.mu.Unlock()
-		return nil, fmt.Errorf("voiceclient: duplicate secure transaction %s", key)
-	}
-	t.pending[key] = responses
-	t.mu.Unlock()
-	defer func() {
-		t.mu.Lock()
-		delete(t.pending, key)
-		t.mu.Unlock()
-	}()
-
-	t.writeMu.Lock()
-	_, writeErr := t.conn.Write([]byte(req.String()))
-	t.writeMu.Unlock()
-	if writeErr != nil {
-		return nil, writeErr
-	}
-
-	logger.Debug(fmt.Sprintf("[%s] IMS SIP 发送", strings.TrimSpace(t.client.cfg.DeviceID)),
-		logger.String("trace_id", strings.TrimSpace(t.client.cfg.TraceID)),
-		logger.String("method", req.Method.String()),
-		logger.String("call_id", key))
-
-	for {
-		select {
-		case response := <-responses:
-			if response.IsProvisional() {
-				continue
-			}
-			return response, nil
-		case <-ctx.Done():
-			return nil, ctx.Err()
-		case <-t.done:
-			return nil, net.ErrClosed
-		}
-	}
-}
-
-func (t *secureMessagingTransport) Close() error {
-	if t == nil {
-		return nil
-	}
-	var err error
-	t.closeOnce.Do(func() {
-		err = t.conn.Close()
-		t.signalDone()
-	})
-	t.wg.Wait()
-	return err
-}
-
-func (t *secureMessagingTransport) decorateRequest(req *sip.Request) error {
-	localPort := t.client.cfg.localPort()
-	if localPort <= 0 {
-		return errors.New("voiceclient: secure local port unavailable")
-	}
-	req.RemoveHeader("Via")
-	req.RemoveHeader("Max-Forwards")
-	req.RemoveHeader("Call-ID")
-	req.RemoveHeader("CSeq")
-	viaHost := net.JoinHostPort(t.client.cfg.LocalIP.String(), fmt.Sprintf("%d", localPort))
-	transport := strings.ToUpper(strings.TrimSpace(t.client.cfg.Transport))
-	if transport == "" {
-		transport = "TCP"
-	}
-	req.PrependHeader(sip.NewHeader("Via", fmt.Sprintf("SIP/2.0/%s %s;branch=%s;rport", transport, viaHost, sip.GenerateBranchN(16))))
-	req.AppendHeader(sip.NewHeader("Max-Forwards", "70"))
-	req.AppendHeader(sip.NewHeader("Call-ID", uuid.NewString()))
-	req.AppendHeader(sip.NewHeader("CSeq", fmt.Sprintf("%d %s", t.cseq.Add(1), req.Method)))
-	if verify := strings.TrimSpace(t.client.cfg.SecurityVerify); verify != "" {
-		req.RemoveHeader("Security-Verify")
-		req.AppendHeader(sip.NewHeader("Security-Verify", verify))
-		if t.client.registerProfile.IncludeRequireSecAgree {
-			appendHeaderToken(req, "Require", "sec-agree")
-			appendHeaderToken(req, "Proxy-Require", "sec-agree")
-		}
-	}
-	req.SetTransport(transport)
-	req.SetDestination(t.client.cfg.PCSCFAddr)
-	return nil
-}
-
+// appendHeaderToken appends a token to a SIP header if not already present.
+// Used by Require/Proxy-Require sec-agree handling.
 func appendHeaderToken(req *sip.Request, headerName, token string) {
 	if req == nil {
 		return
@@ -211,91 +192,4 @@ func appendHeaderToken(req *sip.Request, headerName, token string) {
 		}
 	}
 	req.AppendHeader(sip.NewHeader(headerName, token))
-}
-
-func (t *secureMessagingTransport) readLoop() {
-	defer t.wg.Done()
-	defer t.signalDone()
-	buf := make([]byte, 64*1024)
-	for {
-		n, err := t.conn.Read(buf)
-		if err != nil {
-			return
-		}
-		if n == 0 {
-			continue
-		}
-		message, err := sip.NewParser().ParseSIP(append([]byte(nil), buf[:n]...))
-		if err != nil {
-			continue
-		}
-		switch value := message.(type) {
-		case *sip.Response:
-			t.deliverResponse(value)
-		case *sip.Request:
-			t.respondToRequest(value)
-		}
-	}
-}
-
-func (t *secureMessagingTransport) deliverResponse(response *sip.Response) {
-	key, err := secureMessagingTransactionKey(response)
-	if err != nil {
-		return
-	}
-	logger.Debug(fmt.Sprintf("[%s] IMS SIP 接收", strings.TrimSpace(t.client.cfg.DeviceID)),
-		logger.String("trace_id", strings.TrimSpace(t.client.cfg.TraceID)),
-		logger.Int("status_code", response.StatusCode),
-		logger.String("reason", response.Reason),
-		logger.String("call_id", key))
-	t.mu.Lock()
-	responses := t.pending[key]
-	t.mu.Unlock()
-	if responses == nil {
-		return
-	}
-	select {
-	case responses <- response:
-	default:
-	}
-}
-
-func (t *secureMessagingTransport) respondToRequest(request *sip.Request) {
-	var response *sip.Response
-	if request.Method == sip.MESSAGE {
-		response = t.client.incomingMessageResponse(request)
-	} else {
-		response = sip.NewResponseFromRequest(request, 501, "Not Implemented", nil)
-	}
-	payload := []byte(response.String())
-	if writer, ok := t.conn.(interface{ WriteServerFlow([]byte) (int, error) }); ok {
-		_, _ = writer.WriteServerFlow(payload)
-		return
-	}
-	t.writeMu.Lock()
-	_, _ = t.conn.Write(payload)
-	t.writeMu.Unlock()
-}
-
-func (t *secureMessagingTransport) signalDone() {
-	t.doneOnce.Do(func() { close(t.done) })
-}
-
-func secureMessagingTransactionKey(message sip.Message) (string, error) {
-	var callID sip.Header
-	var cseq sip.Header
-	switch value := message.(type) {
-	case *sip.Request:
-		callID = value.GetHeader("Call-ID")
-		cseq = value.GetHeader("CSeq")
-	case *sip.Response:
-		callID = value.GetHeader("Call-ID")
-		cseq = value.GetHeader("CSeq")
-	default:
-		return "", errors.New("voiceclient: unsupported secure SIP message")
-	}
-	if callID == nil || cseq == nil {
-		return "", errors.New("voiceclient: secure SIP message missing transaction headers")
-	}
-	return strings.TrimSpace(callID.Value()) + "|" + strings.TrimSpace(cseq.Value()), nil
 }

@@ -343,6 +343,12 @@ func (s *Service) startInboundSIPServer(ctx context.Context, tcpLn net.Listener,
 	srv.OnRequest("ACK", func(req *sip.Request, tx sip.ServerTransaction) {
 		// ACK has no response in a transactionless model; just absorb it.
 	})
+	// 改动点 2: NOTIFY handler for reg event subscription.
+	// The P-CSCF sends NOTIFY after SUBSCRIBE(reg) succeeds. We log and
+	// auto-reply 200 OK to keep the subscription alive.
+	srv.OnRequest("NOTIFY", func(req *sip.Request, tx sip.ServerTransaction) {
+		s.handleInboundNOTIFY(ctx, req, tx)
+	})
 	s.sipServer = srv
 
 	if tcpLn != nil {
@@ -375,7 +381,8 @@ func (s *Service) startInboundSIPServer(ctx context.Context, tcpLn net.Listener,
 
 // handleInboundSIPMessage processes an inbound SIP MESSAGE request: extracts
 // the RP-DATA body, calls messaging.Service.HandleIMSMessage for TPdu decode
-// and event dispatch, and responds with 200 OK + RP-ACK (or error).
+// and event dispatch, responds with 200 OK (empty body), and sends RP-ACK
+// as an independent SIP MESSAGE (per 改动点 4 spec).
 func (s *Service) handleInboundSIPMessage(ctx context.Context, req *sip.Request, tx sip.ServerTransaction) {
 	if s.msgSvc == nil {
 		_ = tx.Respond(sip.NewResponseFromRequest(req, 500, "Messaging service unavailable", nil))
@@ -426,10 +433,9 @@ func (s *Service) handleInboundSIPMessage(ctx context.Context, req *sip.Request,
 	if reason == "" {
 		reason = "OK"
 	}
-	resp := sip.NewResponseFromRequest(req, statusCode, reason, result.ReplyBody)
-	if result.ReplyContentType != "" && len(result.ReplyBody) > 0 {
-		resp.AppendHeader(sip.NewHeader("Content-Type", result.ReplyContentType))
-	}
+
+	// 改动点 4: 200 OK body must be empty. RP-ACK is sent as independent SIP MESSAGE.
+	resp := sip.NewResponseFromRequest(req, statusCode, reason, nil)
 	if result.Incoming != nil {
 		logger.Info(fmt.Sprintf("[%s] 收到 IMS 短信", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
@@ -437,8 +443,18 @@ func (s *Service) handleInboundSIPMessage(ctx context.Context, req *sip.Request,
 			logger.String("sender", result.Incoming.Sender),
 			logger.Int("len", len(result.Incoming.Content)),
 			logger.String("transport", "tcp"))
+		logger.Debug(fmt.Sprintf("[%s] IMS 短信内容", strings.TrimSpace(s.cfg.DeviceID)),
+			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+			logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
+			logger.String("sender", result.Incoming.Sender),
+			logger.String("content", result.Incoming.Content))
 	}
 	_ = tx.Respond(resp)
+
+	// Send RP-ACK as independent SIP MESSAGE (only if we have a reply body = RP-ACK PDU).
+	if len(result.ReplyBody) > 0 && s.inner != nil {
+		go s.sendRPAckMessage(ctx, req, result.ReplyBody, result.ReplyContentType)
+	}
 }
 
 func (s *Service) notifySMSCapability() {
@@ -501,6 +517,12 @@ func (s *Service) attachMessaging(ctx context.Context, winningPCSCF string, reg 
 	if s.cfg.RegisterExpirySeconds > 0 {
 		voiceCfg.RegisterExpiry = time.Duration(s.cfg.RegisterExpirySeconds) * time.Second
 	}
+	// 改动点 3: Use the server-assigned expires (from REGISTER 200 OK) for the
+	// refresh interval. This takes priority over the configured request expiry,
+	// because the server may assign a different expires than what we requested.
+	if reg.expiresSeconds > 0 {
+		voiceCfg.RegisterExpiry = time.Duration(reg.expiresSeconds) * time.Second
+	}
 	logger.Info(fmt.Sprintf("[%s] IMS attachMessaging 开始", strings.TrimSpace(s.cfg.DeviceID)),
 		logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
 		logger.String("transport", voiceCfg.Transport),
@@ -515,10 +537,58 @@ func (s *Service) attachMessaging(ctx context.Context, winningPCSCF string, reg 
 		return fmt.Errorf("voiceclient attach: %w", err)
 	}
 	s.inner = inner
+	// Route inbound SIP MESSAGE on the injected TCP connection to imscore
+	// for SMS processing (RP-DATA decode, RP-ACK independent send).
+	inner.OnInboundMessage = s.handleInboundSIPMessage
+	inner.SetInboundCtx(s.lifecycleCtx)
 	s.msgSvc.SetSMSTransport(inner)
 	s.msgSvc.SetUSSDTransport(voiceclient.NewUSSDTransport(inner))
+	// 改动点 3: Log next_refresh_in to match community closed-source log format.
+	refreshIn := time.Duration(reg.expiresSeconds) * time.Second * 4 / 5
+	if refreshIn <= 0 {
+		refreshIn = 48 * time.Minute // default 3600 * 80%
+	}
+	logger.Info(fmt.Sprintf("[%s] IMS REGISTER 成功", strings.TrimSpace(s.cfg.DeviceID)),
+		logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+		logger.Int("code", 200),
+		logger.Int("expires_seconds", reg.expiresSeconds),
+		logger.String("next_refresh_in", refreshIn.String()),
+		logger.String("sip_security_mode", s.sipSecurityMode),
+		logger.String("register_transport", "tcp"),
+		logger.String("signaling_transport", "tcp"),
+		logger.String("verify", reg.verifyHeader))
 	logger.Info(fmt.Sprintf("[%s] IMS attachMessaging 成功", strings.TrimSpace(s.cfg.DeviceID)),
 		logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)))
+
+	// 改动点 2: Send SUBSCRIBE(reg) to establish reg event subscription.
+	// This keeps the P-CSCF session context alive and prevents premature
+	// TCP connection teardown. NOTIFY is handled by the sipgo Server's
+	// OnRequest("NOTIFY") handler registered in startInboundSIPServer.
+	go func() {
+		if err := s.sendSubscribeReg(s.lifecycleCtx); err != nil {
+			logger.Warn(fmt.Sprintf("[%s] IMS SUBSCRIBE(reg) 失败", strings.TrimSpace(s.cfg.DeviceID)),
+				logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+				logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
+				logger.String("error", err.Error()))
+		}
+	}()
+
+	// 改动点 5: Monitor TCP connection closure (EOF/reset) and trigger
+	// pipeline recovery via OnIMSConnDown callback.
+	if s.cfg.OnIMSConnDown != nil && inner.ConnDone() != nil {
+		go func() {
+			select {
+			case <-s.lifecycleCtx.Done():
+				// Normal shutdown — don't trigger recovery.
+			case <-inner.ConnDone():
+				logger.Warn(fmt.Sprintf("[%s] IMS TCP 连接断开，触发 pipeline 恢复", strings.TrimSpace(s.cfg.DeviceID)),
+					logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+					logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)))
+				s.cfg.OnIMSConnDown()
+			}
+		}()
+	}
+
 	return nil
 }
 
