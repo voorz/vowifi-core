@@ -31,8 +31,8 @@ const rpAckMaxRetries = 2
 // which caused duplicate SMS delivery after restart (P-CSCF retransmits
 // unacknowledged RP-DATA).
 func (s *Service) sendRPAckMessage(ctx context.Context, inboundReq *sip.Request, rpAckBody []byte, contentType string) {
-	if s.inner == nil {
-		logger.Warn(fmt.Sprintf("[%s] RP-ACK 发送失败：voiceclient 不可用", strings.TrimSpace(s.cfg.DeviceID)),
+	if s.sipClient == nil {
+		logger.Warn(fmt.Sprintf("[%s] RP-ACK 发送失败：SIP client 不可用", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)))
 		return
 	}
@@ -83,8 +83,7 @@ func (s *Service) sendRPAckMessage(ctx context.Context, inboundReq *sip.Request,
 
 // doSendRPAck builds and sends a single RP-ACK SIP MESSAGE.
 func (s *Service) doSendRPAck(ctx context.Context, targetURI, inboundCallID string, body []byte, contentType string) error {
-	sipClient := s.inner.SIPClient()
-	if sipClient == nil {
+	if s.sipClient == nil {
 		return fmt.Errorf("sipgo client unavailable")
 	}
 
@@ -98,7 +97,7 @@ func (s *Service) doSendRPAck(ctx context.Context, targetURI, inboundCallID stri
 	txCtx, cancel := context.WithTimeout(ctx, rpAckTimeout)
 	defer cancel()
 
-	tx, err := sipClient.TransactionRequest(txCtx, req)
+	tx, err := s.sipClient.TransactionRequest(txCtx, req)
 	if err != nil {
 		return fmt.Errorf("transaction request: %w", err)
 	}
@@ -149,11 +148,14 @@ func (s *Service) buildRPAckRequest(targetURI, inboundCallID string, body []byte
 	// Contact header.
 	// Use net.JoinHostPort to correctly bracket IPv6 addresses.
 	contactHost := s.cfg.LocalIP.String()
-	contactPort := s.inner.LocalPort()
+	contactPort := s.imsCfg.LocalPort
 	if contactPort <= 0 {
 		contactPort = 5060
 	}
-	contactUser := s.inner.ContactUser()
+	contactUser := strings.TrimSpace(s.contactUser)
+	if contactUser == "" {
+		contactUser = s.contactUserFromURI()
+	}
 	if contactUser == "" {
 		contactUser = "anonymous"
 	}
@@ -171,7 +173,7 @@ func (s *Service) buildRPAckRequest(targetURI, inboundCallID string, body []byte
 	}
 
 	// Service-Route (if available).
-	for _, route := range s.inner.ServiceRoutes() {
+	for _, route := range s.serviceRoutes {
 		if v := strings.TrimSpace(route); v != "" {
 			req.AppendHeader(sip.NewHeader("Route", v))
 		}

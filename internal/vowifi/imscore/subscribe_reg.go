@@ -31,14 +31,11 @@ const subscribeRegExpires = 3600
 // current registration state. The NOTIFY is handled by the sipgo Server's
 // OnRequest handler, which auto-replies 200 OK.
 func (s *Service) sendSubscribeReg(ctx context.Context) error {
-	if s.inner == nil {
-		return fmt.Errorf("imscore: voiceclient unavailable for SUBSCRIBE")
-	}
-
-	sipClient := s.inner.SIPClient()
-	if sipClient == nil {
+	if s.sipClient == nil {
 		return fmt.Errorf("imscore: SIP client unavailable for SUBSCRIBE")
 	}
+
+	sipClient := s.sipClient
 
 	req, err := s.buildSubscribeRegRequest()
 	if err != nil {
@@ -126,9 +123,9 @@ func (s *Service) buildSubscribeRegRequest() (*sip.Request, error) {
 		logger.String("auth_realm", ""),
 		logger.String("public_uri", publicURI))
 
-	// Build the SUBSCRIBE request via voiceclient's newRequest.
+	// Build the SUBSCRIBE request via imscore's newRequest.
 	// This ensures Security-Verify, Supported, Allow, and other headers are set.
-	req, err := s.inner.NewRequest(sip.SUBSCRIBE, publicURI, false)
+	req, err := s.newRequest(sip.SUBSCRIBE, publicURI, false)
 	if err != nil {
 		return nil, err
 	}

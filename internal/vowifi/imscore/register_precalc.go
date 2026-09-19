@@ -6,6 +6,7 @@ import (
 
 	"github.com/icholy/digest"
 	"github.com/voorz/swu-go/pkg/logger"
+	"github.com/voorz/vowifi-core/runtimehost/voiceclient"
 )
 
 // buildEAPDirectAuthorization constructs a Digest AKAv1-MD5 Authorization
@@ -42,7 +43,7 @@ func buildEAPDirectAuthorization(cfg Config) string {
 	opts := digest.Options{
 		Method:   "REGISTER",
 		URI:      "sip:" + strings.TrimSpace(cfg.HomeDomain),
-		Username: authorizationUsername(cfg),
+		Username: authorizationUsername(cfg, voiceclient.RegisterProfile{}),
 		Password: string(cfg.EAPRES), // 直接复用 EAP 的 RES 作为密码
 	}
 
@@ -77,11 +78,45 @@ func isEAPDirectMode(variant initialRegisterVariant) bool {
 
 // resolvePrecalculatedAuth returns the Authorization header for the
 // eap_direct mode, or falls back to buildInitialAuthorization for other modes.
+//
+// When variant.initialAuth is empty, the auto-decision logic selects the
+// initial Authorization mode based on the carrier template's SecAgreeMode
+// and UsePlainDigestPlaceholder fields — matching the pre-refactor behavior
+// of the deleted buildInitialAuthorization(cfg, mode) function.
 func resolvePrecalculatedAuth(cfg Config, variant initialRegisterVariant) string {
 	if isEAPDirectMode(variant) {
 		return buildEAPDirectAuthorization(cfg)
 	}
-	return buildInitialAuthorization(cfg, variant.initialAuth)
+	authMode := strings.TrimSpace(variant.initialAuth)
+	if authMode == "" {
+		authMode = resolveInitialAuthMode(cfg)
+	}
+	requestURI := "sip:" + strings.TrimSpace(cfg.HomeDomain)
+	return buildInitialAuthorization(cfg, voiceclient.RegisterProfile{InitialAuthorization: authMode}, requestURI)
+}
+
+// resolveInitialAuthMode recovers the auto-decision logic that was lost during
+// the architecture refactoring when the old buildInitialAuthorization(cfg, mode)
+// was replaced by the new buildInitialAuthorization(cfg, profile, requestURI).
+//
+// Old behavior (deleted from register.go):
+//   - SecAgreeMode == "auto" → "aka_empty_uri_first"
+//   - UsePlainDigestPlaceholder == false → "none"
+//   - otherwise → "aka_empty_uri_first"
+//
+// Additionally, if the carrier template has InitialAuthorization configured
+// (e.g. cmlink_uk sets "aka_empty_uri_first"), that value takes precedence.
+func resolveInitialAuthMode(cfg Config) string {
+	if v := strings.TrimSpace(cfg.Template.InitialAuthorization); v != "" {
+		return v
+	}
+	if strings.EqualFold(strings.TrimSpace(cfg.Template.SecAgreeMode), "auto") {
+		return "aka_empty_uri_first"
+	}
+	if !cfg.Template.UsePlainDigestPlaceholder {
+		return "none"
+	}
+	return "aka_empty_uri_first"
 }
 
 // initialRegisterVariantsPrecalc wraps initialRegisterVariantsBase to

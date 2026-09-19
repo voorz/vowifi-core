@@ -22,6 +22,7 @@ import (
 	"github.com/voorz/vowifi-core/runtimehost/messaging"
 	"github.com/voorz/vowifi-core/runtimehost/transport"
 	"github.com/voorz/vowifi-core/runtimehost/voiceclient"
+	"github.com/voorz/vowifi-core/runtimehost/voicehost"
 	"go.uber.org/zap"
 )
 
@@ -209,12 +210,6 @@ type StartRequest struct {
 	// layer wires this to swu.Session.OnSessionDown so the caller (vohive-next)
 	// can trigger automatic recovery via ScheduleDesiredRecover.
 	OnTunnelDown func(deviceID string)
-
-	// OnIMSReady is called after IMS REGISTER succeeds and the secure
-	// messaging channel is attached. It gives the caller (vohive-next)
-	// access to the voiceclient.Client so it can create an IMSOutboundAgent
-	// and register it with the voicehost.Gateway for VoWiFi voice calls.
-	OnIMSReady func(client *voiceclient.Client, deviceID string)
 
 	// OnInboundCall is called when an inbound INVITE arrives from the IMS
 	// network (an incoming VoWiFi call). The caller (vohive-next) forwards
@@ -1064,10 +1059,30 @@ func (i *Instance) runStagedPipeline(ctx context.Context, req StartRequest, gene
 		return
 	}
 
-	// Notify caller that IMS is ready for voice agent setup.
-	if req.OnIMSReady != nil {
-		if vc := svc.VoiceClient(); vc != nil {
-			req.OnIMSReady(vc, i.deviceID)
+	// Attach voice agent to the voice gateway (if provided).
+	// This follows the community pattern: runtimehost internally creates
+	// the IMSOutboundAgent from the imscore.Service, rather than exposing
+	// imscore.Service to the external caller via a callback.
+	if req.VoiceGateway != nil {
+		if vg, ok := req.VoiceGateway.(*voicehost.Gateway); ok && vg != nil {
+			agent := &voicehost.IMSOutboundAgent{
+				Transport: svc.SIPClient(),
+				UA:        svc.SIPUA(),
+				Profile: voicehost.IMSProfile{
+					IMPI:      svc.PrivateID(),
+					IMPU:      svc.PublicURI(),
+					Domain:    svc.HomeDomain(),
+					LocalIP:   svc.LocalIP().String(),
+					UserAgent: "vowifi-core",
+				},
+				Domain:    svc.HomeDomain(),
+				UserAgent: "vowifi-core",
+				LocalTag:  "vowifi-core",
+			}
+			vg.RegisterAgent(i.deviceID, agent)
+			swulogger.Info("VoWiFi 语音 Agent 已注册",
+				swulogger.String("event", "VOWIFI_VOICE_AGENT_REGISTERED"),
+				swulogger.String("device", i.deviceID))
 		}
 	}
 

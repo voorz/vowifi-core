@@ -452,7 +452,7 @@ func (s *Service) handleInboundSIPMessage(ctx context.Context, req *sip.Request,
 	_ = tx.Respond(resp)
 
 	// Send RP-ACK as independent SIP MESSAGE (only if we have a reply body = RP-ACK PDU).
-	if len(result.ReplyBody) > 0 && s.inner != nil {
+	if len(result.ReplyBody) > 0 && s.sipClient != nil {
 		go s.sendRPAckMessage(ctx, req, result.ReplyBody, result.ReplyContentType)
 	}
 }
@@ -464,91 +464,64 @@ func (s *Service) notifySMSCapability() {
 		logger.Bool("smsc_present", s.cfg.SMSC != ""))
 }
 
-// attachMessaging hooks voiceclient for SMS/USSD after imscore registration.
+// attachMessaging sets up the imscore-owned SIP stack after registration.
+//
+// 架构扭转: imscore.Service 直接持有 sipgo UA/Client/Server，
+// 不再创建 voiceclient.Client 包装层。
 func (s *Service) attachMessaging(ctx context.Context, winningPCSCF string, reg *registerResult) error {
 	if reg == nil {
-		return fmt.Errorf("voiceclient attach: register result is required")
+		return fmt.Errorf("imscore attach: register result is required")
 	}
 	// Determine the connection to use for messaging.
 	var msgConn net.Conn
 	if reg.tcpConn != nil {
-		// TCP+ESP mode: use the TCP connection directly.
 		msgConn = reg.tcpConn
 	} else if reg.secureConn != nil && reg.secureConn.PacketMode() {
-		// UDP+ESP mode: use the SecureChannelConn.
 		msgConn = reg.secureConn
 	} else {
-		return fmt.Errorf("voiceclient attach: secure channel unavailable")
+		return fmt.Errorf("imscore attach: secure channel unavailable")
 	}
 	protectedPCSCF := winningPCSCF
 	if remoteIP := net.IP(reg.ipsecPolicy.RemoteIP); remoteIP != nil && reg.ipsecPolicy.FlowC.RemotePort > 0 {
 		protectedPCSCF = net.JoinHostPort(remoteIP.String(), strconv.Itoa(reg.ipsecPolicy.FlowC.RemotePort))
 	}
-	localPort := reg.ipsecPolicy.FlowC.LocalPort
-	if localPort <= 0 && reg.tcpConn != nil {
-		if tcpAddr, ok := reg.tcpConn.LocalAddr().(*net.TCPAddr); ok && tcpAddr != nil {
-			localPort = tcpAddr.Port
+	// Update cfg with protected P-CSCF address for routing.
+	s.cfg.PCSCFAddr = protectedPCSCF
+	// Inherit local port from the established connection if needed.
+	if s.imsCfg.LocalPort <= 0 {
+		if reg.ipsecPolicy.FlowC.LocalPort > 0 {
+			s.imsCfg.LocalPort = reg.ipsecPolicy.FlowC.LocalPort
+		} else if reg.tcpConn != nil {
+			if tcpAddr, ok := reg.tcpConn.LocalAddr().(*net.TCPAddr); ok && tcpAddr != nil {
+				s.imsCfg.LocalPort = tcpAddr.Port
+			}
 		}
 	}
-	voiceCfg := voiceclient.Config{
-		DeviceID:        s.cfg.DeviceID,
-		TraceID:         s.cfg.TraceID,
-		LocalIP:         s.cfg.LocalIP,
-		LocalPort:       localPort,
-		PCSCFAddr:       protectedPCSCF,
-		SecurityVerify:  reg.verifyHeader,
-		SMSC:            s.cfg.SMSC,
-		ServiceRoutes:   append([]string(nil), reg.serviceRoutes...),
-		Realm:           s.cfg.Realm,
-		PrivateID:       s.cfg.PrivateID,
-		PublicURI:       s.cfg.PublicURI,
-		HomeDomain:      s.cfg.HomeDomain,
-		IMSI:            s.cfg.IMSI,
-		Transport:       "tcp",
-		MCC:             s.cfg.MCC,
-		MNC:             s.cfg.MNC,
-		CellID:          s.cfg.CellID,
-		AKA:             s.cfg.AKA,
-		DeliveryStore:   s.cfg.DeliveryStore,
-		SIPInstanceURN:  s.cfg.SIPInstanceURN,
-		RegisterProfile: voiceclient.SimAdminGBEERegisterProfile(),
-		SkipRegister:    true,
-		TCPKeepaliveSeconds:        s.cfg.TCPKeepaliveSeconds,
-		OptionsPingIntervalSeconds: s.cfg.OptionsPingIntervalSeconds,
-	}
-	if s.cfg.RegisterExpirySeconds > 0 {
-		voiceCfg.RegisterExpiry = time.Duration(s.cfg.RegisterExpirySeconds) * time.Second
-	}
-	// 改动点 3: Use the server-assigned expires (from REGISTER 200 OK) for the
-	// refresh interval. This takes priority over the configured request expiry,
-	// because the server may assign a different expires than what we requested.
-	if reg.expiresSeconds > 0 {
-		voiceCfg.RegisterExpiry = time.Duration(reg.expiresSeconds) * time.Second
-	}
-	logger.Info(fmt.Sprintf("[%s] IMS attachMessaging 开始", strings.TrimSpace(s.cfg.DeviceID)),
+
+	logger.Info(fmt.Sprintf("[%s] IMS attachMessaging 开始 (imscore 直持)", strings.TrimSpace(s.cfg.DeviceID)),
 		logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
-		logger.String("transport", voiceCfg.Transport),
+		logger.String("transport", "tcp"),
 		logger.String("pcscf", protectedPCSCF),
 		logger.Bool("tcp_conn", msgConn != nil))
-	inner, err := voiceclient.AttachSecureMessaging(ctx, voiceCfg, msgConn)
-	if err != nil {
+
+	// 架构扭转: 直接在 imscore 中创建 SIP 栈，不经过 voiceclient。
+	if err := s.attachSIPStack(ctx, msgConn, reg); err != nil {
 		logger.Warn(fmt.Sprintf("[%s] IMS attachMessaging 失败", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
 			logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
 			logger.String("error", err.Error()))
-		return fmt.Errorf("voiceclient attach: %w", err)
+		return fmt.Errorf("imscore attach: %w", err)
 	}
-	s.inner = inner
-	// Route inbound SIP MESSAGE on the injected TCP connection to imscore
-	// for SMS processing (RP-DATA decode, RP-ACK independent send).
-	inner.OnInboundMessage = s.handleInboundSIPMessage
-	inner.SetInboundCtx(s.lifecycleCtx)
-	s.msgSvc.SetSMSTransport(inner)
-	s.msgSvc.SetUSSDTransport(voiceclient.NewUSSDTransport(inner))
-	// 改动点 3: Log next_refresh_in to match community closed-source log format.
+
+	// Wire messaging.Service to use imscore-owned SMS transport.
+	s.msgSvc.SetSMSTransport(s)
+	// Wire USSD transport to imscore-owned USSD transport.
+	s.msgSvc.SetUSSDTransport(newUSSDTransport(s))
+
+	// Log next_refresh_in to match community closed-source log format.
 	refreshIn := time.Duration(reg.expiresSeconds) * time.Second * 4 / 5
 	if refreshIn <= 0 {
-		refreshIn = 48 * time.Minute // default 3600 * 80%
+		refreshIn = 48 * time.Minute
 	}
 	logger.Info(fmt.Sprintf("[%s] IMS REGISTER 成功", strings.TrimSpace(s.cfg.DeviceID)),
 		logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
@@ -562,10 +535,7 @@ func (s *Service) attachMessaging(ctx context.Context, winningPCSCF string, reg 
 	logger.Info(fmt.Sprintf("[%s] IMS attachMessaging 成功", strings.TrimSpace(s.cfg.DeviceID)),
 		logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)))
 
-	// 改动点 2: Send SUBSCRIBE(reg) to establish reg event subscription.
-	// This keeps the P-CSCF session context alive and prevents premature
-	// TCP connection teardown. NOTIFY is handled by the sipgo Server's
-	// OnRequest("NOTIFY") handler registered in startInboundSIPServer.
+	// Send SUBSCRIBE(reg) to establish reg event subscription.
 	go func() {
 		if err := s.sendSubscribeReg(s.lifecycleCtx); err != nil {
 			logger.Warn(fmt.Sprintf("[%s] IMS SUBSCRIBE(reg) 失败", strings.TrimSpace(s.cfg.DeviceID)),
@@ -575,14 +545,12 @@ func (s *Service) attachMessaging(ctx context.Context, winningPCSCF string, reg 
 		}
 	}()
 
-	// 改动点 5: Monitor TCP connection closure (EOF/reset) and trigger
-	// pipeline recovery via OnIMSConnDown callback.
-	if s.cfg.OnIMSConnDown != nil && inner.ConnDone() != nil {
+	// Monitor TCP connection closure (EOF/reset) and trigger pipeline recovery.
+	if s.cfg.OnIMSConnDown != nil && s.connDone != nil {
 		go func() {
 			select {
 			case <-s.lifecycleCtx.Done():
-				// Normal shutdown — don't trigger recovery.
-			case <-inner.ConnDone():
+			case <-s.connDone:
 				logger.Warn(fmt.Sprintf("[%s] IMS TCP 连接断开，触发 pipeline 恢复", strings.TrimSpace(s.cfg.DeviceID)),
 					logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
 					logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)))

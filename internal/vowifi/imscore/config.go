@@ -58,11 +58,9 @@ type Config struct {
 	DeliveryStore messaging.DeliveryStore
 	Dispatcher    eventhost.Dispatcher
 
-	// OnIMSReady is called after IMS REGISTER succeeds and the secure
-	// messaging channel is attached. It gives the caller access to the
-	// voiceclient.Client so it can create a voicehost.IMSOutboundAgent
-	// for VoWiFi voice calls.
-	OnIMSReady func(client *voiceclient.Client, deviceID string)
+	// OnIMSReady has been removed. Voice agent creation is now handled
+	// internally by runtimehost (following the community pattern).
+	// Previously: func(svc *Service, deviceID string)
 
 	// OnInboundCall is called when an inbound INVITE arrives from the IMS
 	// network. Uses primitive types to avoid a circular dependency on

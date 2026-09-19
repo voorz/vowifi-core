@@ -1,4 +1,4 @@
-package voiceclient
+package imscore
 
 import (
 	"bytes"
@@ -11,13 +11,17 @@ import (
 	"github.com/voorz/sipgo/sip"
 	"github.com/voorz/swu-go/pkg/logger"
 	"github.com/voorz/vowifi-core/runtimehost/messaging"
+	"github.com/voorz/vowifi-core/runtimehost/voiceclient"
 )
 
-// ussdTransport adapts *voiceclient.Client to implement messaging.USSDTransport.
+// ussdTransport adapts *imscore.Service to implement messaging.USSDTransport.
 // USSD over IMS uses SIP INVITE (dialog setup) → INFO (continuation) → BYE (cancel),
 // per 3GPP TS 24.390.
+//
+// This is the imscore-owned version of voiceclient.ussdTransport, rewritten
+// to depend on imscore.Service instead of voiceclient.Client.
 type ussdTransport struct {
-	client *Client
+	svc *Service
 
 	mu       sync.Mutex
 	sessions map[string]*ussdDialog
@@ -32,28 +36,28 @@ type ussdDialog struct {
 	routeSet   []string
 }
 
-// NewUSSDTransport creates a messaging.USSDTransport backed by the given voiceclient.Client.
-func NewUSSDTransport(c *Client) messaging.USSDTransport {
-	return &ussdTransport{client: c, sessions: make(map[string]*ussdDialog)}
+// newUSSDTransport creates a messaging.USSDTransport backed by the given imscore.Service.
+func newUSSDTransport(s *Service) messaging.USSDTransport {
+	return &ussdTransport{svc: s, sessions: make(map[string]*ussdDialog)}
 }
 
 func (t *ussdTransport) ExecuteUSSD(ctx context.Context, req messaging.USSDRequest) (messaging.USSDResult, error) {
-	if t == nil || t.client == nil {
+	if t == nil || t.svc == nil {
 		return messaging.USSDResult{SessionID: req.SessionID, Done: true}, messaging.ErrUSSDTransportUnavailable
 	}
 	command := strings.TrimSpace(req.Command)
 	if command == "" {
 		return messaging.USSDResult{SessionID: req.SessionID, Done: true}, fmt.Errorf("ussd command is empty")
 	}
-	c := t.client
+	s := t.svc
 	sessionID := req.SessionID
 	if sessionID == "" {
 		sessionID = fmt.Sprintf("ussd-%d", len(command))
 	}
 
-	logger.Info(fmt.Sprintf("[%s] IMS USSD 发送", strings.TrimSpace(c.cfg.DeviceID)),
-		logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
-		logger.String("device_id", strings.TrimSpace(c.cfg.DeviceID)),
+	logger.Info(fmt.Sprintf("[%s] IMS USSD 发送", strings.TrimSpace(s.cfg.DeviceID)),
+		logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
+		logger.String("device_id", strings.TrimSpace(s.cfg.DeviceID)),
 		logger.String("command", command),
 		logger.String("session_id", sessionID))
 
@@ -69,16 +73,16 @@ func (t *ussdTransport) ExecuteUSSD(ctx context.Context, req messaging.USSDReque
 
 	// Build multipart/mixed body (SDP + USSD XML)
 	boundary := "vowifi-ussd-" + sessionID
-	body := buildUSSDMultipartBody(c.cfg.LocalIP.String(), boundary, xmlBody)
+	body := buildUSSDMultipartBody(s.cfg.LocalIP.String(), boundary, xmlBody)
 
 	// Build remote URI
-	remoteURI := ussdRemoteURI(command, c.cfg.HomeDomain)
+	remoteURI := ussdRemoteURI(command, s.cfg.HomeDomain)
 	if remoteURI == "" {
 		return messaging.USSDResult{SessionID: sessionID, Done: true}, fmt.Errorf("ussd remote URI is empty")
 	}
 
 	// Build INVITE request
-	inviteReq, err := c.newRequest(sip.INVITE, remoteURI, false)
+	inviteReq, err := s.newRequest(sip.INVITE, remoteURI, false)
 	if err != nil {
 		return messaging.USSDResult{SessionID: sessionID, Done: true}, err
 	}
@@ -90,10 +94,10 @@ func (t *ussdTransport) ExecuteUSSD(ctx context.Context, req messaging.USSDReque
 	inviteReq.SetBody(body)
 
 	// Send INVITE (wait for final response, skip 100 Trying / 183 Session Progress)
-	res, err := c.doTransactionFinal(ctx, inviteReq)
+	res, err := s.doTransactionFinal(ctx, inviteReq)
 	if err != nil {
-		logger.Warn(fmt.Sprintf("[%s] IMS USSD INVITE 失败", strings.TrimSpace(c.cfg.DeviceID)),
-			logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
+		logger.Warn(fmt.Sprintf("[%s] IMS USSD INVITE 失败", strings.TrimSpace(s.cfg.DeviceID)),
+			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
 			logger.String("session_id", sessionID),
 			logger.String("error", err.Error()))
 		return messaging.USSDResult{SessionID: sessionID, Done: true, Status: 0}, err
@@ -102,8 +106,8 @@ func (t *ussdTransport) ExecuteUSSD(ctx context.Context, req messaging.USSDReque
 	// Send ACK for 2xx response
 	if res.StatusCode >= 200 && res.StatusCode < 300 {
 		if err := t.sendACK(ctx, inviteReq, res); err != nil {
-			logger.Warn(fmt.Sprintf("[%s] IMS USSD ACK 失败", strings.TrimSpace(c.cfg.DeviceID)),
-				logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
+			logger.Warn(fmt.Sprintf("[%s] IMS USSD ACK 失败", strings.TrimSpace(s.cfg.DeviceID)),
+				logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
 				logger.String("session_id", sessionID),
 				logger.String("error", err.Error()))
 		}
@@ -113,8 +117,8 @@ func (t *ussdTransport) ExecuteUSSD(ctx context.Context, req messaging.USSDReque
 	result := parseUSSDResponse(sessionID, res)
 	if res.StatusCode < 200 || res.StatusCode >= 300 {
 		result.Done = true
-		logger.Warn(fmt.Sprintf("[%s] IMS USSD INVITE 被拒绝", strings.TrimSpace(c.cfg.DeviceID)),
-			logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
+		logger.Warn(fmt.Sprintf("[%s] IMS USSD INVITE 被拒绝", strings.TrimSpace(s.cfg.DeviceID)),
+			logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
 			logger.String("session_id", sessionID),
 			logger.Int("sip_code", res.StatusCode),
 			logger.String("reason", res.Reason))
@@ -127,8 +131,8 @@ func (t *ussdTransport) ExecuteUSSD(ctx context.Context, req messaging.USSDReque
 		t.storeSession(sessionID, dialog)
 	}
 
-	logger.Info(fmt.Sprintf("[%s] IMS USSD 响应", strings.TrimSpace(c.cfg.DeviceID)),
-		logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
+	logger.Info(fmt.Sprintf("[%s] IMS USSD 响应", strings.TrimSpace(s.cfg.DeviceID)),
+		logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
 		logger.String("session_id", sessionID),
 		logger.Int("sip_code", res.StatusCode),
 		logger.String("text", result.Text),
@@ -138,7 +142,7 @@ func (t *ussdTransport) ExecuteUSSD(ctx context.Context, req messaging.USSDReque
 }
 
 func (t *ussdTransport) ContinueUSSD(ctx context.Context, req messaging.USSDRequest) (messaging.USSDResult, error) {
-	if t == nil || t.client == nil {
+	if t == nil || t.svc == nil {
 		return messaging.USSDResult{SessionID: req.SessionID, Done: true}, messaging.ErrUSSDTransportUnavailable
 	}
 	sessionID := strings.TrimSpace(req.SessionID)
@@ -153,11 +157,11 @@ func (t *ussdTransport) ContinueUSSD(ctx context.Context, req messaging.USSDRequ
 	if !ok {
 		return messaging.USSDResult{SessionID: sessionID, Done: true}, fmt.Errorf("ussd session %s is not active", sessionID)
 	}
-	c := t.client
+	s := t.svc
 	dialog.cseq++
 
-	logger.Info(fmt.Sprintf("[%s] IMS USSD 继续", strings.TrimSpace(c.cfg.DeviceID)),
-		logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
+	logger.Info(fmt.Sprintf("[%s] IMS USSD 继续", strings.TrimSpace(s.cfg.DeviceID)),
+		logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
 		logger.String("session_id", sessionID),
 		logger.String("input", input))
 
@@ -181,7 +185,7 @@ func (t *ussdTransport) ContinueUSSD(ctx context.Context, req messaging.USSDRequ
 	infoReq.AppendHeader(sip.NewHeader("Accept", messaging.IMSUSSDContentType))
 	infoReq.AppendHeader(sip.NewHeader("Recv-Info", messaging.IMSUSSDInfoPackage))
 
-	res, err := c.doTransaction(ctx, infoReq)
+	res, err := s.doTransaction(ctx, infoReq)
 	if err != nil {
 		return messaging.USSDResult{SessionID: sessionID, Done: true, Status: 0}, err
 	}
@@ -199,8 +203,8 @@ func (t *ussdTransport) ContinueUSSD(ctx context.Context, req messaging.USSDRequ
 		t.storeSession(sessionID, dialog)
 	}
 
-	logger.Info(fmt.Sprintf("[%s] IMS USSD 继续响应", strings.TrimSpace(c.cfg.DeviceID)),
-		logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
+	logger.Info(fmt.Sprintf("[%s] IMS USSD 继续响应", strings.TrimSpace(s.cfg.DeviceID)),
+		logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
 		logger.String("session_id", sessionID),
 		logger.Int("sip_code", res.StatusCode),
 		logger.String("text", result.Text),
@@ -210,7 +214,7 @@ func (t *ussdTransport) ContinueUSSD(ctx context.Context, req messaging.USSDRequ
 }
 
 func (t *ussdTransport) CancelUSSD(ctx context.Context, req messaging.USSDRequest) error {
-	if t == nil || t.client == nil {
+	if t == nil || t.svc == nil {
 		return messaging.ErrUSSDTransportUnavailable
 	}
 	sessionID := strings.TrimSpace(req.SessionID)
@@ -221,11 +225,11 @@ func (t *ussdTransport) CancelUSSD(ctx context.Context, req messaging.USSDReques
 	if !ok {
 		return nil
 	}
-	c := t.client
+	s := t.svc
 	dialog.cseq++
 
-	logger.Info(fmt.Sprintf("[%s] IMS USSD 取消", strings.TrimSpace(c.cfg.DeviceID)),
-		logger.String("trace_id", strings.TrimSpace(c.cfg.TraceID)),
+	logger.Info(fmt.Sprintf("[%s] IMS USSD 取消", strings.TrimSpace(s.cfg.DeviceID)),
+		logger.String("trace_id", strings.TrimSpace(s.cfg.TraceID)),
 		logger.String("session_id", sessionID))
 
 	byeReq, err := t.buildDialogRequest(sip.BYE, dialog, nil)
@@ -234,7 +238,7 @@ func (t *ussdTransport) CancelUSSD(ctx context.Context, req messaging.USSDReques
 		return err
 	}
 
-	_, err = c.doTransaction(ctx, byeReq)
+	_, err = s.doTransaction(ctx, byeReq)
 	t.clearSession(sessionID)
 	if err != nil {
 		return err
@@ -244,7 +248,7 @@ func (t *ussdTransport) CancelUSSD(ctx context.Context, req messaging.USSDReques
 
 // sendACK sends an ACK for a 2xx INVITE response.
 func (t *ussdTransport) sendACK(ctx context.Context, invite *sip.Request, res *sip.Response) error {
-	c := t.client
+	s := t.svc
 	ackURI := invite.Recipient
 	if contact := res.GetHeader("Contact"); contact != nil {
 		parsed := sip.Uri{}
@@ -279,33 +283,33 @@ func (t *ussdTransport) sendACK(ctx context.Context, invite *sip.Request, res *s
 		ack.AppendHeader(sip.NewHeader("Route", route))
 	}
 	ack.SetTransport(invite.Transport())
-	if c.cfg.transportNetwork() == "udp" {
+	if s.transportNetwork() == "udp" {
 		ack.SetTransport("UDP")
 	} else {
 		ack.SetTransport("TCP")
 	}
-	return c.client.WriteRequest(ack)
+	return s.sipClient.WriteRequest(ack)
 }
 
 // buildDialogRequest builds a SIP request within an established dialog.
 func (t *ussdTransport) buildDialogRequest(method sip.RequestMethod, d *ussdDialog, body []byte) (*sip.Request, error) {
-	c := t.client
+	s := t.svc
 	remoteURI := d.contactURI
 	if remoteURI == "" {
-		remoteURI = c.cfg.PublicURI
+		remoteURI = s.basePublicURI
 	}
 	recipient := sip.Uri{}
 	if err := sip.ParseUri(remoteURI, &recipient); err != nil {
 		return nil, fmt.Errorf("parse dialog remote URI: %w", err)
 	}
 	req := sip.NewRequest(method, recipient)
-	req.AppendHeader(sip.NewHeader("From", "<"+c.cfg.PublicURI+">;tag="+d.fromTag))
+	req.AppendHeader(sip.NewHeader("From", "<"+s.basePublicURI+">;tag="+d.fromTag))
 	req.AppendHeader(sip.NewHeader("To", "<"+remoteURI+">;tag="+d.toTag))
 	req.AppendHeader(sip.NewHeader("Call-ID", d.callID))
 	req.AppendHeader(sip.NewHeader("CSeq", strconv.Itoa(d.cseq)+" "+string(method)))
-	contact := c.cfg.buildContactHeader(c.registerProfile, c.sipInstanceURN, c.contactUser)
+	contact := s.buildContactHeader()
 	req.AppendHeader(sip.NewHeader("Contact", contact))
-	req.AppendHeader(sip.NewHeader("User-Agent", NormalizeUserAgent(c.registerProfile.UserAgent)))
+	req.AppendHeader(sip.NewHeader("User-Agent", voiceclient.NormalizeUserAgent(s.registerProfile.UserAgent)))
 	for _, route := range d.routeSet {
 		req.AppendHeader(sip.NewHeader("Route", route))
 	}
@@ -313,7 +317,7 @@ func (t *ussdTransport) buildDialogRequest(method sip.RequestMethod, d *ussdDial
 		req.AppendHeader(sip.NewHeader("Content-Type", messaging.IMSUSSDContentType))
 		req.SetBody(body)
 	}
-	if c.cfg.transportNetwork() == "udp" {
+	if s.transportNetwork() == "udp" {
 		req.SetTransport("UDP")
 	} else {
 		req.SetTransport("TCP")

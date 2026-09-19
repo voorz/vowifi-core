@@ -451,7 +451,11 @@ func buildRegisterRequest(cfg Config, state registerState, initial bool, variant
 		req.AppendHeader(sip.NewHeader("P-Access-Network-Info", templatePANIValue(cfg.Template)))
 	}
 	if includeCellular && !minimalInitialHeaders {
-		req.AppendHeader(sip.NewHeader("Cellular-Network-Info", buildCellularNetworkInfo(cfg)))
+		plmn := plmnFromIMSDomain(cfg.HomeDomain)
+		if plmn == "" {
+			plmn = plmnFromIMSDomain(cfg.Realm)
+		}
+		req.AppendHeader(sip.NewHeader("Cellular-Network-Info", buildCellularNetworkInfo(plmn, cfg.CellID)))
 	}
 	if !minimalInitialHeaders {
 		icsiRef := strings.TrimSpace(cfg.Template.ICSIRef)
@@ -673,61 +677,6 @@ func doRegisterTransaction(ctx context.Context, client *sipgo.Client, req *sip.R
 	}
 }
 
-func buildInitialAuthorization(cfg Config, mode string) string {
-	authMode := strings.ToLower(strings.TrimSpace(mode))
-	if authMode == "" {
-		if strings.EqualFold(strings.TrimSpace(cfg.Template.SecAgreeMode), "auto") {
-			authMode = "aka_empty_uri_first"
-		} else if !cfg.Template.UsePlainDigestPlaceholder {
-			authMode = "none"
-		} else {
-			authMode = "aka_empty_uri_first"
-		}
-	}
-	requestURI := "sip:" + strings.TrimSpace(cfg.HomeDomain)
-	username := authorizationUsername(cfg)
-	realm := quoteSipParam(strings.TrimSpace(cfg.Realm))
-	switch authMode {
-	case "none":
-		return ""
-	case "aka_empty":
-		return fmt.Sprintf(
-			`Digest username="%s",realm="%s",nonce="",uri="%s",response="",algorithm=AKAv1-MD5`,
-			quoteSipParam(username),
-			realm,
-			quoteSipParam(requestURI),
-		)
-	case "aka_zero_response_uri_first":
-		return fmt.Sprintf(
-			`Digest uri="%s",username="%s",algorithm=AKAv1-MD5,response="00000000000000000000000000000000",realm="%s",nonce=""`,
-			quoteSipParam(requestURI),
-			quoteSipParam(username),
-			realm,
-		)
-	default:
-		return fmt.Sprintf(
-			`Digest uri="%s",username="%s",algorithm=AKAv1-MD5,response="",realm="%s",nonce=""`,
-			quoteSipParam(requestURI),
-			quoteSipParam(username),
-			realm,
-		)
-	}
-}
-
-func authorizationUsername(cfg Config) string {
-	if v := strings.TrimSpace(cfg.PrivateID); v != "" {
-		return v
-	}
-	imsi := strings.TrimSpace(cfg.IMSI)
-	realm := strings.TrimSpace(cfg.Realm)
-	if imsi != "" && realm != "" {
-		if privateID, _ := voiceclient.BuildIMSIdentity(imsi, realm, strings.TrimSpace(cfg.HomeDomain), "imsi_home_domain"); privateID != "" {
-			return privateID
-		}
-	}
-	return ""
-}
-
 func buildIMSCoreContact(cfg Config, state registerState, localPort int) string {
 	return buildIMSCoreContactForTransport(cfg, state, localPort, "tcp")
 }
@@ -750,24 +699,6 @@ func buildIMSCoreContactForTransport(cfg Config, state registerState, localPort 
 		RegisterExpirySecs: cfg.RegisterExpirySeconds,
 		IcsiRef:            cfg.Template.ICSIRef,
 	})
-}
-
-func buildCellularNetworkInfo(cfg Config) string {
-	// Compact PLMN: MCC + MNC with leading zeros stripped (per 3GPP TS 25.331
-	// CellGlobalId format). Consistent with carrier.PlmnKey's normalization.
-	mncStripped := strings.TrimLeft(strings.TrimSpace(cfg.MNC), "0")
-	if mncStripped == "" && strings.TrimSpace(cfg.MNC) != "" {
-		mncStripped = "0"
-	}
-	plmn := strings.TrimSpace(cfg.MCC) + mncStripped
-	if plmn == "" {
-		plmn = "00000"
-	}
-	cell := strings.TrimSpace(cfg.CellID)
-	if cell == "" {
-		cell = "0000000"
-	}
-	return fmt.Sprintf("3GPP-E-UTRAN-FDD;utran-cell-id-3gpp=%s%s;cell-info-age=0", plmn, cell)
 }
 
 // computeAKAAuth runs a single USIM AKA and builds the Digest Authorization
@@ -934,10 +865,6 @@ func selectDigestChallenge(cfg Config, res *sip.Response) (*digest.Challenge, er
 	return nil, fmt.Errorf("parse challenge failed")
 }
 
-func quoteSipParam(value string) string {
-	return strings.NewReplacer(`\`, `\\`, `"`, `\"`).Replace(value)
-}
-
 func registerSIPLocalPort(cfg Config) int {
 	return registerAttemptLocalPort(cfg, 0)
 }
@@ -958,19 +885,6 @@ func randomEphemeralSIPPort() int {
 		port := 10000 + int(n.Int64())
 		if port != 5060 && port != 5061 {
 			return port
-		}
-	}
-}
-
-func randomNonZeroUint32() uint32 {
-	// Prefer signed 31-bit SPI values (1..0x7fffffff); some IMS stacks reject high-bit SPIs.
-	for {
-		n, err := rand.Int(rand.Reader, big.NewInt(0x7fffffff))
-		if err != nil {
-			return 0x00ffee01
-		}
-		if v := uint32(n.Int64()) + 1; v != 0 {
-			return v
 		}
 	}
 }

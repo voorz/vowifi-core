@@ -38,10 +38,43 @@ type Service struct {
 	lifecycleCtx    context.Context
 	lifecycleCancel context.CancelFunc
 
-	inner *voiceclient.Client
-
 	msgSvc    *messaging.Service
 	sipServer *sipgo.Server
+
+	// ─── 架构扭转：imscore 直接持有 SIP 栈 ───
+	// sipUA is the sipgo UserAgent directly owned by imscore (not via voiceclient).
+	sipUA *sipgo.UserAgent
+	// sipClient is the sipgo.Client directly owned by imscore.
+	sipClient *sipgo.Client
+	// tcpConn is the injected TCP connection to the P-CSCF, directly held by imscore.
+	tcpConn net.Conn
+
+	// IMS identity state (moved from voiceclient.Client).
+	registerProfile voiceclient.RegisterProfile
+	sipInstanceURN  string
+	contactUser     string
+	basePrivateID   string
+	basePublicURI   string
+
+	// Lifecycle channels (moved from voiceclient.Client).
+	stopCh   chan struct{}
+	stopDone chan struct{}
+
+	// connDone is closed when the injected TCP connection is closed by the
+	// remote side (EOF, reset, or read error). Used to detect P-CSCF TCP
+	// teardown and trigger pipeline recovery.
+	connDone     chan struct{}
+	connDoneOnce sync.Once
+
+	// serviceRoutes are the Service-Route headers learned from REGISTER,
+	// used for routing non-REGISTER requests.
+	serviceRoutes []string
+
+	// securityClient holds the IPSec parameters advertised in the
+	// Security-Client header during initial REGISTER.
+	securityClient securityClientState
+
+	// ─── 架构扭转结束 ───
 
 	// subscribeDialog stores the dialog info from SUBSCRIBE(reg) 200 OK,
 	// used for potential refresh within the same dialog.
@@ -115,21 +148,10 @@ func Dial(ctx context.Context, cfg Config) (*Service, error) {
 }
 
 func (s *Service) SendSMS(ctx context.Context, peer, content string, parts []messaging.SMSPart) (messaging.SendOutcome, error) {
-	if s == nil || s.inner == nil {
+	if s == nil || s.sipClient == nil {
 		return messaging.SendOutcome{}, fmt.Errorf("IMS service not ready")
 	}
-	return s.inner.SendSMS(ctx, peer, content, parts)
-}
-
-// VoiceClient returns the underlying voiceclient.Client created during
-// attachMessaging. Returns nil if IMS has not been registered yet.
-// Used by runtimehost.runStagedPipeline to wire OnIMSReady callback
-// for VoWiFi voice agent setup.
-func (s *Service) VoiceClient() *voiceclient.Client {
-	if s == nil {
-		return nil
-	}
-	return s.inner
+	return s.sendSMS(ctx, peer, content, parts)
 }
 
 // SetInboundCallHandler sets the callback invoked when an inbound IMS
@@ -226,18 +248,15 @@ func (s *Service) Close(ctx context.Context) error {
 		_ = s.portSUDP.Close()
 		s.portSUDP = nil
 	}
-	var innerErr error
-	if s.inner != nil {
-		innerErr = s.inner.Close(ctx)
-		s.inner = nil
-	}
+	// Close imscore-owned SIP stack.
+	s.shutdownSIPStack()
 	if us, ok := s.network.(*UserspaceIMSNetwork); ok {
 		_ = us.Close()
 	} else if s.swu != nil {
 		_ = s.swu.Close()
 	}
 	s.swu = nil
-	return innerErr
+	return nil
 }
 
 func (s *Service) Status() map[string]interface{} {
